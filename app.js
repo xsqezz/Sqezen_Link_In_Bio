@@ -26,6 +26,14 @@ function publicProfile() {
   return `<div class="profile-page"><div class="profile-glow"></div><a class="profile-brand" href="/"><span class="brand-mark">s</span> sqezen</a><section class="profile-card"><div class="profile-avatar">${profile.avatar}</div><div class="verified">● VERIFIED</div><h1>${profile.displayName}</h1><p class="profile-handle">@${profile.username}</p><p class="profile-bio">${profile.bio}</p><div class="profile-meta"><span>⌖ ${profile.location}</span><span>◉ ${profile.views} wyświetleń</span></div><div class="profile-links">${links}</div><div class="profile-footer"><span>sqezen.lol/${profile.username}</span><button onclick="copyProfile()">⧉</button></div></section><p class="profile-report">Zgłoś profil</p></div>`;
 }
 
+function loginPage() {
+  return layout(`<section class="auth-page"><div class="auth-copy"><span class="eyebrow"><span class="pulse"></span> SQEZEN / ACCOUNT</span><h1>Wróć do<br /><em>swojego miejsca.</em></h1><p>Zaloguj się, żeby edytować profil, linki i wygląd swojej strony.</p><a class="auth-back" href="/">← Wróć na stronę główną</a></div><section class="auth-card"><div class="auth-card-top"><span class="card-kicker">LOGOWANIE</span><span class="auth-status">● SECURE</span></div><h2>Zaloguj się</h2><p class="auth-muted">Dostęp do Twojego profilu sqezen.</p><form id="login-form"><label>E-mail<input type="email" name="email" placeholder="ty@przyklad.pl" required /></label><label>Hasło<input type="password" name="password" placeholder="••••••••" required /></label><div class="auth-row"><label class="remember"><input type="checkbox" /> Zapamiętaj mnie</label><a href="#">Nie pamiętasz hasła?</a></div><button class="button button-primary auth-submit" type="submit">Zaloguj się <span>→</span></button><p class="auth-feedback" id="auth-feedback"></p></form><div class="auth-divider"><span>albo</span></div><button class="oauth-button" type="button">◉ Kontynuuj z Google</button><p class="auth-switch">Nie masz konta? <a href="/register">Utwórz je za darmo</a></p></section></section>`);
+}
+
+function registerPage() {
+  return layout(`<section class="auth-page"><div class="auth-copy"><span class="eyebrow"><span class="pulse"></span> SQEZEN / JOIN</span><h1>Zajmij swoje<br /><em>miejsce online.</em></h1><p>Załóż konto, wybierz nazwę i opublikuj swój profil w mniej niż minutę.</p><a class="auth-back" href="/">← Wróć na stronę główną</a></div><section class="auth-card"><div class="auth-card-top"><span class="card-kicker">NOWE KONTO</span><span class="auth-status">● FREE</span></div><h2>Stwórz profil</h2><p class="auth-muted">Najpierw konto, potem Twoja nazwa.</p><form id="register-form"><label>E-mail<input type="email" name="email" placeholder="ty@przyklad.pl" required /></label><label>Hasło<input type="password" name="password" placeholder="minimum 8 znaków" minlength="8" required /></label><button class="button button-primary auth-submit" type="submit">Dalej <span>→</span></button><p class="auth-feedback" id="auth-feedback"></p></form><p class="auth-switch">Masz już konto? <a href="/login">Zaloguj się</a></p></section></section>`);
+}
+
 function dashboard() {
   return layout(`<section class="dashboard"><div class="dashboard-heading"><div><span class="eyebrow">PANEL TWÓRCY</span><h1>Witaj, Sqezz <span>✦</span></h1><p>Twój profil wygląda dobrze. Co dziś zmieniamy?</p></div><a class="button button-primary" href="/sqezz">Zobacz profil <span>↗</span></a></div><div class="stats"><div><span>Wyświetlenia profilu</span><strong>1 248</strong><small class="up">↗ 18,4% w tym tygodniu</small></div><div><span>Kliknięcia linków</span><strong>386</strong><small class="up">↗ 9,2% w tym tygodniu</small></div><div><span>Najlepszy link</span><strong>YouTube</strong><small>142 kliknięcia</small></div></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><span class="card-kicker">EDYTOR PROFILU</span><h2>Podstawowe informacje</h2></div><button class="save-button">Zapisz zmiany</button></div><label>Nazwa wyświetlana<input value="Sqezz" /></label><label>Bio<textarea>tworzę rzeczy w internecie ✦</textarea></label><label>Adres profilu<div class="input-prefix"><span>sqezen.lol/</span><input value="sqezz" /></div></label></section><section class="panel preview-panel"><div class="panel-head"><div><span class="card-kicker">PODGLĄD NA ŻYWO</span><h2>Twój profil</h2></div><span class="live-dot">● LIVE</span></div><div class="preview-box"><div class="preview-avatar">S</div><strong>Sqezz</strong><small>@sqezz</small><div class="preview-line"></div><div class="preview-link"></div><div class="preview-link"></div></div></section></div>`);
 }
@@ -41,11 +49,27 @@ function render() {
   const routeSegments = segments[0] === "sqezzbio" ? segments.slice(1) : segments;
   const path = "/" + routeSegments.join("/") || "/";
   document.title = path === "/sqezz" ? "Sqezz | sqezen" : path === "/dashboard" ? "Dashboard | sqezen" : "sqezen — Twój profil w internecie";
-  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : landing();
+  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : path === "/login" ? loginPage() : path === "/register" ? registerPage() : landing();
+  const authForm = document.querySelector("#login-form, #register-form");
+  if (authForm) authForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const feedback = document.querySelector("#auth-feedback");
+    if (feedback) feedback.textContent = "Połączę ten formularz z Supabase w następnym kroku.";
+  });
 }
 
 const redirect = new URLSearchParams(window.location.search).get("redirect");
 if (redirect) {
   history.replaceState(null, "", redirect);
 }
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a");
+  if (!link || link.target === "_blank" || link.origin !== window.location.origin || link.hash) return;
+  event.preventDefault();
+  history.pushState(null, "", link.pathname + link.search);
+  render();
+  window.scrollTo({ top: 0, behavior: "instant" });
+});
+window.addEventListener("popstate", render);
 render();
