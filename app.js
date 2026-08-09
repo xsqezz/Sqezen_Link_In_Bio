@@ -39,7 +39,7 @@ function register() {
 }
 
 function registerCode() {
-  return layout(`<section class="auth-panel"><p class="section-label">SQEZEN / VERIFY</p><h1>Wpisz kod</h1><p class="about-copy">Kod weryfikacyjny znajdziesz w wiadomości e-mail wysłanej po rejestracji.</p><form id="code-form" class="stack-form"><label>6-cyfrowy kod<input name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required /></label><button class="social-btn route-btn" type="submit">Potwierdź e-mail <span class="external">↗</span></button><p class="form-feedback" id="form-feedback" role="status"></p></form><a class="route-back" href="/register">← Zmień dane</a></section>`);
+  return layout(`<section class="auth-panel"><p class="section-label">SQEZEN / VERIFY</p><h1>Wpisz kod</h1><p class="about-copy">Kod weryfikacyjny znajdziesz w wiadomości e-mail wysłanej po rejestracji.</p><form id="code-form" class="stack-form"><label>6-cyfrowy kod<input name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required /></label><button class="social-btn route-btn" type="submit">Potwierdź e-mail <span class="external">↗</span></button><button class="text-button" id="resend-code" type="button">Wyślij kod ponownie</button><p class="form-feedback" id="form-feedback" role="status"></p></form><a class="route-back" href="/register">← Zmień dane</a></section>`);
 }
 
 function dashboard() {
@@ -97,6 +97,15 @@ async function wire(path) {
     if (error) return feedback("Kod jest nieprawidłowy lub wygasł.", true);
     sessionStorage.removeItem("sqezen_email");
     navigate("/dashboard");
+  });
+
+  const resendCode = document.querySelector("#resend-code");
+  if (resendCode) resendCode.addEventListener("click", async () => {
+    const email = sessionStorage.getItem("sqezen_email");
+    if (!email) return feedback("Wróć do rejestracji i wpisz e-mail.", true);
+    feedback("Wysyłanie nowego kodu...");
+    const { error } = await supabaseClient.auth.resend({ type: "signup", email });
+    feedback(error ? "Nie udało się wysłać kodu ponownie." : "Nowy kod został wysłany.", Boolean(error));
   });
 
   const logout = document.querySelector("#logout-button");
