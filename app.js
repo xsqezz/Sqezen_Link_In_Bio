@@ -39,7 +39,7 @@ function register() {
 }
 
 function registerCode() {
-  return layout(`<section class="auth-panel"><p class="section-label">SQEZEN / VERIFY</p><h1>Wpisz kod</h1><p class="about-copy">Kod weryfikacyjny znajdziesz w wiadomości e-mail wysłanej po rejestracji.</p><form id="code-form" class="stack-form"><label>6-cyfrowy kod<input name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required /></label><button class="social-btn route-btn" type="submit">Potwierdź e-mail <span class="external">↗</span></button><button class="text-button" id="resend-code" type="button">Wyślij kod ponownie</button><p class="form-feedback" id="form-feedback" role="status"></p></form><a class="route-back" href="/register">← Zmień dane</a></section>`);
+  return layout(`<section class="auth-panel"><p class="section-label">SQEZEN / VERIFY</p><h1>Wpisz kod</h1><p class="about-copy">Kod weryfikacyjny znajdziesz w wiadomości e-mail wysłanej po rejestracji.</p><form id="code-form" class="stack-form"><label>8-cyfrowy kod<input name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" placeholder="00000000" required /></label><button class="social-btn route-btn" type="submit">Potwierdź e-mail <span class="external">↗</span></button><button class="text-button" id="resend-code" type="button">Wyślij kod ponownie</button><p class="form-feedback" id="form-feedback" role="status"></p></form><a class="route-back" href="/register">← Zmień dane</a></section>`);
 }
 
 function dashboard() {
