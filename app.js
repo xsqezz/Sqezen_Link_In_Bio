@@ -37,7 +37,9 @@ function copyProfile() {
 }
 
 function render() {
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const segments = window.location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+  const routeSegments = segments[0] === "sqezzbio" ? segments.slice(1) : segments;
+  const path = "/" + routeSegments.join("/") || "/";
   document.title = path === "/sqezz" ? "Sqezz | sqezzbio" : path === "/dashboard" ? "Dashboard | sqezzbio" : "sqezzbio — Twój profil w internecie";
   document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : landing();
 }
