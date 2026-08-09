@@ -6,8 +6,9 @@
     <title>sqezzbio</title>
     <script>
       const path = window.location.pathname;
+      const base = path.split('/').filter(Boolean).length > 1 ? '/' + path.split('/').filter(Boolean)[0] + '/' : '/';
       sessionStorage.redirect = path + window.location.search + window.location.hash;
-      window.location.replace('/');
+      window.location.replace(base);
     </script>
   </head>
   <body></body>
