@@ -43,7 +43,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .profile-card {
-  width: min(100%, 420px);
+  width: min(100%, 860px);
   padding: 34px;
   text-align: center;
   background: rgba(255, 255, 255, 0.06);
@@ -53,6 +53,54 @@ a { color: inherit; text-decoration: none; }
   border-radius: 24px;
   animation: fadeUp 400ms ease both;
 }
+
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 48px;
+  align-items: center;
+  text-align: left;
+}
+
+.home-intro h1 { font-size: clamp(2.3rem, 6vw, 3.8rem); line-height: 0.98; }
+.home-intro h1 span { color: var(--muted); }
+.home-intro .tagline { max-width: 420px; margin: 20px 0 18px; }
+.home-intro .about-copy { max-width: 430px; }
+.about-copy strong { color: var(--text); font-weight: 600; }
+
+.login-form {
+  padding: 24px;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.login-form label {
+  display: block;
+  margin: 16px 0 7px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.login-form input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  color: var(--text);
+  font: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  outline: none;
+}
+
+.login-form input:focus { border-color: rgba(200, 243, 106, 0.7); }
+.login-form input::placeholder { color: #687283; }
+.login-form .route-btn { width: 100%; border: 0; cursor: pointer; font: inherit; }
+.form-feedback { min-height: 18px; margin: 12px 0 0; color: #f3a8a8; font-size: 0.78rem; }
+.form-note { margin: 14px 0 0; color: var(--muted); font-size: 0.78rem; }
+.form-note a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 
 .avatar {
   display: block;
@@ -170,6 +218,9 @@ h1 {
 @media (max-width: 480px) {
   .profile-shell { padding: 20px 16px; }
   .profile-card { padding: 20px; border-radius: 20px; }
+  .home-grid { grid-template-columns: 1fr; gap: 28px; }
+  .home-intro h1 { font-size: 2.35rem; }
+  .login-form { padding: 18px; }
   .avatar { width: 88px; height: 88px; margin-bottom: 18px; }
   .social-btn { width: 100%; }
 }
