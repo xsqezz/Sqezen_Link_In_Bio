@@ -42,6 +42,9 @@ function render() {
   document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : landing();
 }
 
-const redirect = sessionStorage.redirect;
-if (redirect) { sessionStorage.removeItem("redirect"); history.replaceState(null, "", redirect); }
+const redirect = new URLSearchParams(window.location.search).get("redirect") || sessionStorage.redirect;
+if (redirect) {
+  sessionStorage.removeItem("redirect");
+  history.replaceState(null, "", redirect);
+}
 render();
