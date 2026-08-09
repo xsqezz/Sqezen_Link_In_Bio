@@ -41,9 +41,9 @@ function landing() {
   return layout(`<section class="hero"><div class="eyebrow"><span class="pulse"></span> Twoje miejsce w internecie</div><h1>Wszystko o Tobie.<br /><em>W jednym miejscu.</em></h1><p class="hero-copy">Stwórz minimalistyczny profil, który zbiera Twoje linki, projekty i społeczność. Prosto, szybko i po swojemu.</p><div class="hero-actions"><a class="button button-primary" href="/dashboard">Zacznij za darmo <span>→</span></a><a class="button button-ghost" href="/sqezz">Zobacz przykład <span>↗</span></a></div><div class="hero-note"><span>◉</span> Bez karty płatniczej&nbsp; · &nbsp;Gotowe w 60 sekund</div></section><section class="feature-grid"><article class="feature-card feature-wide"><div><span class="card-kicker">01 / Twój profil</span><h2>Niech Twoje<br /><span>linki mówią.</span></h2><p>Jedna estetyczna strona na wszystkie miejsca, w których można Cię znaleźć.</p></div><div class="mini-profile"><div class="mini-avatar">S</div><strong>sqezz</strong><small>tworzę rzeczy w internecie</small><div class="mini-link"></div><div class="mini-link short"></div></div></article><article class="feature-card accent"><span class="card-kicker">02 / Personalizacja</span><h2>Twój styl.<br />Twoje zasady.</h2><p>Kolory, tła, fonty i układ. Dopasuj profil do siebie.</p><div class="swatches"><i></i><i></i><i></i><i></i></div></article><article class="feature-card dark"><span class="card-kicker">03 / Analityka</span><h2>Wiesz, co<br /><span>działa.</span></h2><p>Sprawdzaj wyświetlenia i kliknięcia bez zbędnego chaosu.</p><div class="chart"><span style="height:32%"></span><span style="height:46%"></span><span style="height:38%"></span><span style="height:68%"></span><span style="height:54%"></span><span style="height:88%"></span><span style="height:72%"></span></div></article></section>`);
 }
 
-function publicProfile() {
-  const links = profile.links.map((link) => `<a class="profile-link ${link.featured ? "featured" : ""}" href="${link.href}"><span class="link-icon">${link.icon}</span><span>${link.label}</span><span class="link-arrow">↗</span></a>`).join("");
-  return `<div class="profile-page"><div class="profile-glow"></div><a class="profile-brand" href="/"><span class="brand-mark">s</span> sqezen</a><section class="profile-card"><div class="profile-avatar">${profile.avatar}</div><div class="verified">● VERIFIED</div><h1>${profile.displayName}</h1><p class="profile-handle">@${profile.username}</p><p class="profile-bio">${profile.bio}</p><div class="profile-meta"><span>⌖ ${profile.location}</span><span>◉ ${profile.views} wyświetleń</span></div><div class="profile-links">${links}</div><div class="profile-footer"><span>sqezen.lol/${profile.username}</span><button onclick="copyProfile()">⧉</button></div></section><p class="profile-report">Zgłoś profil</p></div>`;
+function publicProfile(view = profile) {
+  const links = (view.links || profile.links).map((link) => `<a class="profile-link ${link.featured ? "featured" : ""}" href="${link.href}"><span class="link-icon">${link.icon}</span><span>${link.label}</span><span class="link-arrow">↗</span></a>`).join("");
+  return `<div class="profile-page"><div class="profile-glow"></div><a class="profile-brand" href="/"><span class="brand-mark">s</span> sqezen</a><section class="profile-card"><div class="profile-avatar">${view.avatar || "S"}</div><div class="verified">● VERIFIED</div><h1>${view.displayName || view.username}</h1><p class="profile-handle">@${view.username}</p><p class="profile-bio">${view.bio || ""}</p><div class="profile-meta"><span>⌖ ${view.location || "Polska"}</span><span>◉ ${view.views || "0"} wyświetleń</span></div><div class="profile-links">${links}</div><div class="profile-footer"><span>sqezen.lol/${view.username}</span><button onclick="copyProfile()">⧉</button></div></section><p class="profile-report">Zgłoś profil</p></div>`;
 }
 
 function loginPage() {
@@ -108,11 +108,21 @@ async function wireAuth(path) {
   }
 }
 
+async function hydratePublicProfile(path) {
+  if (!authClient || path === "/sqezz") return;
+  const username = path.slice(1).toLowerCase();
+  const { data } = await authClient.from("profiles").select("username,display_name,bio,avatar_url,background_color").eq("username", username).maybeSingle();
+  if (!data) return;
+  document.getElementById("app").innerHTML = publicProfile({ ...profile, username: data.username, displayName: data.display_name, bio: data.bio, avatar: data.avatar_url || "S" });
+}
+
 function render() {
   const path = routePath();
   document.title = path === "/sqezz" ? "Sqezz | sqezen" : path === "/dashboard" ? "Dashboard | sqezen" : "sqezen — Twój profil w internecie";
   const currentUser = authClient?.auth?.getUser;
-  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : path === "/claim" ? claimPage() : path === "/login" ? loginPage() : path === "/register" ? registerPage() : landing();
+  const reserved = ["/", "/sqezz", "/dashboard", "/claim", "/login", "/register"];
+  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : path === "/claim" ? claimPage() : path === "/login" ? loginPage() : path === "/register" ? registerPage() : path === "/" ? landing() : publicProfile({ ...profile, username: path.slice(1) });
+  if (!reserved.includes(path)) hydratePublicProfile(path);
   wireAuth(path);
 }
 
