@@ -55,5 +55,41 @@
         </footer>
       </section>
     </main>
+
+    <script>
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        const redirectedPath = params.get("redirect");
+        if (redirectedPath) {
+          history.replaceState(null, "", redirectedPath);
+        }
+
+        const path = window.location.pathname.replace(/\/+$/, "") || "/";
+        if (path === "/") return;
+
+        const card = document.querySelector(".profile-card");
+        if (!card) return;
+
+        const safeName = path.slice(1).split("/")[0].replace(/[^a-zA-Z0-9_-]/g, "") || "sqezen";
+        const isDashboard = path === "/dashboard";
+        const isLogin = path === "/login";
+        document.title = isDashboard ? "Dashboard — sqezen" : isLogin ? "Logowanie — sqezen" : `${safeName} — sqezen`;
+
+        if (isDashboard || isLogin) {
+          card.innerHTML = `
+            <p class="section-label">SQEZEN / ${isDashboard ? "DASHBOARD" : "ACCOUNT"}</p>
+            <h1>${isDashboard ? "Panel twórcy" : "Zaloguj się"}</h1>
+            <p class="about-copy">${isDashboard ? "Zaloguj się, aby edytować swój profil, linki i ustawienia." : "Zaloguj się, aby przejść do swojego panelu."}</p>
+            <a class="social-btn route-btn" href="${isDashboard ? "/login" : "/dashboard"}">${isDashboard ? "Przejdź do logowania" : "Przejdź do dashboardu"}<span class="external" aria-hidden="true">↗</span></a>
+            <a class="route-back" href="/">← Wróć na profil sqezen</a>
+          `;
+          return;
+        }
+
+        card.querySelector("#profile-name").textContent = safeName;
+        card.querySelector(".about-copy").textContent = "Ten profil jest dostępny publicznie na sqezen.lol.";
+        card.querySelector(".profile-footer span").textContent = `sqezen.lol/${safeName}`;
+      })();
+    </script>
   </body>
 </html>
