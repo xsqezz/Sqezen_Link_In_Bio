@@ -54,6 +54,10 @@ function registerPage() {
   return layout(`<section class="auth-page"><div class="auth-copy"><span class="eyebrow"><span class="pulse"></span> SQEZEN / JOIN</span><h1>Zajmij swoje<br /><em>miejsce online.</em></h1><p>Załóż konto, wybierz nazwę i opublikuj swój profil w mniej niż minutę.</p><a class="auth-back" href="/">← Wróć na stronę główną</a></div><section class="auth-card"><div class="auth-card-top"><span class="card-kicker">NOWE KONTO</span><span class="auth-status">● FREE</span></div><h2>Stwórz profil</h2><p class="auth-muted">Najpierw konto, potem Twoja nazwa.</p><form id="register-form"><label>E-mail<input type="email" name="email" placeholder="ty@przyklad.pl" required /></label><label>Hasło<input type="password" name="password" placeholder="minimum 8 znaków" minlength="8" required /></label><button class="button button-primary auth-submit" type="submit">Dalej <span>→</span></button><p class="auth-feedback" id="auth-feedback"></p></form><p class="auth-switch">Masz już konto? <a href="/login">Zaloguj się</a></p></section></section>`);
 }
 
+function verifyPage() {
+  return layout(`<section class="auth-page"><div class="auth-copy"><span class="eyebrow"><span class="pulse"></span> SQEZEN / VERIFY</span><h1>Sprawdź swój<br /><em>e-mail.</em></h1><p>Wysłaliśmy 6-cyfrowy kod. Wpisz go tutaj, żeby odblokować wybór nazwy profilu.</p><a class="auth-back" href="/register">← Zmień adres e-mail</a></div><section class="auth-card"><div class="auth-card-top"><span class="card-kicker">WERYFIKACJA</span><span class="auth-status">● 6 DIGITS</span></div><h2>Wpisz kod</h2><p class="auth-muted">Kod jest ważny przez kilka minut.</p><form id="verify-form"><label>Kod weryfikacyjny<input class="otp-input" name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required /></label><button class="button button-primary auth-submit" type="submit">Potwierdź e-mail <span>→</span></button><p class="auth-feedback" id="auth-feedback"></p></form><p class="auth-switch">Nie widzisz wiadomości? Sprawdź spam lub wyślij kod ponownie.</p></section></section>`);
+}
+
 function dashboard() {
   return layout(`<section class="dashboard"><div class="dashboard-heading"><div><span class="eyebrow">PANEL TWÓRCY</span><h1>Witaj, Sqezz <span>✦</span></h1><p>Twój profil wygląda dobrze. Co dziś zmieniamy?</p></div><a class="button button-primary" href="/sqezz">Zobacz profil <span>↗</span></a></div><div class="stats"><div><span>Wyświetlenia profilu</span><strong>1 248</strong><small class="up">↗ 18,4% w tym tygodniu</small></div><div><span>Kliknięcia linków</span><strong>386</strong><small class="up">↗ 9,2% w tym tygodniu</small></div><div><span>Najlepszy link</span><strong>YouTube</strong><small>142 kliknięcia</small></div></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><span class="card-kicker">EDYTOR PROFILU</span><h2>Podstawowe informacje</h2></div><button class="save-button">Zapisz zmiany</button></div><label>Nazwa wyświetlana<input value="Sqezz" /></label><label>Bio<textarea>tworzę rzeczy w internecie ✦</textarea></label><label>Adres profilu<div class="input-prefix"><span>sqezen.lol/</span><input value="sqezz" /></div></label></section><section class="panel preview-panel"><div class="panel-head"><div><span class="card-kicker">PODGLĄD NA ŻYWO</span><h2>Twój profil</h2></div><span class="live-dot">● LIVE</span></div><div class="preview-box"><div class="preview-avatar">S</div><strong>Sqezz</strong><small>@sqezz</small><div class="preview-line"></div><div class="preview-link"></div><div class="preview-link"></div></div></section></div>`);
 }
@@ -83,10 +87,22 @@ async function wireAuth(path) {
     event.preventDefault();
     const form = new FormData(registerForm);
     setFeedback("Tworzenie konta...");
-    const { data, error } = await authClient.auth.signUp({ email: form.get("email"), password: form.get("password") });
+    const { data, error } = await authClient.auth.signUp({ email: form.get("email"), password: form.get("password"), options: { emailRedirectTo: "https://sqezen.lol/claim" } });
     if (error) { setFeedback(error.message, true); return; }
     if (data.session) go("/claim");
-    else setFeedback("Sprawdź skrzynkę e-mail i kliknij link weryfikacyjny.");
+    else { sessionStorage.setItem("sqezen_email", String(form.get("email"))); go("/verify"); }
+  });
+  const verifyForm = document.querySelector("#verify-form");
+  if (verifyForm) verifyForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(verifyForm);
+    const email = sessionStorage.getItem("sqezen_email");
+    if (!email) { setFeedback("Wpisz e-mail jeszcze raz.", true); return; }
+    setFeedback("Sprawdzanie kodu...");
+    const { error } = await authClient.auth.verifyOtp({ email, token: String(form.get("token")), type: "signup" });
+    if (error) { setFeedback("Kod jest nieprawidłowy lub wygasł.", true); return; }
+    sessionStorage.removeItem("sqezen_email");
+    go("/claim");
   });
   const claimForm = document.querySelector("#claim-form");
   if (claimForm) claimForm.addEventListener("submit", async (event) => {
@@ -108,6 +124,10 @@ async function wireAuth(path) {
   }
 }
 
+function dashboardReal() {
+  return layout(`<section class="dashboard"><div class="dashboard-heading"><div><span class="eyebrow">SQEZEN / DASHBOARD</span><h1>Twój profil. <span>Twoje zasady.</span></h1><p>Uzupełnij profil i dodaj pierwsze linki.</p></div><a class="button button-primary" href="/sqezz">Podgląd profilu <span>↗</span></a></div><div class="stats"><div><span>Wyświetlenia profilu</span><strong>0</strong><small>Statystyki pojawią się po publikacji</small></div><div><span>Kliknięcia linków</span><strong>0</strong><small>Dodaj link, żeby zacząć</small></div><div><span>Najlepszy link</span><strong>—</strong><small>Brak danych</small></div></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><span class="card-kicker">EDYTOR PROFILU</span><h2>Podstawowe informacje</h2></div><button class="save-button" type="button">Zapisz zmiany</button></div><label>Nazwa wyświetlana<input value="" placeholder="Twoja nazwa" /></label><label>Bio<textarea placeholder="Napisz coś o sobie..."></textarea></label><label>Adres profilu<div class="input-prefix"><span>sqezen.lol/</span><input value="" placeholder="username" /></div></label></section><section class="panel preview-panel"><div class="panel-head"><div><span class="card-kicker">PODGLĄD NA ŻYWO</span><h2>Twój profil</h2></div><span class="live-dot">● LIVE</span></div><div class="preview-box"><div class="preview-avatar">?</div><strong>Twój profil</strong><small>Dodaj username</small><div class="preview-line"></div><div class="preview-link"></div><div class="preview-link"></div></div></section></div>`);
+}
+
 async function hydratePublicProfile(path) {
   if (!authClient || path === "/sqezz") return;
   const username = path.slice(1).toLowerCase();
@@ -121,7 +141,7 @@ function render() {
   document.title = path === "/sqezz" ? "Sqezz | sqezen" : path === "/dashboard" ? "Dashboard | sqezen" : "sqezen — Twój profil w internecie";
   const currentUser = authClient?.auth?.getUser;
   const reserved = ["/", "/sqezz", "/dashboard", "/claim", "/login", "/register"];
-  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : path === "/claim" ? claimPage() : path === "/login" ? loginPage() : path === "/register" ? registerPage() : path === "/" ? landing() : publicProfile({ ...profile, username: path.slice(1) });
+  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboardReal() : path === "/claim" ? claimPage() : path === "/login" ? loginPage() : path === "/register" ? registerPage() : path === "/verify" ? verifyPage() : path === "/" ? landing() : publicProfile({ ...profile, username: path.slice(1) });
   if (!reserved.includes(path)) hydratePublicProfile(path);
   wireAuth(path);
 }
