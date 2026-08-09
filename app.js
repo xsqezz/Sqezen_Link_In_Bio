@@ -13,6 +13,26 @@ const profile = {
   ],
 };
 
+const SUPABASE_URL = "https://wzdxgmzwxzfhegelqugy.supabase.co";
+const SUPABASE_KEY = "sb_publishable_63IpIFewxY0qJ3Cx532LQA_vEwXoSwP";
+const authClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function routePath() {
+  const segments = window.location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+  const routeSegments = segments[0] === "sqezzbio" ? segments.slice(1) : segments;
+  return "/" + routeSegments.join("/") || "/";
+}
+
+function go(path) {
+  history.pushState(null, "", path);
+  render();
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function claimPage(user) {
+  return layout(`<section class="auth-page"><div class="auth-copy"><span class="eyebrow"><span class="pulse"></span> SQEZEN / CLAIM</span><h1>Wybierz swoją<br /><em>nazwę profilu.</em></h1><p>To właśnie ten adres udostępnisz ludziom. Możesz używać małych liter, cyfr i podkreśleń.</p></div><section class="auth-card"><div class="auth-card-top"><span class="card-kicker">OSTATNI KROK</span><span class="auth-status">● ${user?.email || "NOWE KONTO"}</span></div><h2>Zajmij username</h2><p class="auth-muted">Twój profil będzie dostępny pod sqezen.lol/username.</p><form id="claim-form"><label>Twoja nazwa<div class="input-prefix"><span>sqezen.lol/</span><input name="username" placeholder="sqezz" pattern="[a-z0-9_]{3,24}" minlength="3" maxlength="24" required /></div></label><label>Nazwa wyświetlana<input name="display_name" placeholder="Sqezz" required /></label><label>Bio<textarea name="bio" placeholder="Napisz coś o sobie..."></textarea></label><button class="button button-primary auth-submit" type="submit">Opublikuj profil <span>→</span></button><p class="auth-feedback" id="auth-feedback"></p></form></section></section>`);
+}
+
 function layout(content) {
   return `<div class="noise"></div><header class="topbar"><a class="brand" href="/"><span class="brand-mark">s</span><span>sqezen</span></a><nav><a href="/">Start</a><a href="/dashboard">Dashboard</a><a class="nav-login" href="/dashboard">Zaloguj się <span>↗</span></a></nav></header><main>${content}</main><footer><span>sqezen © 2026</span><span>zbudowane dla twórców</span></footer>`;
 }
@@ -44,18 +64,56 @@ function copyProfile() {
   if (button) { button.textContent = "✓"; setTimeout(() => button.textContent = "⧉", 1400); }
 }
 
-function render() {
-  const segments = window.location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
-  const routeSegments = segments[0] === "sqezzbio" ? segments.slice(1) : segments;
-  const path = "/" + routeSegments.join("/") || "/";
-  document.title = path === "/sqezz" ? "Sqezz | sqezen" : path === "/dashboard" ? "Dashboard | sqezen" : "sqezen — Twój profil w internecie";
-  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : path === "/login" ? loginPage() : path === "/register" ? registerPage() : landing();
-  const authForm = document.querySelector("#login-form, #register-form");
-  if (authForm) authForm.addEventListener("submit", (event) => {
+async function wireAuth(path) {
+  const feedback = document.querySelector("#auth-feedback");
+  const setFeedback = (message, error = false) => { if (feedback) { feedback.textContent = message; feedback.classList.toggle("error", error); } };
+  if (!authClient) { setFeedback("Auth nie jest dostępny.", true); return; }
+  const loginForm = document.querySelector("#login-form");
+  if (loginForm) loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const feedback = document.querySelector("#auth-feedback");
-    if (feedback) feedback.textContent = "Połączę ten formularz z Supabase w następnym kroku.";
+    const form = new FormData(loginForm);
+    setFeedback("Logowanie...");
+    const { data, error } = await authClient.auth.signInWithPassword({ email: form.get("email"), password: form.get("password") });
+    if (error) { setFeedback(error.message, true); return; }
+    const { data: owned } = await authClient.from("profiles").select("username").eq("id", data.user.id).maybeSingle();
+    go(owned ? "/dashboard" : "/claim");
   });
+  const registerForm = document.querySelector("#register-form");
+  if (registerForm) registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(registerForm);
+    setFeedback("Tworzenie konta...");
+    const { data, error } = await authClient.auth.signUp({ email: form.get("email"), password: form.get("password") });
+    if (error) { setFeedback(error.message, true); return; }
+    if (data.session) go("/claim");
+    else setFeedback("Sprawdź skrzynkę e-mail i kliknij link weryfikacyjny.");
+  });
+  const claimForm = document.querySelector("#claim-form");
+  if (claimForm) claimForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = new FormData(claimForm);
+    const username = String(form.get("username")).trim().toLowerCase();
+    setFeedback("Publikowanie profilu...");
+    const { data: sessionData } = await authClient.auth.getSession();
+    const user = sessionData.session?.user;
+    if (!user) { go("/login"); return; }
+    const { error } = await authClient.from("profiles").insert({ id: user.id, username, display_name: form.get("display_name"), bio: form.get("bio") || "" });
+    if (error) { setFeedback(error.code === "23505" ? "Ta nazwa jest już zajęta." : error.message, true); return; }
+    await authClient.from("links").insert([{ profile_id: user.id, title: "Dodaj pierwszy link", url: "https://sqezen.lol", icon: "↗", position: 0 }]);
+    go("/dashboard");
+  });
+  if (path === "/dashboard" || path === "/claim") {
+    const { data } = await authClient.auth.getSession();
+    if (!data.session) go("/login");
+  }
+}
+
+function render() {
+  const path = routePath();
+  document.title = path === "/sqezz" ? "Sqezz | sqezen" : path === "/dashboard" ? "Dashboard | sqezen" : "sqezen — Twój profil w internecie";
+  const currentUser = authClient?.auth?.getUser;
+  document.getElementById("app").innerHTML = path === "/sqezz" ? publicProfile() : path === "/dashboard" ? dashboard() : path === "/claim" ? claimPage() : path === "/login" ? loginPage() : path === "/register" ? registerPage() : landing();
+  wireAuth(path);
 }
 
 const redirect = new URLSearchParams(window.location.search).get("redirect");
