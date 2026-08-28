@@ -179,12 +179,17 @@ svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColo
 .preview-sticky { position: sticky; top: 22px; }
 .preview-topline { display: flex; justify-content: space-between; gap: 15px; align-items: flex-start; margin-bottom: 20px; }
 .preview-live { display: inline-flex; align-items: center; gap: 5px; color: var(--dim); font-size: .62rem; }
-.dashboard-preview { --preview-accent: #c9cdd4; }
+.dashboard-preview { --preview-accent: #c9cdd4; display: grid; min-height: 430px; place-items: center; padding: 18px 10px; overflow: hidden; background: radial-gradient(circle at 50% 18%,rgba(201,205,212,.08),transparent 50%),#101218; border-radius: 14px; }
 .preview-card { padding: 22px 19px 18px; text-align: center; background: #15171e; border: 1px solid var(--line); border-radius: 16px; }
-.preview-card { color: var(--preview-text,var(--text)); background: var(--preview-background,#15171e); opacity: var(--preview-opacity,1); backdrop-filter: blur(var(--preview-blur,0px)); }
+.preview-card { color: var(--preview-text,var(--text)); background: rgba(var(--preview-card-rgb,23,24,32),var(--preview-opacity,1)); backdrop-filter: blur(var(--preview-blur,0px)); -webkit-backdrop-filter: blur(var(--preview-blur,0px)); transition: width .18s ease,background .18s ease,border-radius .18s ease,backdrop-filter .18s ease; }
 .preview-card.preview-align-left { text-align: left; }
 .preview-card.preview-align-left .preview-avatar { margin-left: 0; }
 .preview-card.preview-align-left .preview-location { justify-content: flex-start; }
+.preview-card.preview-font-mono { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; }
+.preview-card.preview-font-serif { font-family: Georgia,"Times New Roman",serif; }
+.preview-card.preview-name-gradient .preview-name { background: linear-gradient(120deg,var(--preview-accent),var(--preview-text)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.preview-card.preview-name-soft-glow .preview-name { text-shadow: 0 0 14px rgba(var(--preview-button-rgb),.25); }
+.preview-card.preview-name-outline .preview-name { -webkit-text-stroke: 1px rgba(255,255,255,.35); }
 .preview-avatar { width: 59px; height: 59px; margin: 0 auto; color: #17191d; font-size: 1.25rem; background: var(--preview-accent); }
 .preview-card .preview-avatar { width: min(100%,var(--preview-avatar,59px)); height: min(100%,var(--preview-avatar,59px)); }
 .preview-card .avatar-fallback { display: grid; }
