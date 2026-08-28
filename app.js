@@ -70,6 +70,92 @@ function safeUrl(value) {
 
 function safeColor(value, fallback = "#c9cdd4") { return /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback; }
 
+const DEFAULT_CUSTOMIZATION = Object.freeze({
+  backgroundMediaUrl: "", audioUrl: "", cursorUrl: "", location: "",
+  profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104,
+  backgroundEffect: "noise", usernameEffect: "none", textColor: "#f5f7fb",
+  cardColor: "#171820", buttonColor: "#ffffff", buttonTextColor: "#f5f7fb",
+  gradientPrimary: "#151521", gradientSecondary: "#07070a", useGradient: true,
+  alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13,
+  fontFamily: "inter", showHandle: true, showBranding: true
+});
+
+function safeMediaUrl(value) {
+  const url = safeUrl(value);
+  return /^https?:/i.test(url) ? url : "";
+}
+
+function safeNumber(value, min, max, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
+}
+
+function safeChoice(value, choices, fallback) { return choices.includes(value) ? value : fallback; }
+function safeBoolean(value, fallback) { return typeof value === "boolean" ? value : fallback; }
+
+function sanitizeCustomization(raw = {}) {
+  const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl),
+    audioUrl: safeMediaUrl(value.audioUrl),
+    cursorUrl: safeMediaUrl(value.cursorUrl),
+    location: String(value.location || "").trim().slice(0, 42),
+    profileOpacity: safeNumber(value.profileOpacity, 45, 100, DEFAULT_CUSTOMIZATION.profileOpacity),
+    profileBlur: safeNumber(value.profileBlur, 0, 40, DEFAULT_CUSTOMIZATION.profileBlur),
+    cardWidth: safeNumber(value.cardWidth, 360, 680, DEFAULT_CUSTOMIZATION.cardWidth),
+    avatarSize: safeNumber(value.avatarSize, 72, 148, DEFAULT_CUSTOMIZATION.avatarSize),
+    backgroundEffect: safeChoice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], DEFAULT_CUSTOMIZATION.backgroundEffect),
+    usernameEffect: safeChoice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], DEFAULT_CUSTOMIZATION.usernameEffect),
+    textColor: safeColor(value.textColor, DEFAULT_CUSTOMIZATION.textColor),
+    cardColor: safeColor(value.cardColor, DEFAULT_CUSTOMIZATION.cardColor),
+    buttonColor: safeColor(value.buttonColor, DEFAULT_CUSTOMIZATION.buttonColor),
+    buttonTextColor: safeColor(value.buttonTextColor, DEFAULT_CUSTOMIZATION.buttonTextColor),
+    gradientPrimary: safeColor(value.gradientPrimary, DEFAULT_CUSTOMIZATION.gradientPrimary),
+    gradientSecondary: safeColor(value.gradientSecondary, DEFAULT_CUSTOMIZATION.gradientSecondary),
+    useGradient: safeBoolean(value.useGradient, DEFAULT_CUSTOMIZATION.useGradient),
+    alignment: safeChoice(value.alignment, ["center", "left"], DEFAULT_CUSTOMIZATION.alignment),
+    spacing: safeChoice(value.spacing, ["compact", "comfortable", "airy"], DEFAULT_CUSTOMIZATION.spacing),
+    buttonStyle: safeChoice(value.buttonStyle, ["glass", "solid", "outline"], DEFAULT_CUSTOMIZATION.buttonStyle),
+    buttonRadius: safeNumber(value.buttonRadius, 0, 28, DEFAULT_CUSTOMIZATION.buttonRadius),
+    fontFamily: safeChoice(value.fontFamily, ["inter", "system", "mono", "serif"], DEFAULT_CUSTOMIZATION.fontFamily),
+    showHandle: safeBoolean(value.showHandle, DEFAULT_CUSTOMIZATION.showHandle),
+    showBranding: safeBoolean(value.showBranding, DEFAULT_CUSTOMIZATION.showBranding)
+  };
+}
+
+function readCustomizationForm(form) {
+  const values = new FormData(form);
+  return sanitizeCustomization({
+    backgroundMediaUrl: values.get("background_media_url"), audioUrl: values.get("audio_url"), cursorUrl: values.get("cursor_url"), location: values.get("location"),
+    profileOpacity: values.get("profile_opacity"), profileBlur: values.get("profile_blur"), cardWidth: values.get("card_width"), avatarSize: values.get("avatar_size"),
+    backgroundEffect: values.get("background_effect"), usernameEffect: values.get("username_effect"), textColor: values.get("text_color"), cardColor: values.get("card_color"),
+    buttonColor: values.get("button_color"), buttonTextColor: values.get("button_text_color"), gradientPrimary: values.get("gradient_primary"), gradientSecondary: values.get("gradient_secondary"),
+    useGradient: Boolean(form.elements.use_gradient?.checked), alignment: values.get("alignment"), spacing: values.get("spacing"), buttonStyle: values.get("button_style"),
+    buttonRadius: values.get("button_radius"), fontFamily: values.get("font_family"), showHandle: Boolean(form.elements.show_handle?.checked), showBranding: Boolean(form.elements.show_branding?.checked)
+  });
+}
+
+function setCustomizationForm(form, raw) {
+  const config = sanitizeCustomization(raw);
+  const fields = {
+    background_media_url: config.backgroundMediaUrl, audio_url: config.audioUrl, cursor_url: config.cursorUrl, location: config.location,
+    profile_opacity: config.profileOpacity, profile_blur: config.profileBlur, card_width: config.cardWidth, avatar_size: config.avatarSize,
+    background_effect: config.backgroundEffect, username_effect: config.usernameEffect, text_color: config.textColor, card_color: config.cardColor,
+    button_color: config.buttonColor, button_text_color: config.buttonTextColor, gradient_primary: config.gradientPrimary, gradient_secondary: config.gradientSecondary,
+    alignment: config.alignment, spacing: config.spacing, button_style: config.buttonStyle, button_radius: config.buttonRadius, font_family: config.fontFamily
+  };
+  Object.entries(fields).forEach(([name, value]) => { if (form.elements[name]) form.elements[name].value = value; });
+  if (form.elements.use_gradient) form.elements.use_gradient.checked = config.useGradient;
+  if (form.elements.show_handle) form.elements.show_handle.checked = config.showHandle;
+  if (form.elements.show_branding) form.elements.show_branding.checked = config.showBranding;
+  return config;
+}
+
+function hexRgb(value) {
+  const hex = safeColor(value).slice(1);
+  return `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`;
+}
+
 function friendlyError(error) {
   const message = String(error?.message || error || "").toLowerCase();
   if (message.includes("failed to fetch") || message.includes("networkerror") || message.includes("fetch resource")) return "Nie udało się połączyć z serwerem. Odśwież stronę i spróbuj ponownie.";
@@ -184,11 +270,45 @@ function dashboard() {
               <div id="links-list" class="links-editor"></div>
             </section>
             <section class="dashboard-tab-panel" data-tab-panel="appearance" hidden>
-              <div class="panel-heading"><div><p class="panel-kicker">VISUAL STYLE</p><h2>Wygląd profilu</h2></div><span class="panel-number">C</span></div>
-              <p class="panel-help">Wybierz neutralny odcień dla avatara, detali i delikatnego tła profilu.</p>
-              <label class="field-label color-field">Kolor akcentu<div class="color-input"><input name="background_color" type="color" value="#c9cdd4" /><span id="color-value">#C9CDD4</span></div></label>
-              <div class="quick-colors" aria-label="Szybkie kolory"><button type="button" data-color-preset="#c9cdd4"><i style="background:#c9cdd4"></i>Srebrny</button><button type="button" data-color-preset="#8f96a1"><i style="background:#8f96a1"></i>Grafit</button><button type="button" data-color-preset="#eef0f3"><i style="background:#eef0f3"></i>Jasny</button><button type="button" data-color-preset="#5f6670"><i style="background:#5f6670"></i>Ciemny</button></div>
-              <div class="appearance-note">${icon("eye")} Podgląd po prawej aktualizuje się natychmiast.</div>
+              <div class="panel-heading"><div><p class="panel-kicker">FULL CUSTOMIZATION</p><h2>Wygląd profilu</h2></div><span class="panel-number">C</span></div>
+              <p class="panel-help">Każda opcja działa na publicznym profilu. Efekty są domyślnie subtelne, a media możesz podać jako bezpośredni adres URL.</p>
+
+              <div class="custom-section"><div class="custom-section-head"><span>01</span><div><h3>Media i dodatki</h3><p>Tło, muzyka, kursor i lokalizacja.</p></div></div><div class="custom-grid custom-grid-2">
+                <label class="field-label">Tło — obraz lub wideo<input name="background_media_url" type="text" inputmode="url" placeholder="https://.../background.mp4" /><small>Obsługa JPG, PNG, GIF, WebP, MP4 i WebM.</small></label>
+                <label class="field-label">Audio profilu<input name="audio_url" type="text" inputmode="url" placeholder="https://.../track.mp3" /><small>Odwiedzający uruchamia dźwięk przyciskiem.</small></label>
+                <label class="field-label">Własny kursor<input name="cursor_url" type="text" inputmode="url" placeholder="https://.../cursor.png" /><small>Najlepiej PNG 32×32 px.</small></label>
+                <label class="field-label">Lokalizacja<input name="location" maxlength="42" placeholder="np. Warszawa" /></label>
+              </div></div>
+
+              <div class="custom-section"><div class="custom-section-head"><span>02</span><div><h3>Karta profilu</h3><p>Rozmiar, czytelność i intensywność szkła.</p></div></div><div class="custom-grid custom-grid-2">
+                <label class="range-field"><span>Przezroczystość karty <output data-output-for="profile_opacity">92%</output></span><input name="profile_opacity" type="range" min="45" max="100" value="92" /></label>
+                <label class="range-field"><span>Blur karty <output data-output-for="profile_blur">18px</output></span><input name="profile_blur" type="range" min="0" max="40" value="18" /></label>
+                <label class="range-field"><span>Szerokość karty <output data-output-for="card_width">520px</output></span><input name="card_width" type="range" min="360" max="680" step="10" value="520" /></label>
+                <label class="range-field"><span>Rozmiar avatara <output data-output-for="avatar_size">104px</output></span><input name="avatar_size" type="range" min="72" max="148" step="4" value="104" /></label>
+                <label class="field-label">Efekt tła<select name="background_effect"><option value="none">Brak</option><option value="noise">Subtelny noise</option><option value="grid">Delikatna siatka</option><option value="spotlight">Miękki spotlight</option></select></label>
+                <label class="field-label">Efekt nazwy<select name="username_effect"><option value="none">Brak</option><option value="gradient">Gradient</option><option value="soft-glow">Delikatny glow</option><option value="outline">Kontur</option></select></label>
+              </div></div>
+
+              <div class="custom-section"><div class="custom-section-head"><span>03</span><div><h3>Kolory i gradient</h3><p>Pełna paleta profilu bez narzuconych zielonych akcentów.</p></div></div><div class="color-custom-grid">
+                <label class="mini-color">Akcent<div><input name="background_color" type="color" value="#c9cdd4" /><span id="color-value">#C9CDD4</span></div></label>
+                <label class="mini-color">Tekst<div><input name="text_color" type="color" value="#f5f7fb" /><span data-color-label="text_color">#F5F7FB</span></div></label>
+                <label class="mini-color">Karta<div><input name="card_color" type="color" value="#171820" /><span data-color-label="card_color">#171820</span></div></label>
+                <label class="mini-color">Przyciski<div><input name="button_color" type="color" value="#ffffff" /><span data-color-label="button_color">#FFFFFF</span></div></label>
+                <label class="mini-color">Tekst przycisków<div><input name="button_text_color" type="color" value="#f5f7fb" /><span data-color-label="button_text_color">#F5F7FB</span></div></label>
+                <label class="mini-color">Gradient 1<div><input name="gradient_primary" type="color" value="#151521" /><span data-color-label="gradient_primary">#151521</span></div></label>
+                <label class="mini-color">Gradient 2<div><input name="gradient_secondary" type="color" value="#07070a" /><span data-color-label="gradient_secondary">#07070A</span></div></label>
+                <label class="switch-row"><input name="use_gradient" type="checkbox" checked /><span class="switch-control"></span><span><strong>Gradient tła</strong><small>Połącz dwa wybrane kolory.</small></span></label>
+              </div><div class="quick-colors" aria-label="Szybkie kolory"><button type="button" data-color-preset="#c9cdd4"><i style="background:#c9cdd4"></i>Srebrny</button><button type="button" data-color-preset="#8f96a1"><i style="background:#8f96a1"></i>Grafit</button><button type="button" data-color-preset="#eef0f3"><i style="background:#eef0f3"></i>Jasny</button><button type="button" data-color-preset="#5f6670"><i style="background:#5f6670"></i>Ciemny</button></div></div>
+
+              <div class="custom-section"><div class="custom-section-head"><span>04</span><div><h3>Układ i typografia</h3><p>Dopasuj charakter profilu i przycisków.</p></div></div><div class="custom-grid custom-grid-2">
+                <label class="field-label">Wyrównanie<select name="alignment"><option value="center">Wyśrodkowane</option><option value="left">Do lewej</option></select></label>
+                <label class="field-label">Odstępy<select name="spacing"><option value="compact">Kompaktowe</option><option value="comfortable">Wygodne</option><option value="airy">Przestronne</option></select></label>
+                <label class="field-label">Styl przycisków<select name="button_style"><option value="glass">Glass</option><option value="solid">Pełne</option><option value="outline">Kontur</option></select></label>
+                <label class="field-label">Krój pisma<select name="font_family"><option value="inter">Inter</option><option value="system">Systemowy</option><option value="mono">Monospace</option><option value="serif">Serif</option></select></label>
+                <label class="range-field custom-span-2"><span>Zaokrąglenie przycisków <output data-output-for="button_radius">13px</output></span><input name="button_radius" type="range" min="0" max="28" value="13" /></label>
+              </div><div class="switch-grid"><label class="switch-row"><input name="show_handle" type="checkbox" checked /><span class="switch-control"></span><span><strong>Pokaż @username</strong><small>Nick nad nazwą profilu.</small></span></label><label class="switch-row"><input name="show_branding" type="checkbox" checked /><span class="switch-control"></span><span><strong>Pokaż branding</strong><small>Logo i stopka sqezen.</small></span></label></div></div>
+
+              <div class="appearance-note">${icon("eye")} Podgląd po prawej aktualizuje się natychmiast. Zapisz, aby opublikować zmiany.</div>
             </section>
             <section class="dashboard-tab-panel" data-tab-panel="account" hidden>
               <div class="panel-heading"><div><p class="panel-kicker">ACCOUNT</p><h2>Konto i adres</h2></div><span class="panel-number">D</span></div>
@@ -238,7 +358,13 @@ async function profile(username) {
   const safeLinks = (links || []).map(publicLink).filter(Boolean).join("");
   const displayName = data.display_name || data.username;
   const accent = safeColor(data.background_color);
-  return `<div class="public-page" style="--profile-accent:${accent}"><a class="public-brand" href="/" aria-label="sqezen — strona główna"><span class="brand-mark">s</span><span>sqezen</span></a><main class="public-main"><section class="public-card"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><button class="icon-button share-profile" type="button" data-copy-profile="${escapeHtml(window.location.href)}" aria-label="Skopiuj link do profilu">${icon("copy")}</button></div>${avatarMarkup(data)}<p class="public-handle">@${escapeHtml(data.username)}</p><h1>${escapeHtml(displayName)}</h1>${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links">${safeLinks || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`}</div><div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <strong>sqezen</strong></span></div></section><a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a></main></div>`;
+  const config = sanitizeCustomization(data.customization);
+  const media = config.backgroundMediaUrl;
+  const mediaMarkup = media ? (/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(media) ? `<video class="profile-background-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="profile-background-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : "";
+  const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
+  const pageBackground = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 72%)` : config.gradientSecondary;
+  const style = [`--profile-accent:${accent}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBackground}`].join(";");
+  return `<div class="public-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="profile-background-shade"></div>${config.showBranding ? `<a class="public-brand" href="/" aria-label="sqezen — strona główna"><span class="brand-mark">s</span><span>sqezen</span></a>` : ""}<main class="public-main"><section class="public-card"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><div class="public-tools">${config.audioUrl ? `<button class="icon-button audio-toggle" type="button" data-audio-toggle aria-label="Odtwórz muzykę">${icon("sparkle")}</button><audio data-profile-audio preload="none" src="${escapeHtml(config.audioUrl)}"></audio>` : ""}<button class="icon-button share-profile" type="button" data-copy-profile="${escapeHtml(window.location.href)}" aria-label="Skopiuj link do profilu">${icon("copy")}</button></div></div>${avatarMarkup(data)}${config.showHandle ? `<p class="public-handle">@${escapeHtml(data.username)}</p>` : ""}<h1>${escapeHtml(displayName)}</h1>${config.location ? `<p class="public-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links">${safeLinks || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`}</div>${config.showBranding ? `<div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <strong>sqezen</strong></span></div>` : ""}</section>${config.showBranding ? `<a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a>` : ""}</main></div>`;
 }
 
 async function getSession() {
@@ -342,9 +468,10 @@ function renderDashboardPreview() {
   const bio = String(form.elements.bio?.value || "").trim();
   const avatar = safeUrl(form.elements.avatar_url?.value);
   const color = safeColor(form.elements.background_color?.value);
+  const config = readCustomizationForm(form);
   const links = readLinkItems();
   target.style.setProperty("--preview-accent", color);
-  target.innerHTML = `<div class="preview-card"><div class="preview-profile-head">${avatar ? `<img class="preview-avatar" src="${escapeHtml(avatar)}" alt="" />` : `<span class="preview-avatar avatar-fallback">${escapeHtml(name.slice(0, 1).toUpperCase())}</span>`}<span class="preview-menu">•••</span></div><p class="preview-handle">@${escapeHtml(username)}</p><h3>${escapeHtml(name)}</h3>${bio ? `<p class="preview-bio">${escapeHtml(bio)}</p>` : `<p class="preview-bio preview-placeholder">Twój krótki opis pojawi się tutaj.</p>`}<div class="preview-links">${links.length ? links.slice(0, 4).map((link) => `<div class="preview-link"><span>${icon(profileIcon(link))}</span><strong>${escapeHtml(link.title || "Nazwa linku")}</strong><i>↗</i></div>`).join("") : `<div class="preview-link preview-placeholder-link">Dodaj pierwszy link ${icon("plus")}</div>`}</div><div class="preview-card-footer"><span>sqezen.lol/${escapeHtml(username)}</span><span>${icon("sparkle")}</span></div></div>`;
+  target.innerHTML = `<div class="preview-card preview-align-${config.alignment} preview-buttons-${config.buttonStyle}" style="--preview-card-rgb:${hexRgb(config.cardColor)};--preview-text:${config.textColor};--preview-button-rgb:${hexRgb(config.buttonColor)};--preview-button-text:${config.buttonTextColor};--preview-opacity:${config.profileOpacity / 100};--preview-blur:${config.profileBlur}px;--preview-width:${config.cardWidth}px;--preview-avatar:${config.avatarSize}px;--preview-radius:${config.buttonRadius}px;--preview-background:${config.useGradient ? `linear-gradient(145deg,${config.gradientPrimary},${config.gradientSecondary})` : config.gradientSecondary}"><div class="preview-profile-head">${avatar ? `<img class="preview-avatar" src="${escapeHtml(avatar)}" alt="" />` : `<span class="preview-avatar avatar-fallback">${escapeHtml(name.slice(0, 1).toUpperCase())}</span>`}<span class="preview-menu">•••</span></div>${config.showHandle ? `<p class="preview-handle">@${escapeHtml(username)}</p>` : ""}<h3 class="preview-name">${escapeHtml(name)}</h3>${config.location ? `<p class="preview-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${bio ? `<p class="preview-bio">${escapeHtml(bio)}</p>` : `<p class="preview-bio preview-placeholder">Twój krótki opis pojawi się tutaj.</p>`}<div class="preview-links">${links.length ? links.slice(0, 4).map((link) => `<div class="preview-link"><span>${icon(profileIcon(link))}</span><strong>${escapeHtml(link.title || "Nazwa linku")}</strong><i>↗</i></div>`).join("") : `<div class="preview-link preview-placeholder-link">Dodaj pierwszy link ${icon("plus")}</div>`}</div>${config.showBranding ? `<div class="preview-card-footer"><span>sqezen.lol/${escapeHtml(username)}</span><span>${icon("sparkle")}</span></div>` : ""}</div>`;
 }
 
 async function wireDashboardLegacy() {
@@ -418,6 +545,7 @@ async function wireDashboard() {
     setInputValue(form, "avatar_url", profileData.avatar_url);
     form.elements.background_color.value = safeColor(profileData.background_color, "#c9cdd4");
   }
+  setCustomizationForm(form, profileData?.customization || DEFAULT_CUSTOMIZATION);
   linksList.innerHTML = (links?.length ? links : [{}]).map((link, index) => linkEditorItem(link, index)).join("");
 
   function refreshDashboardMeta() {
@@ -432,6 +560,16 @@ async function wireDashboard() {
     document.querySelector("#profile-address-field").value = address;
     document.querySelector("#color-value").textContent = String(form.elements.background_color.value).toUpperCase();
     bioCount.textContent = `${String(form.elements.bio.value || "").length} / 160`;
+    document.querySelectorAll("[data-output-for]").forEach((output) => {
+      const field = form.elements[output.dataset.outputFor];
+      if (!field) return;
+      const unit = ["profile_opacity"].includes(field.name) ? "%" : "px";
+      output.textContent = `${field.value}${unit}`;
+    });
+    document.querySelectorAll("[data-color-label]").forEach((label) => {
+      const field = form.elements[label.dataset.colorLabel];
+      if (field) label.textContent = String(field.value).toUpperCase();
+    });
     if (username) { profileLink.href = `/${encodeURIComponent(username)}`; profileLink.classList.remove("is-disabled"); }
     else { profileLink.href = "/"; profileLink.classList.add("is-disabled"); }
   }
@@ -439,7 +577,7 @@ async function wireDashboard() {
   const tabCopy = {
     profile: ["SQEZEN / PROFILE", "Twój profil.", "Ustaw nazwę, opis i avatar widoczne na publicznej stronie."],
     links: ["SQEZEN / LINKS", "Zarządzaj linkami.", "Dodawaj, duplikuj, testuj i ustawiaj kolejność swoich odnośników."],
-    appearance: ["SQEZEN / APPEARANCE", "Dopasuj wygląd.", "Wybierz neutralny akcent pasujący do Twojego profilu."],
+    appearance: ["SQEZEN / APPEARANCE", "Dopasuj wygląd.", "Tło, karta, typografia, przyciski i dodatki — wszystko w jednym miejscu."],
     account: ["SQEZEN / ACCOUNT", "Konto i adres.", "Sprawdź dane konta i skopiuj publiczny adres profilu."]
   };
 
@@ -526,7 +664,7 @@ async function wireDashboard() {
     for (const link of linksValue) if (!safeUrl(link.url)) { setDashboardTab("links"); return feedback(`Sprawdź treść linku „${link.title || "bez nazwy"}”.`, true); }
     feedback("Zapisywanie profilu...");
     setBusy(button, true, "Zapisywanie...");
-    const profilePayload = { id: current.user.id, username: usernameValue, display_name: displayName, bio: String(values.get("bio") || "").trim(), avatar_url: safeUrl(values.get("avatar_url")), background_color: safeColor(values.get("background_color")) };
+    const profilePayload = { id: current.user.id, username: usernameValue, display_name: displayName, bio: String(values.get("bio") || "").trim(), avatar_url: safeUrl(values.get("avatar_url")), background_color: safeColor(values.get("background_color")), customization: readCustomizationForm(form) };
     let saveResult = await supabaseClient.from("profiles").upsert(profilePayload);
     if (saveResult.error && /background_color|avatar_url/i.test(saveResult.error.message || "")) saveResult = await supabaseClient.from("profiles").upsert({ id: profilePayload.id, username: profilePayload.username, display_name: profilePayload.display_name, bio: profilePayload.bio });
     if (saveResult.error) { setBusy(button, false); return feedback(friendlyError(saveResult.error), true); }
@@ -550,6 +688,21 @@ function wireCopy() {
   button.addEventListener("click", async () => { try { await navigator.clipboard.writeText(button.dataset.copyProfile); button.classList.add("is-copied"); button.innerHTML = icon("check"); setTimeout(() => { button.classList.remove("is-copied"); button.innerHTML = icon("copy"); }, 1600); } catch { /* Clipboard may be unavailable. */ } });
 }
 
+function wirePublicExtras() {
+  const page = document.querySelector(".public-page");
+  if (!page) return;
+  const cursor = page.dataset.customCursor;
+  if (cursor) page.style.cursor = `url("${cursor.replace(/["\\\n\r]/g, "")}"), auto`;
+  const audio = page.querySelector("[data-profile-audio]");
+  const toggle = page.querySelector("[data-audio-toggle]");
+  if (audio && toggle) toggle.addEventListener("click", async () => {
+    try {
+      if (audio.paused) { await audio.play(); toggle.classList.add("is-playing"); toggle.setAttribute("aria-label", "Zatrzymaj muzykę"); }
+      else { audio.pause(); toggle.classList.remove("is-playing"); toggle.setAttribute("aria-label", "Odtwórz muzykę"); }
+    } catch { toggle.setAttribute("aria-label", "Nie udało się odtworzyć muzyki"); }
+  });
+}
+
 async function render() {
   const path = currentPath();
   if (appState.resendTimer) { clearInterval(appState.resendTimer); appState.resendTimer = null; }
@@ -563,7 +716,7 @@ async function render() {
     else if (path === "/register/code") app.innerHTML = registerCode();
     else if (path === "/dashboard") app.innerHTML = dashboard();
     else app.innerHTML = await profile(path.slice(1).split("/")[0].toLowerCase());
-    await wireAuth(); await wireDashboard(); wireCopy();
+    await wireAuth(); await wireDashboard(); wireCopy(); wirePublicExtras();
   } catch (error) {
     app.innerHTML = layout(`<section class="empty-state"><p class="eyebrow">SQEZEN / ERROR</p><h1>Coś poszło nie tak.</h1><p>Odśwież stronę i spróbuj ponownie.</p><a class="back-link" href="/">${icon("arrow")} Wróć na stronę główną</a></section>`); console.error(error);
   }
