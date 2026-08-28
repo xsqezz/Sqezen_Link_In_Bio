@@ -23,7 +23,12 @@ const icons = {
   tiktok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5v9.2a4 4 0 1 1-3-3.9M14 5c.5 2.2 1.9 3.6 4 4"/></svg>',
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>',
   eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12s3-5 8.5-5 8.5 5 8.5 5-3 5-8.5 5-8.5-5-8.5-5Z"/><circle cx="12" cy="12" r="2"/></svg>',
-  logout: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 16l4-4-4-4M9 12h9"/></svg>'
+  logout: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 16l4-4-4-4M9 12h9"/></svg>',
+  user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>',
+  palette: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 0 16h1.2a1.8 1.8 0 0 0 1.2-3.1 1.8 1.8 0 0 1 1.2-3.1H18A2 2 0 0 0 20 12a8 8 0 0 0-8-8Z"/><path d="M8 10h.1M10 7h.1M7 14h.1"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.5-1.2.9-1.9-2.1-2.1-1.9.9-1.2-.5-.7-2h-3l-.7 2-1.2.5-1.9-.9-2.1 2.1.9 1.9-.5 1.2-2 .7v3l2 .7.5 1.2-.9 1.9 2.1 2.1 1.9-.9 1.2.5.7 2h3l.7-2 1.2-.5 1.9.9 2.1-2.1-.9-1.9.5-1.2 2-.7Z"/></svg>',
+  up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"/></svg>',
+  down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>'
 };
 
 function icon(name) { return icons[name] || icons.link; }
@@ -45,11 +50,20 @@ function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
 }
 
-function safeUrl(value) {
+function normalizeLinkUrl(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
+  if (/^(javascript|data|vbscript):/i.test(raw)) return "";
+  if (/^(https?:|mailto:)/i.test(raw)) return raw;
+  if (raw.startsWith("//")) return `https:${raw}`;
+  return `https://${raw.replace(/\s+/g, "")}`;
+}
+
+function safeUrl(value) {
+  const normalized = normalizeLinkUrl(value);
+  if (!normalized) return "";
   try {
-    const parsed = new URL(raw, window.location.origin);
+    const parsed = new URL(normalized);
     return ["https:", "http:", "mailto:"].includes(parsed.protocol) ? parsed.href : "";
   } catch { return ""; }
 }
@@ -124,11 +138,70 @@ function iconOptions(selected = "website") {
 
 function linkEditorItem(link = {}, index = 0) {
   const iconName = ["website", "github", "discord", "youtube", "tiktok"].includes(link.icon) ? link.icon : "website";
-  return `<article class="link-item" data-link-item><div class="link-item-head"><span class="link-index">${String(index + 1).padStart(2, "0")}</span><span class="link-item-title">Link ${index + 1}</span><button class="icon-button remove-link" type="button" data-remove-link aria-label="Usuń link">${icon("close")}</button></div><div class="link-fields"><label class="field-label">Nazwa<input data-link-title type="text" maxlength="38" value="${escapeHtml(link.title || "")}" placeholder="np. Mój GitHub" /></label><label class="field-label">Adres URL<input data-link-url type="url" value="${escapeHtml(link.url || "")}" placeholder="https://..." /></label><label class="field-label">Ikona<select data-link-icon>${iconOptions(iconName)}</select></label></div></article>`;
+  return `<article class="link-item" data-link-item><div class="link-item-head"><span class="link-index">${String(index + 1).padStart(2, "0")}</span><span class="link-item-title">Link ${index + 1}</span><div class="link-actions"><button class="icon-button" type="button" data-link-action="up" aria-label="Przesuń wyżej">${icon("up")}</button><button class="icon-button" type="button" data-link-action="down" aria-label="Przesuń niżej">${icon("down")}</button><button class="icon-button" type="button" data-link-action="duplicate" aria-label="Duplikuj link">${icon("copy")}</button><button class="icon-button" type="button" data-link-action="test" aria-label="Otwórz link testowo">${icon("arrowUp")}</button><button class="icon-button remove-link" type="button" data-link-action="remove" aria-label="Usuń link">${icon("close")}</button></div></div><div class="link-fields"><label class="field-label">Nazwa<input data-link-title type="text" maxlength="38" value="${escapeHtml(link.title || "")}" placeholder="np. Mój GitHub" /></label><label class="field-label">Adres / tekst linku<input data-link-url type="text" inputmode="url" value="${escapeHtml(link.url || "")}" placeholder="discord.gg/twojserwer lub https://..." /><small>Możesz wkleić adres bez https:// — uzupełnimy go automatycznie.</small></label><label class="field-label">Ikona<select data-link-icon>${iconOptions(iconName)}</select></label></div></article>`;
+}
+
+function dashboardLegacy() {
+  return `<div class="dashboard-page"><header class="dashboard-nav"><a class="brand" href="/"><span class="brand-mark">s</span><span>sqezen</span></a><div class="dashboard-nav-actions"><span class="save-status" id="top-status"><i></i> dashboard</span><a class="button button-small button-ghost" id="view-profile" href="#" target="_blank" rel="noopener noreferrer">Zobacz profil ${icon("arrowUp")}</a><button class="button button-small button-dark" id="logout-button" type="button">Wyloguj ${icon("logout")}</button></div></header><div class="dashboard-layout"><aside class="dashboard-sidebar"><div class="sidebar-label">WORKSPACE</div><div class="sidebar-item is-active">${icon("dashboard")}<span>Twój profil</span></div><div class="sidebar-item sidebar-muted">${icon("sparkle")}<span>Personalizacja</span><em>soon</em></div><div class="sidebar-divider"></div><div class="sidebar-label">ACCOUNT</div><div class="account-mini"><span class="account-avatar" id="account-avatar">s</span><div><strong id="account-name">Twoje konto</strong><small id="account-email">Ładowanie...</small></div></div></aside><main class="dashboard-main"><div class="dashboard-heading"><div><p class="eyebrow">SQEZEN / DASHBOARD</p><h1>Ustaw swój profil.</h1><p class="dashboard-subtitle">Zadbaj o pierwsze wrażenie. Zmiany pojawią się na Twoim publicznym adresie od razu po zapisaniu.</p></div><div class="dashboard-heading-mark">${icon("sparkle")}</div></div><div class="dashboard-grid"><form id="profile-form" class="editor-panel"><div class="panel-heading"><div><p class="panel-kicker">01 / IDENTITY</p><h2>Podstawowe dane</h2></div><span class="panel-number">A</span></div><div class="identity-grid"><label class="field-label">Nazwa użytkownika<input name="username" pattern="[a-z0-9_]{3,24}" minlength="3" maxlength="24" autocomplete="off" placeholder="np. sqezen" required /><small>Tylko małe litery, cyfry i podkreślenie.</small></label><label class="field-label">Nazwa wyświetlana<input name="display_name" maxlength="40" placeholder="Twoja nazwa" required /></label></div><label class="field-label">Bio<textarea name="bio" maxlength="160" placeholder="developer • gamer • digital chaos"></textarea><small>Krótko i konkretnie. Maksymalnie 160 znaków.</small></label><div class="editor-divider"></div><div class="panel-heading"><div><p class="panel-kicker">02 / LOOK</p><h2>Wygląd profilu</h2></div><span class="panel-number">B</span></div><div class="look-grid"><label class="field-label">Avatar URL<input name="avatar_url" type="url" placeholder="https://.../avatar.png" /></label><label class="field-label color-field">Kolor akcentu<div class="color-input"><input name="background_color" type="color" value="#c9cdd4" /><span id="color-value">#C9CDD4</span></div></label></div><div class="editor-divider"></div><div class="panel-heading"><div><p class="panel-kicker">03 / LINKS</p><h2>Twoje linki</h2></div><button class="button button-small button-ghost add-link" id="add-link" type="button">${icon("plus")} Dodaj link</button></div><p class="panel-help">Dodaj miejsca, w których można Cię znaleźć. Kolejność jest taka sama jak tutaj.</p><div id="links-list" class="links-editor"></div><button class="button button-primary button-wide save-profile" type="submit">Zapisz profil ${icon("check")}</button><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p></form><aside class="preview-panel"><div class="preview-sticky"><div class="preview-topline"><div><p class="panel-kicker">LIVE PREVIEW</p><h2>Tak wygląda Twój profil</h2></div><span class="preview-live"><i></i> live</span></div><div id="dashboard-preview" class="dashboard-preview"></div><p class="preview-hint">Podgląd aktualizuje się podczas pisania. Publicznie zobaczysz go po zapisaniu profilu.</p></div></aside></div></main></div></div>`;
 }
 
 function dashboard() {
-  return `<div class="dashboard-page"><header class="dashboard-nav"><a class="brand" href="/"><span class="brand-mark">s</span><span>sqezen</span></a><div class="dashboard-nav-actions"><span class="save-status" id="top-status"><i></i> dashboard</span><a class="button button-small button-ghost" id="view-profile" href="#" target="_blank" rel="noopener noreferrer">Zobacz profil ${icon("arrowUp")}</a><button class="button button-small button-dark" id="logout-button" type="button">Wyloguj ${icon("logout")}</button></div></header><div class="dashboard-layout"><aside class="dashboard-sidebar"><div class="sidebar-label">WORKSPACE</div><div class="sidebar-item is-active">${icon("dashboard")}<span>Twój profil</span></div><div class="sidebar-item sidebar-muted">${icon("sparkle")}<span>Personalizacja</span><em>soon</em></div><div class="sidebar-divider"></div><div class="sidebar-label">ACCOUNT</div><div class="account-mini"><span class="account-avatar" id="account-avatar">s</span><div><strong id="account-name">Twoje konto</strong><small id="account-email">Ładowanie...</small></div></div></aside><main class="dashboard-main"><div class="dashboard-heading"><div><p class="eyebrow">SQEZEN / DASHBOARD</p><h1>Ustaw swój profil.</h1><p class="dashboard-subtitle">Zadbaj o pierwsze wrażenie. Zmiany pojawią się na Twoim publicznym adresie od razu po zapisaniu.</p></div><div class="dashboard-heading-mark">${icon("sparkle")}</div></div><div class="dashboard-grid"><form id="profile-form" class="editor-panel"><div class="panel-heading"><div><p class="panel-kicker">01 / IDENTITY</p><h2>Podstawowe dane</h2></div><span class="panel-number">A</span></div><div class="identity-grid"><label class="field-label">Nazwa użytkownika<input name="username" pattern="[a-z0-9_]{3,24}" minlength="3" maxlength="24" autocomplete="off" placeholder="np. sqezen" required /><small>Tylko małe litery, cyfry i podkreślenie.</small></label><label class="field-label">Nazwa wyświetlana<input name="display_name" maxlength="40" placeholder="Twoja nazwa" required /></label></div><label class="field-label">Bio<textarea name="bio" maxlength="160" placeholder="developer • gamer • digital chaos"></textarea><small>Krótko i konkretnie. Maksymalnie 160 znaków.</small></label><div class="editor-divider"></div><div class="panel-heading"><div><p class="panel-kicker">02 / LOOK</p><h2>Wygląd profilu</h2></div><span class="panel-number">B</span></div><div class="look-grid"><label class="field-label">Avatar URL<input name="avatar_url" type="url" placeholder="https://.../avatar.png" /></label><label class="field-label color-field">Kolor akcentu<div class="color-input"><input name="background_color" type="color" value="#c9cdd4" /><span id="color-value">#C9CDD4</span></div></label></div><div class="editor-divider"></div><div class="panel-heading"><div><p class="panel-kicker">03 / LINKS</p><h2>Twoje linki</h2></div><button class="button button-small button-ghost add-link" id="add-link" type="button">${icon("plus")} Dodaj link</button></div><p class="panel-help">Dodaj miejsca, w których można Cię znaleźć. Kolejność jest taka sama jak tutaj.</p><div id="links-list" class="links-editor"></div><button class="button button-primary button-wide save-profile" type="submit">Zapisz profil ${icon("check")}</button><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p></form><aside class="preview-panel"><div class="preview-sticky"><div class="preview-topline"><div><p class="panel-kicker">LIVE PREVIEW</p><h2>Tak wygląda Twój profil</h2></div><span class="preview-live"><i></i> live</span></div><div id="dashboard-preview" class="dashboard-preview"></div><p class="preview-hint">Podgląd aktualizuje się podczas pisania. Publicznie zobaczysz go po zapisaniu profilu.</p></div></aside></div></main></div></div>`;
+  return `<div class="dashboard-page">
+    <header class="dashboard-nav">
+      <a class="brand" href="/"><span class="brand-mark">s</span><span>sqezen</span></a>
+      <div class="dashboard-nav-actions">
+        <span class="save-status" id="top-status"><i></i> dashboard</span>
+        <a class="button button-small button-ghost" id="view-profile" href="#" target="_blank" rel="noopener noreferrer">Zobacz profil ${icon("arrowUp")}</a>
+        <button class="button button-small button-dark" id="logout-button" type="button">Wyloguj ${icon("logout")}</button>
+      </div>
+    </header>
+    <div class="dashboard-layout">
+      <aside class="dashboard-sidebar">
+        <div class="sidebar-label">WORKSPACE</div>
+        <button class="sidebar-item is-active" type="button" data-dashboard-tab="profile">${icon("user")}<span>Profil</span></button>
+        <button class="sidebar-item" type="button" data-dashboard-tab="links">${icon("link")}<span>Linki</span><em id="links-count">0</em></button>
+        <button class="sidebar-item" type="button" data-dashboard-tab="appearance">${icon("palette")}<span>Wygląd</span></button>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-label">ACCOUNT</div>
+        <button class="sidebar-item" type="button" data-dashboard-tab="account">${icon("settings")}<span>Konto</span></button>
+        <div class="account-mini"><span class="account-avatar" id="account-avatar">s</span><div><strong id="account-name">Twoje konto</strong><small id="account-email">Ładowanie...</small></div></div>
+      </aside>
+      <main class="dashboard-main">
+        <div class="dashboard-heading"><div><p class="eyebrow" id="dashboard-eyebrow">SQEZEN / PROFILE</p><h1 id="dashboard-title">Twój profil.</h1><p class="dashboard-subtitle" id="dashboard-subtitle">Ustaw nazwę, opis i avatar widoczne na publicznej stronie.</p></div><div class="dashboard-heading-mark">${icon("sparkle")}</div></div>
+        <div class="dashboard-grid">
+          <form id="profile-form" class="editor-panel">
+            <section class="dashboard-tab-panel" data-tab-panel="profile">
+              <div class="panel-heading"><div><p class="panel-kicker">01 / IDENTITY</p><h2>Podstawowe dane</h2></div><span class="panel-number">A</span></div>
+              <div class="identity-grid"><label class="field-label">Nazwa użytkownika<input name="username" pattern="[a-z0-9_]{3,24}" minlength="3" maxlength="24" autocomplete="off" placeholder="np. sqezen" required /><small>Tylko małe litery, cyfry i podkreślenie.</small></label><label class="field-label">Nazwa wyświetlana<input name="display_name" maxlength="40" placeholder="Twoja nazwa" required /></label></div>
+              <label class="field-label bio-field">Bio<textarea name="bio" maxlength="160" placeholder="developer • gamer • digital chaos"></textarea><small><span>Krótko i konkretnie.</span><span id="bio-count">0 / 160</span></small></label>
+              <div class="editor-divider"></div>
+              <div class="panel-heading"><div><p class="panel-kicker">02 / AVATAR</p><h2>Zdjęcie profilowe</h2></div><span class="panel-number">B</span></div>
+              <label class="field-label avatar-url-field">Adres avatara<input name="avatar_url" type="text" inputmode="url" placeholder="cdn.discordapp.com/.../avatar.png" /><small>Wklej bezpośredni adres obrazka. Może być również bez https://.</small></label>
+            </section>
+            <section class="dashboard-tab-panel" data-tab-panel="links" hidden>
+              <div class="panel-heading"><div><p class="panel-kicker">LINK MANAGER</p><h2>Twoje linki</h2></div><button class="button button-small button-ghost add-link" id="add-link" type="button">${icon("plus")} Dodaj link</button></div>
+              <p class="panel-help">Wklej dowolny zapis adresu, np. <strong>discord.gg/nazwa</strong>. Nie musisz dodawać https://. Strzałkami zmienisz kolejność, a ikoną ↗ sprawdzisz link.</p>
+              <div id="links-list" class="links-editor"></div>
+            </section>
+            <section class="dashboard-tab-panel" data-tab-panel="appearance" hidden>
+              <div class="panel-heading"><div><p class="panel-kicker">VISUAL STYLE</p><h2>Wygląd profilu</h2></div><span class="panel-number">C</span></div>
+              <p class="panel-help">Wybierz neutralny odcień dla avatara, detali i delikatnego tła profilu.</p>
+              <label class="field-label color-field">Kolor akcentu<div class="color-input"><input name="background_color" type="color" value="#c9cdd4" /><span id="color-value">#C9CDD4</span></div></label>
+              <div class="quick-colors" aria-label="Szybkie kolory"><button type="button" data-color-preset="#c9cdd4"><i style="background:#c9cdd4"></i>Srebrny</button><button type="button" data-color-preset="#8f96a1"><i style="background:#8f96a1"></i>Grafit</button><button type="button" data-color-preset="#eef0f3"><i style="background:#eef0f3"></i>Jasny</button><button type="button" data-color-preset="#5f6670"><i style="background:#5f6670"></i>Ciemny</button></div>
+              <div class="appearance-note">${icon("eye")} Podgląd po prawej aktualizuje się natychmiast.</div>
+            </section>
+            <section class="dashboard-tab-panel" data-tab-panel="account" hidden>
+              <div class="panel-heading"><div><p class="panel-kicker">ACCOUNT</p><h2>Konto i adres</h2></div><span class="panel-number">D</span></div>
+              <div class="account-settings"><label class="field-label">Adres e-mail<input id="account-email-field" type="text" readonly /></label><label class="field-label">Publiczny adres<div class="readonly-action"><input id="profile-address-field" type="text" readonly /><button class="icon-button" id="copy-profile-address" type="button" aria-label="Skopiuj adres profilu">${icon("copy")}</button></div></label></div>
+              <div class="account-info-card"><span>${icon("lock")}</span><div><strong>Konto chronione przez Supabase</strong><p>Sesja i hasło nie są zapisywane w przeglądarce przez sqezen.</p></div></div>
+            </section>
+            <div class="editor-actions"><button class="button button-primary button-wide save-profile" type="submit">Zapisz wszystkie zmiany ${icon("check")}</button><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p></div>
+          </form>
+          <aside class="preview-panel"><div class="preview-sticky"><div class="preview-topline"><div><p class="panel-kicker">LIVE PREVIEW</p><h2>Tak wygląda Twój profil</h2></div><span class="preview-live"><i></i> live</span></div><div id="dashboard-preview" class="dashboard-preview"></div><p class="preview-hint">Podgląd aktualizuje się podczas pisania. Publicznie zobaczysz go po zapisaniu profilu.</p></div></aside>
+        </div>
+      </main>
+    </div>
+  </div>`;
 }
 
 function profileIcon(link) {
@@ -274,7 +347,7 @@ function renderDashboardPreview() {
   target.innerHTML = `<div class="preview-card"><div class="preview-profile-head">${avatar ? `<img class="preview-avatar" src="${escapeHtml(avatar)}" alt="" />` : `<span class="preview-avatar avatar-fallback">${escapeHtml(name.slice(0, 1).toUpperCase())}</span>`}<span class="preview-menu">•••</span></div><p class="preview-handle">@${escapeHtml(username)}</p><h3>${escapeHtml(name)}</h3>${bio ? `<p class="preview-bio">${escapeHtml(bio)}</p>` : `<p class="preview-bio preview-placeholder">Twój krótki opis pojawi się tutaj.</p>`}<div class="preview-links">${links.length ? links.slice(0, 4).map((link) => `<div class="preview-link"><span>${icon(profileIcon(link))}</span><strong>${escapeHtml(link.title || "Nazwa linku")}</strong><i>↗</i></div>`).join("") : `<div class="preview-link preview-placeholder-link">Dodaj pierwszy link ${icon("plus")}</div>`}</div><div class="preview-card-footer"><span>sqezen.lol/${escapeHtml(username)}</span><span>${icon("sparkle")}</span></div></div>`;
 }
 
-async function wireDashboard() {
+async function wireDashboardLegacy() {
   const form = document.querySelector("#profile-form");
   if (!form) return;
   const current = await getSession();
@@ -317,6 +390,157 @@ async function wireDashboard() {
       if (linksError) { setBusy(button, false); return feedback("Profil zapisany, ale linki mają problem z zapisem.", true); }
     }
     setBusy(button, false); document.querySelector("#top-status").innerHTML = `<i></i> saved just now`; document.querySelector("#account-name").textContent = profilePayload.display_name || usernameValue; document.querySelector("#account-avatar").textContent = (profilePayload.display_name || usernameValue).slice(0, 1).toUpperCase(); profileLink.href = `/${encodeURIComponent(usernameValue)}`; profileLink.classList.remove("is-disabled"); feedback("Profil zapisany. Jest już dostępny publicznie.");
+  });
+}
+
+async function wireDashboard() {
+  const form = document.querySelector("#profile-form");
+  if (!form) return;
+  form.noValidate = true;
+  const current = await getSession();
+  if (!current) return navigate("/login");
+
+  const linksList = document.querySelector("#links-list");
+  const profileLink = document.querySelector("#view-profile");
+  const bioCount = document.querySelector("#bio-count");
+  const email = current.user.email || "zalogowane konto";
+  document.querySelector("#account-email").textContent = email;
+  document.querySelector("#account-email-field").value = email;
+
+  const { data: profileData, error: profileError } = await supabaseClient.from("profiles").select("*").eq("id", current.user.id).maybeSingle();
+  if (profileError) feedback("Nie udało się wczytać danych profilu.", true);
+  const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", current.user.id).order("position", { ascending: true });
+
+  if (profileData) {
+    setInputValue(form, "username", profileData.username);
+    setInputValue(form, "display_name", profileData.display_name);
+    setInputValue(form, "bio", profileData.bio);
+    setInputValue(form, "avatar_url", profileData.avatar_url);
+    form.elements.background_color.value = safeColor(profileData.background_color, "#c9cdd4");
+  }
+  linksList.innerHTML = (links?.length ? links : [{}]).map((link, index) => linkEditorItem(link, index)).join("");
+
+  function refreshDashboardMeta() {
+    updateLinkNumbers();
+    const username = String(form.elements.username.value || "").trim().toLowerCase();
+    const displayName = String(form.elements.display_name.value || username || "Twoje konto").trim();
+    const activeLinks = readLinkItems().filter((link) => link.url).length;
+    const address = username ? `${window.location.origin}/${username}` : "Ustaw najpierw nazwę użytkownika";
+    document.querySelector("#links-count").textContent = String(activeLinks);
+    document.querySelector("#account-name").textContent = displayName;
+    document.querySelector("#account-avatar").textContent = displayName.slice(0, 1).toUpperCase();
+    document.querySelector("#profile-address-field").value = address;
+    document.querySelector("#color-value").textContent = String(form.elements.background_color.value).toUpperCase();
+    bioCount.textContent = `${String(form.elements.bio.value || "").length} / 160`;
+    if (username) { profileLink.href = `/${encodeURIComponent(username)}`; profileLink.classList.remove("is-disabled"); }
+    else { profileLink.href = "/"; profileLink.classList.add("is-disabled"); }
+  }
+
+  const tabCopy = {
+    profile: ["SQEZEN / PROFILE", "Twój profil.", "Ustaw nazwę, opis i avatar widoczne na publicznej stronie."],
+    links: ["SQEZEN / LINKS", "Zarządzaj linkami.", "Dodawaj, duplikuj, testuj i ustawiaj kolejność swoich odnośników."],
+    appearance: ["SQEZEN / APPEARANCE", "Dopasuj wygląd.", "Wybierz neutralny akcent pasujący do Twojego profilu."],
+    account: ["SQEZEN / ACCOUNT", "Konto i adres.", "Sprawdź dane konta i skopiuj publiczny adres profilu."]
+  };
+
+  function setDashboardTab(tab) {
+    const selected = tabCopy[tab] ? tab : "profile";
+    document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === selected));
+    document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel.dataset.tabPanel !== selected; });
+    const [eyebrow, title, subtitle] = tabCopy[selected];
+    document.querySelector("#dashboard-eyebrow").textContent = eyebrow;
+    document.querySelector("#dashboard-title").textContent = title;
+    document.querySelector("#dashboard-subtitle").textContent = subtitle;
+    sessionStorage.setItem("sqezen_dashboard_tab", selected);
+  }
+
+  document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.addEventListener("click", () => setDashboardTab(button.dataset.dashboardTab)));
+  setDashboardTab(sessionStorage.getItem("sqezen_dashboard_tab") || "profile");
+  refreshDashboardMeta();
+  renderDashboardPreview();
+
+  form.addEventListener("input", (event) => {
+    if (event.target.matches("[data-link-url]")) {
+      const item = event.target.closest("[data-link-item]");
+      const detected = profileIcon({ url: event.target.value, icon: "website" });
+      if (detected !== "globe") item.querySelector("[data-link-icon]").value = detected;
+    }
+    refreshDashboardMeta();
+    renderDashboardPreview();
+  });
+
+  document.querySelector("#add-link").addEventListener("click", () => {
+    const count = document.querySelectorAll("[data-link-item]").length;
+    linksList.insertAdjacentHTML("beforeend", linkEditorItem({}, count));
+    refreshDashboardMeta();
+    renderDashboardPreview();
+    linksList.lastElementChild?.querySelector("[data-link-title]")?.focus();
+  });
+
+  linksList.addEventListener("click", (event) => {
+    const actionButton = event.target.closest("[data-link-action]");
+    if (!actionButton) return;
+    const item = actionButton.closest("[data-link-item]");
+    const action = actionButton.dataset.linkAction;
+    const itemData = { title: item.querySelector("[data-link-title]").value, url: item.querySelector("[data-link-url]").value, icon: item.querySelector("[data-link-icon]").value };
+    if (action === "remove") {
+      item.remove();
+      if (!document.querySelector("[data-link-item]")) linksList.insertAdjacentHTML("beforeend", linkEditorItem({}, 0));
+    }
+    if (action === "up" && item.previousElementSibling) item.previousElementSibling.before(item);
+    if (action === "down" && item.nextElementSibling) item.nextElementSibling.after(item);
+    if (action === "duplicate") item.insertAdjacentHTML("afterend", linkEditorItem(itemData, 0));
+    if (action === "test") {
+      const href = safeUrl(itemData.url);
+      if (!href) return feedback("Wpisz treść adresu, żeby otworzyć link.", true);
+      const opened = window.open(href, "_blank", "noopener,noreferrer");
+      if (opened) opened.opener = null;
+    }
+    refreshDashboardMeta();
+    renderDashboardPreview();
+  });
+
+  document.querySelectorAll("[data-color-preset]").forEach((button) => button.addEventListener("click", () => {
+    form.elements.background_color.value = button.dataset.colorPreset;
+    refreshDashboardMeta();
+    renderDashboardPreview();
+  }));
+
+  document.querySelector("#copy-profile-address").addEventListener("click", async () => {
+    const address = document.querySelector("#profile-address-field").value;
+    if (!/^https?:\/\//.test(address)) return feedback("Ustaw nazwę użytkownika, aby skopiować adres.", true);
+    try { await navigator.clipboard.writeText(address); feedback("Adres profilu skopiowany."); }
+    catch { feedback("Nie udało się skopiować adresu automatycznie.", true); }
+  });
+
+  document.querySelector("#logout-button").addEventListener("click", async () => { await supabaseClient.auth.signOut(); navigate("/"); });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = form.querySelector("button[type=submit]");
+    const values = new FormData(form);
+    const usernameValue = String(values.get("username") || "").trim().toLowerCase();
+    const displayName = String(values.get("display_name") || "").trim();
+    const linksValue = readLinkItems().map((link) => ({ ...link, url: normalizeLinkUrl(link.url) }));
+    if (!/^[a-z0-9_]{3,24}$/.test(usernameValue)) { setDashboardTab("profile"); return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true); }
+    if (!displayName) { setDashboardTab("profile"); return feedback("Wpisz nazwę wyświetlaną.", true); }
+    for (const link of linksValue) if (!safeUrl(link.url)) { setDashboardTab("links"); return feedback(`Sprawdź treść linku „${link.title || "bez nazwy"}”.`, true); }
+    feedback("Zapisywanie profilu...");
+    setBusy(button, true, "Zapisywanie...");
+    const profilePayload = { id: current.user.id, username: usernameValue, display_name: displayName, bio: String(values.get("bio") || "").trim(), avatar_url: safeUrl(values.get("avatar_url")), background_color: safeColor(values.get("background_color")) };
+    let saveResult = await supabaseClient.from("profiles").upsert(profilePayload);
+    if (saveResult.error && /background_color|avatar_url/i.test(saveResult.error.message || "")) saveResult = await supabaseClient.from("profiles").upsert({ id: profilePayload.id, username: profilePayload.username, display_name: profilePayload.display_name, bio: profilePayload.bio });
+    if (saveResult.error) { setBusy(button, false); return feedback(friendlyError(saveResult.error), true); }
+    const { error: deleteError } = await supabaseClient.from("links").delete().eq("profile_id", current.user.id);
+    if (deleteError) { setBusy(button, false); return feedback("Profil zapisany, ale nie udało się zaktualizować linków.", true); }
+    if (linksValue.length) {
+      const { error: linksError } = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({ profile_id: current.user.id, title: link.title || "Link", url: link.url, icon: link.icon, position: index })));
+      if (linksError) { setBusy(button, false); return feedback("Profil zapisany, ale linki mają problem z zapisem.", true); }
+    }
+    linksValue.forEach((link, index) => { const input = document.querySelectorAll("[data-link-url]")[index]; if (input) input.value = link.url; });
+    setBusy(button, false);
+    document.querySelector("#top-status").innerHTML = `<i></i> saved just now`;
+    refreshDashboardMeta();
+    feedback("Wszystkie zmiany zostały zapisane.");
   });
 }
 

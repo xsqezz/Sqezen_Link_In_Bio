@@ -126,12 +126,12 @@ svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColo
 .dashboard-nav-actions { gap: 8px; }
 .save-status { display: inline-flex; align-items: center; gap: 7px; margin-right: 13px; color: var(--dim); font-size: .68rem; }
 .dashboard-layout { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 56px; padding: 46px 0 70px; }
-.dashboard-sidebar { padding-top: 10px; }
+.dashboard-sidebar { display: flex; flex-direction: column; padding-top: 10px; }
 .sidebar-label { margin: 0 0 12px; color: var(--dim); font-size: .62rem; font-weight: 800; letter-spacing: .15em; }
-.sidebar-item { display: flex; align-items: center; gap: 10px; min-height: 39px; padding: 0 10px; color: var(--muted); font-size: .76rem; border-radius: 10px; }
+.sidebar-item { display: flex; width: 100%; align-items: center; gap: 10px; min-height: 39px; padding: 0 10px; color: var(--muted); font-size: .76rem; text-align: left; background: transparent; border: 0; border-radius: 10px; cursor: pointer; transition: color .18s ease,background .18s ease; }
 .sidebar-item svg { width: 16px; height: 16px; }
 .sidebar-item.is-active { color: var(--text); background: var(--surface-strong); }
-.sidebar-item.sidebar-muted { color: var(--dim); }
+.sidebar-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
 .sidebar-item em { margin-left: auto; color: var(--dim); font-size: .58rem; font-style: normal; }
 .sidebar-divider { height: 1px; margin: 27px 0; background: var(--line-soft); }
 .account-mini { display: flex; align-items: center; gap: 10px; padding: 9px 4px; }
@@ -147,13 +147,16 @@ svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColo
 .dashboard-heading-mark svg { width: 19px; height: 19px; }
 .dashboard-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px,.7fr); gap: 16px; align-items: start; }
 .editor-panel,.preview-sticky { padding: 25px; background: rgba(255,255,255,.045); border: 1px solid var(--line-soft); border-radius: 18px; }
+.dashboard-tab-panel[hidden] { display: none; }
+.dashboard-tab-panel { animation: fadeUp 400ms ease both; }
 .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .panel-heading h2,.preview-topline h2 { margin: 0; font-size: 1.08rem; letter-spacing: -.04em; }
 .panel-number { color: var(--dim); font-size: .7rem; font-weight: 800; }
 .identity-grid,.look-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 21px; }
-.editor-panel>.field-label { margin-top: 17px; }
+.editor-panel>.field-label,.dashboard-tab-panel>.field-label { margin-top: 17px; }
 .editor-divider { height: 1px; margin: 28px 0; background: var(--line-soft); }
 .panel-help { margin: 11px 0 17px; color: var(--muted); font-size: .72rem; line-height: 1.5; }
+.panel-help strong { color: #cfd3d9; font-weight: 600; }
 .add-link { gap: 7px; }
 .add-link svg { width: 14px; height: 14px; }
 .links-editor { display: grid; gap: 10px; }
@@ -161,13 +164,17 @@ svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColo
 .link-item-head { display: flex; align-items: center; gap: 9px; margin-bottom: 11px; }
 .link-index { color: var(--accent); font-size: .62rem; font-weight: 800; }
 .link-item-title { color: var(--text); font-size: .74rem; font-weight: 700; }
-.remove-link { width: 27px; height: 27px; margin-left: auto; }
+.link-actions { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.link-actions .icon-button { width: 27px; height: 27px; border-radius: 8px; }
+.remove-link { width: 27px; height: 27px; }
 .remove-link svg { width: 15px; height: 15px; }
 .link-fields { display: grid; grid-template-columns: 1fr 1.3fr .75fr; gap: 9px; }
 .link-fields .field-label { font-size: .67rem; }
 .link-fields input,.link-fields select { min-height: 40px; padding: 0 10px; font-size: .75rem; }
 .link-fields select { background-position: calc(100% - 15px) 18px,calc(100% - 10px) 18px; }
-.save-profile { margin-top: 24px; }
+.editor-actions { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
+.save-profile { margin-top: 0; }
+.editor-actions .form-feedback { margin-top: 11px; }
 .preview-panel { min-width: 0; }
 .preview-sticky { position: sticky; top: 22px; }
 .preview-topline { display: flex; justify-content: space-between; gap: 15px; align-items: flex-start; margin-bottom: 20px; }
@@ -193,6 +200,22 @@ svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColo
 .color-input { display: flex; height: 47px; align-items: center; gap: 10px; padding: 5px 9px 5px 6px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.1); border-radius: 11px; }
 .color-input input { width: 36px; min-height: 35px; padding: 2px; border: 0; border-radius: 8px; cursor: pointer; }
 .color-input span { color: var(--text); font-size: .73rem; letter-spacing: .07em; }
+.bio-field small { display: flex; justify-content: space-between; gap: 15px; }
+.quick-colors { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-top: 14px; }
+.quick-colors button { display: flex; min-height: 42px; align-items: center; gap: 9px; padding: 0 11px; color: var(--muted); font-size: .7rem; text-align: left; background: rgba(255,255,255,.035); border: 1px solid var(--line-soft); border-radius: 10px; cursor: pointer; transition: color .18s ease,background .18s ease,border-color .18s ease; }
+.quick-colors button:hover { color: var(--text); background: var(--surface); border-color: var(--line); }
+.quick-colors i { width: 15px; height: 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 5px; }
+.appearance-note { display: flex; align-items: center; gap: 9px; margin-top: 20px; padding: 13px; color: var(--muted); font-size: .7rem; background: rgba(0,0,0,.12); border: 1px solid var(--line-soft); border-radius: 11px; }
+.appearance-note svg { width: 16px; height: 16px; }
+.account-settings { display: grid; gap: 15px; margin-top: 21px; }
+.readonly-action { display: grid; grid-template-columns: 1fr 40px; gap: 8px; }
+.readonly-action .icon-button { width: 40px; height: 47px; color: var(--text); background: var(--surface); border-color: var(--line-soft); }
+.field-label input[readonly] { color: #c5cad2; cursor: default; }
+.account-info-card { display: flex; align-items: flex-start; gap: 12px; margin-top: 22px; padding: 15px; background: rgba(0,0,0,.12); border: 1px solid var(--line-soft); border-radius: 12px; }
+.account-info-card>span { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; color: var(--muted); background: var(--surface); border-radius: 9px; }
+.account-info-card svg { width: 15px; height: 15px; }
+.account-info-card strong { font-size: .72rem; }
+.account-info-card p { margin: 5px 0 0; color: var(--dim); font-size: .66rem; line-height: 1.5; }
 .is-disabled { pointer-events: none; opacity: .45; }
 
 .public-page { position: relative; display: flex; min-height: 100vh; flex-direction: column; align-items: center; padding: 28px 16px; overflow: hidden; }
@@ -237,10 +260,11 @@ svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColo
   .intro-strip,.steps-section,.final-cta,.feature-grid { padding-inline: 0; }
   .auth-layout { gap: 45px; padding-inline: 0; }
   .dashboard-layout { grid-template-columns: 1fr; gap: 20px; }
-  .dashboard-sidebar { display: flex; align-items: center; gap: 11px; padding: 0; }
+  .dashboard-sidebar { display: flex; flex-direction: row; align-items: center; gap: 5px; padding: 0 0 6px; overflow-x: auto; scrollbar-width: none; }
+  .dashboard-sidebar::-webkit-scrollbar { display: none; }
   .dashboard-sidebar .sidebar-label,.dashboard-sidebar .sidebar-divider { display: none; }
-  .sidebar-item.sidebar-muted { display: none; }
-  .account-mini { margin-left: auto; padding: 0; }
+  .sidebar-item { width: auto; flex: 0 0 auto; padding-inline: 12px; }
+  .account-mini { display: none; }
 }
 @media (max-width: 700px) {
   .site-page,.dashboard-page { width: min(100% - 32px,560px); }
@@ -265,6 +289,7 @@ svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColo
   .preview-panel { order: -1; }
   .preview-sticky { position: static; }
   .link-fields,.identity-grid,.look-grid { grid-template-columns: 1fr; }
+  .link-actions { gap: 0; }
   .public-card { padding: 23px 19px 20px; }
 }
 @media (max-width: 480px) {
