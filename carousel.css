@@ -1,0 +1,13 @@
+.custom-carousel-nav{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:13px;margin:23px 0 14px;padding:14px 15px;background:linear-gradient(135deg,rgba(201,209,222,.08),rgba(255,255,255,.025));border:1px solid var(--line);border-radius:15px}
+.carousel-arrow{display:grid;width:38px;height:38px;place-items:center;color:var(--text);font-size:1.15rem;background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:50%;cursor:pointer;transition:background .18s ease,color .18s ease,transform .18s ease}
+.carousel-arrow:hover:not(:disabled){color:#15171b;background:var(--accent);transform:scale(1.06)}
+.carousel-arrow:disabled{color:var(--dim);cursor:not-allowed;opacity:.32}
+.custom-wheel-wrap{display:flex;align-items:center;justify-content:center;gap:13px}
+.custom-wheel{position:relative;display:grid;width:52px;height:52px;place-items:center;border:1px solid rgba(201,209,222,.65);border-radius:50%;transition:transform .42s cubic-bezier(.2,.8,.2,1)}
+.custom-wheel:before{width:8px;height:8px;content:"";background:var(--accent);border-radius:50%;box-shadow:0 0 0 5px rgba(201,209,222,.11)}
+.custom-wheel:after{position:absolute;inset:6px;content:"";border:1px dashed rgba(201,209,222,.25);border-radius:50%}
+.custom-wheel i{position:absolute;width:5px;height:5px;background:#6f7a8b;border-radius:50%}.custom-wheel i:nth-child(1){top:-3px}.custom-wheel i:nth-child(2){right:-3px}.custom-wheel i:nth-child(3){bottom:-3px}.custom-wheel i:nth-child(4){left:-3px}
+.custom-wheel-label{display:grid;gap:3px;min-width:88px}.custom-wheel-label b{color:var(--accent);font-size:.7rem;letter-spacing:.14em}.custom-wheel-label span{color:var(--muted);font-size:.65rem;font-weight:650}
+.custom-wheel.is-turning{animation:wheelSettle .42s ease both}.custom-stage{position:relative}.custom-stage .custom-card{display:none;margin-top:0}.custom-stage .custom-card.is-active{display:grid;animation:carouselIn .35s ease both}.custom-stage .custom-card[aria-hidden="true"]{visibility:hidden}
+@keyframes carouselIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}@keyframes wheelSettle{0%{filter:brightness(1)}50%{filter:brightness(1.45)}100%{filter:brightness(1)}}
+@media(max-width:760px){.custom-carousel-nav{grid-template-columns:38px 1fr 38px;padding:11px 12px}.carousel-arrow{width:34px;height:34px}.custom-wheel{width:45px;height:45px}.custom-wheel-label{min-width:78px}.custom-wheel-label span{font-size:.59rem}}
