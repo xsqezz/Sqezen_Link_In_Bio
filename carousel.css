@@ -9,23 +9,13 @@
 .custom-wheel-label b{color:var(--accent);font-size:.72rem;letter-spacing:.14em}
 .custom-wheel-label span{color:var(--muted);font-size:.72rem;font-weight:650}
 
-/* The editor cards form one four-sided wheel. The whole stage rotates; the
-   small status indicator above it is intentionally secondary to this motion. */
-.custom-stage{position:relative;min-height:570px;overflow:hidden;perspective:1600px;transform:rotateY(0deg);transform-style:preserve-3d;transition:transform .72s cubic-bezier(.2,.75,.2,1);--wheel-depth:0px}
-.custom-stage .custom-card{position:absolute;inset:0;display:grid;width:100%;margin:0;opacity:.82;transform-style:preserve-3d;backface-visibility:hidden;transition:opacity .35s ease,filter .35s ease}
-.custom-stage .custom-card[data-custom-step="0"]{transform:rotateY(0deg)}
-.custom-stage .custom-card[data-custom-step="1"]{transform:rotateY(90deg)}
-.custom-stage .custom-card[data-custom-step="2"]{transform:rotateY(180deg)}
-.custom-stage .custom-card[data-custom-step="3"]{transform:rotateY(270deg)}
-.custom-stage .custom-card[aria-hidden="true"]{visibility:visible;pointer-events:none}
-.custom-stage .custom-card.is-active{opacity:1;filter:none;z-index:2}
+/* One stable viewport: only the selected section is mounted visually. The
+   section itself makes the large 90-degree turn, so cards never overlap. */
+.custom-stage{position:relative;min-height:0;perspective:1400px;transform-style:preserve-3d}
+.custom-stage .custom-card{position:relative;inset:auto;display:none;width:100%;margin:0;transform:none;transform-origin:center center;backface-visibility:hidden}
+.custom-stage .custom-card.is-active{display:grid;animation:customWheelIn .62s cubic-bezier(.2,.75,.2,1) both}
+.custom-stage .custom-card[aria-hidden="true"]{display:none;visibility:hidden;pointer-events:none}
 
-/* :has() is supported by the Chromium browsers used by the app and lets the
-   existing accessible active-state drive the wheel without duplicate state. */
-.custom-stage:has(.custom-card:nth-child(1).is-active){transform:rotateY(0deg)}
-.custom-stage:has(.custom-card:nth-child(2).is-active){transform:rotateY(-90deg)}
-.custom-stage:has(.custom-card:nth-child(3).is-active){transform:rotateY(-180deg)}
-.custom-stage:has(.custom-card:nth-child(4).is-active){transform:rotateY(-270deg)}
-
-@media(prefers-reduced-motion:reduce){.custom-stage,.carousel-arrow{transition:none}.custom-stage .custom-card{transition:none}}
-@media(max-width:760px){.custom-carousel-nav{grid-template-columns:42px 1fr 42px;padding:11px 12px;gap:10px}.carousel-arrow{width:38px;height:38px}.custom-wheel-label{min-width:120px}.custom-stage{min-height:690px;perspective:1200px;--wheel-depth:0px}}
+@keyframes customWheelIn{from{opacity:.15;transform:perspective(1400px) rotateY(90deg) scale(.96)}to{opacity:1;transform:perspective(1400px) rotateY(0deg) scale(1)}}
+@media(prefers-reduced-motion:reduce){.custom-stage .custom-card.is-active{animation:none}.carousel-arrow{transition:none}}
+@media(max-width:760px){.custom-carousel-nav{grid-template-columns:42px 1fr 42px;padding:11px 12px;gap:10px}.carousel-arrow{width:38px;height:38px}.custom-wheel-label{min-width:120px}}
