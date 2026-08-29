@@ -12,11 +12,11 @@
 /* The editor cards form one four-sided wheel. The whole stage rotates; the
    small status indicator above it is intentionally secondary to this motion. */
 .custom-stage{position:relative;min-height:570px;overflow:hidden;perspective:1600px;transform:rotateY(0deg);transform-style:preserve-3d;transition:transform .72s cubic-bezier(.2,.75,.2,1);--wheel-depth:0px}
-.custom-stage .custom-card{position:absolute;inset:0;display:grid;width:100%;margin:0;opacity:.82;transform-style:preserve-3d;backface-visibility:hidden;transform:rotateY(calc(var(--custom-step) * 90deg)) translateZ(0);transition:opacity .35s ease,filter .35s ease}
-.custom-stage .custom-card[data-custom-step="0"]{--custom-step:0}
-.custom-stage .custom-card[data-custom-step="1"]{--custom-step:1}
-.custom-stage .custom-card[data-custom-step="2"]{--custom-step:2}
-.custom-stage .custom-card[data-custom-step="3"]{--custom-step:3}
+.custom-stage .custom-card{position:absolute;inset:0;display:grid;width:100%;margin:0;opacity:.82;transform-style:preserve-3d;backface-visibility:hidden;transition:opacity .35s ease,filter .35s ease}
+.custom-stage .custom-card[data-custom-step="0"]{transform:rotateY(0deg)}
+.custom-stage .custom-card[data-custom-step="1"]{transform:rotateY(90deg)}
+.custom-stage .custom-card[data-custom-step="2"]{transform:rotateY(180deg)}
+.custom-stage .custom-card[data-custom-step="3"]{transform:rotateY(270deg)}
 .custom-stage .custom-card[aria-hidden="true"]{visibility:visible;pointer-events:none}
 .custom-stage .custom-card.is-active{opacity:1;filter:none;z-index:2}
 
