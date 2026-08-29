@@ -11,8 +11,8 @@
 
 /* The editor cards form one four-sided wheel. The whole stage rotates; the
    small status indicator above it is intentionally secondary to this motion. */
-.custom-stage{position:relative;min-height:570px;perspective:1450px;transform:rotateY(0deg);transform-style:preserve-3d;transition:transform .72s cubic-bezier(.2,.75,.2,1);--wheel-depth:clamp(210px,27vw,350px)}
-.custom-stage .custom-card{position:absolute;inset:0;display:grid;width:100%;margin:0;opacity:.82;transform-style:preserve-3d;backface-visibility:hidden;transform:rotateY(calc(var(--custom-step) * 90deg)) translateZ(var(--wheel-depth));transition:opacity .35s ease,filter .35s ease}
+.custom-stage{position:relative;min-height:570px;overflow:hidden;perspective:1600px;transform:rotateY(0deg);transform-style:preserve-3d;transition:transform .72s cubic-bezier(.2,.75,.2,1);--wheel-depth:0px}
+.custom-stage .custom-card{position:absolute;inset:0;display:grid;width:100%;margin:0;opacity:.82;transform-style:preserve-3d;backface-visibility:hidden;transform:rotateY(calc(var(--custom-step) * 90deg)) translateZ(0);transition:opacity .35s ease,filter .35s ease}
 .custom-stage .custom-card[data-custom-step="0"]{--custom-step:0}
 .custom-stage .custom-card[data-custom-step="1"]{--custom-step:1}
 .custom-stage .custom-card[data-custom-step="2"]{--custom-step:2}
@@ -28,4 +28,4 @@
 .custom-stage:has(.custom-card:nth-child(4).is-active){transform:rotateY(-270deg)}
 
 @media(prefers-reduced-motion:reduce){.custom-stage,.carousel-arrow{transition:none}.custom-stage .custom-card{transition:none}}
-@media(max-width:760px){.custom-carousel-nav{grid-template-columns:42px 1fr 42px;padding:11px 12px;gap:10px}.carousel-arrow{width:38px;height:38px}.custom-wheel-label{min-width:120px}.custom-stage{min-height:690px;perspective:1100px;--wheel-depth:clamp(170px,41vw,270px)}}
+@media(max-width:760px){.custom-carousel-nav{grid-template-columns:42px 1fr 42px;padding:11px 12px;gap:10px}.carousel-arrow{width:38px;height:38px}.custom-wheel-label{min-width:120px}.custom-stage{min-height:690px;perspective:1200px;--wheel-depth:0px}}
