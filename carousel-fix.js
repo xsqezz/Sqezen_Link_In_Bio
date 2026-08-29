@@ -5,7 +5,7 @@
     const oldNav = appearance?.querySelector('.custom-carousel-nav');
     if (!stage || !oldNav || stage.dataset.wheelFix === 'true') return;
 
-    const cards = Array.from(stage.querySelectorAll(':scope > .custom-card'));
+    const cards = Array.from(stage.children).filter((element) => element.classList.contains('custom-card'));
     if (cards.length < 2) return;
     stage.dataset.wheelFix = 'true';
 
