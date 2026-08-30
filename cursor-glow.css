@@ -1,0 +1,2 @@
+.cursor-glow{position:fixed;top:0;left:0;z-index:9999;width:150px;height:150px;pointer-events:none;opacity:0;border-radius:50%;background:radial-gradient(circle,var(--profile-accent,#5865ee) 0%,var(--profile-accent,#5865ee) 18%,transparent 70%);filter:blur(18px);mix-blend-mode:screen;transform:translate3d(-50%,-50%,0);will-change:transform,opacity;transition:opacity .22s ease}
+@media(pointer:coarse){.cursor-glow{display:none}}
