@@ -1,0 +1,11 @@
+.landing-minimal-page{min-height:100vh;background:#000;color:var(--text)}
+.landing-minimal-inner{display:flex;width:min(100%,620px);min-height:100vh;align-items:center;flex-direction:column;margin:0 auto;padding:clamp(42px,9vh,92px) 16px 70px}
+.sqezen-logo{display:grid;width:76px;height:76px;place-items:center;color:#fff;background:var(--blue-accent);border:1px solid rgba(255,255,255,.2);border-radius:24px;box-shadow:0 18px 55px rgba(88,101,238,.22);animation:fadeUp .4s ease both}
+.sqezen-logo svg{width:45px;height:45px;fill:none;stroke:currentColor;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.landing-minimal-title{margin:25px 0 36px;color:#fff;font-size:clamp(4rem,13vw,7.2rem);font-weight:850;letter-spacing:-.13em;line-height:.8;text-align:center;animation:fadeUp .4s .05s ease both}
+.landing-example{width:min(100%,450px);margin:0;transform:none;animation:fadeUp .4s .1s ease both}
+.landing-example .showcase-profile{background:#08080b;border-color:rgba(255,255,255,.1);box-shadow:0 25px 80px rgba(0,0,0,.5)}
+.landing-example .showcase-avatar{background:var(--blue-accent);color:#fff}
+.landing-example .showcase-links>div{background:rgba(88,101,238,.07);border-color:rgba(88,101,238,.2)}
+.landing-example .showcase-links svg,.landing-example .showcase-bio b{color:var(--blue-accent)}
+@media(max-width:480px){.landing-minimal-inner{padding-top:38px}.sqezen-logo{width:68px;height:68px;border-radius:21px}.landing-minimal-title{margin-top:23px;margin-bottom:30px;font-size:clamp(3.8rem,18vw,5.5rem)}.landing-example{width:100%}.landing-example .showcase-profile{padding:25px 19px 21px}}
