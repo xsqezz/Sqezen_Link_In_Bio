@@ -19,6 +19,8 @@
     let targetY = -200;
     let currentX = targetX;
     let currentY = targetY;
+    let cursorX = targetX;
+    let cursorY = targetY;
     let frame = 0;
     let visible = false;
     let appliedCursor = '';
@@ -54,14 +56,16 @@
     const render = () => {
       currentX += (targetX - currentX) * 0.2;
       currentY += (targetY - currentY) * 0.2;
+      cursorX += (targetX - cursorX) * 0.38;
+      cursorY += (targetY - cursorY) * 0.38;
       glow.style.transform = `translate3d(${currentX}px,${currentY}px,0) translate3d(-50%,-50%,0)`;
+      cursor.style.transform = `translate3d(${cursorX}px,${cursorY}px,0) translate3d(-50%,-50%,0)`;
       frame = requestAnimationFrame(render);
     };
 
     document.addEventListener('pointermove', (event) => {
       targetX = event.clientX;
       targetY = event.clientY;
-      cursor.style.transform = `translate3d(${targetX}px,${targetY}px,0) translate3d(-50%,-50%,0)`;
       cursor.style.opacity = '1';
       syncCursor();
       if (!visible) {
