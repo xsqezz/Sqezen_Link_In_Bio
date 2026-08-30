@@ -10,6 +10,11 @@
     glow.setAttribute('aria-hidden', 'true');
     document.body.appendChild(glow);
 
+    const cursor = document.createElement('span');
+    cursor.className = 'site-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(cursor);
+
     let targetX = -200;
     let targetY = -200;
     let currentX = targetX;
@@ -29,9 +34,21 @@
       if (cursorUrl === appliedCursor) return;
       appliedCursor = cursorUrl;
       document.documentElement.classList.toggle('has-custom-cursor', Boolean(cursorUrl));
-      const cursorValue = cursorUrl ? `url("${cursorUrl}"), auto` : '';
+      const cursorValue = cursorUrl ? 'none' : '';
       document.documentElement.style.cursor = cursorValue;
       document.body.style.cursor = cursorValue;
+      cursor.classList.remove('has-image');
+      cursor.style.backgroundImage = '';
+      if (cursorUrl) {
+        const probe = document.createElement('img');
+        probe.onload = () => {
+          if (cursorUrl !== appliedCursor) return;
+          cursor.style.backgroundImage = `url("${cursorUrl}")`;
+          cursor.classList.add('has-image');
+        };
+        probe.onerror = () => cursor.classList.remove('has-image');
+        probe.src = cursorUrl;
+      }
     };
 
     const render = () => {
@@ -44,6 +61,8 @@
     document.addEventListener('pointermove', (event) => {
       targetX = event.clientX;
       targetY = event.clientY;
+      cursor.style.transform = `translate3d(${targetX}px,${targetY}px,0) translate3d(-50%,-50%,0)`;
+      cursor.style.opacity = '1';
       syncCursor();
       if (!visible) {
         visible = true;
@@ -54,11 +73,13 @@
     window.addEventListener('blur', () => {
       visible = false;
       glow.style.opacity = '0';
+      cursor.style.opacity = '0';
     });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         visible = false;
         glow.style.opacity = '0';
+        cursor.style.opacity = '0';
       }
     });
 
