@@ -28,6 +28,7 @@
       const cursorUrl = cleanCursorUrl(getCursorUrl());
       if (cursorUrl === appliedCursor) return;
       appliedCursor = cursorUrl;
+      document.documentElement.classList.toggle('has-custom-cursor', Boolean(cursorUrl));
       document.body.style.cursor = cursorUrl ? `url("${cursorUrl}"), auto` : '';
     };
 
