@@ -1,14 +1,14 @@
 (() => {
-  const initCursorGlow = () => {
-    const page = document.querySelector('.public-page[data-custom-cursor]');
-    if (!page || page.dataset.cursorGlowReady === 'true') return;
-    page.dataset.cursorGlowReady = 'true';
-    page.style.cursor = `url("${page.dataset.customCursor.replace(/["\\\n\r]/g, '')}"),auto`;
+  const cleanCursorUrl = (value) => String(value || '').replace(/["\\\n\r]/g, '').trim();
+
+  const startCursorGlow = () => {
+    if (document.documentElement.dataset.cursorGlowReady === 'true') return;
+    document.documentElement.dataset.cursorGlowReady = 'true';
 
     const glow = document.createElement('span');
     glow.className = 'cursor-glow';
     glow.setAttribute('aria-hidden', 'true');
-    page.appendChild(glow);
+    document.body.appendChild(glow);
 
     let targetX = -200;
     let targetY = -200;
@@ -16,30 +16,63 @@
     let currentY = targetY;
     let frame = 0;
     let visible = false;
+    let appliedCursor = '';
+
+    const getCursorUrl = () => {
+      const publicPage = document.querySelector('.public-page[data-custom-cursor]');
+      if (publicPage?.dataset.customCursor) return publicPage.dataset.customCursor;
+      return document.querySelector('#profile-form [name="cursor_url"]')?.value || '';
+    };
+
+    const syncCursor = () => {
+      const cursorUrl = cleanCursorUrl(getCursorUrl());
+      if (cursorUrl === appliedCursor) return;
+      appliedCursor = cursorUrl;
+      document.body.style.cursor = cursorUrl ? `url("${cursorUrl}"), auto` : '';
+    };
 
     const render = () => {
-      currentX += (targetX - currentX) * 0.18;
-      currentY += (targetY - currentY) * 0.18;
+      currentX += (targetX - currentX) * 0.2;
+      currentY += (targetY - currentY) * 0.2;
       glow.style.transform = `translate3d(${currentX}px,${currentY}px,0) translate3d(-50%,-50%,0)`;
       frame = requestAnimationFrame(render);
     };
 
-    page.addEventListener('pointermove', (event) => {
+    document.addEventListener('pointermove', (event) => {
       targetX = event.clientX;
       targetY = event.clientY;
+      syncCursor();
       if (!visible) {
         visible = true;
         glow.style.opacity = '0.34';
       }
+    }, { passive: true });
+
+    window.addEventListener('blur', () => {
+      visible = false;
+      glow.style.opacity = '0';
     });
-    page.addEventListener('pointerenter', () => { glow.style.opacity = visible ? '0.34' : '0'; });
-    page.addEventListener('pointerleave', () => { glow.style.opacity = '0'; });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        visible = false;
+        glow.style.opacity = '0';
+      }
+    });
+
+    new MutationObserver(syncCursor).observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('input', syncCursor, { passive: true });
+    document.addEventListener('change', syncCursor, { passive: true });
+    window.setInterval(syncCursor, 300);
+    syncCursor();
     render();
 
     window.addEventListener('pagehide', () => cancelAnimationFrame(frame), { once: true });
   };
 
-  const observer = new MutationObserver(initCursorGlow);
-  observer.observe(document.body, { childList: true, subtree: true });
-  initCursorGlow();
+  const waitForBody = () => {
+    if (document.body) startCursorGlow();
+    else requestAnimationFrame(waitForBody);
+  };
+
+  waitForBody();
 })();
