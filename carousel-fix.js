@@ -35,16 +35,23 @@
       outgoing.classList.remove('is-active');
       outgoing.classList.add('is-leaving', `leave-${side}`);
       outgoing.setAttribute('aria-hidden', 'true');
-      incoming.classList.remove('is-leaving', 'leave-next', 'leave-prev', 'enter-next', 'enter-prev');
-      incoming.classList.add('is-active', `enter-${side}`);
-      incoming.setAttribute('aria-hidden', 'false');
-      active = target;
-      updateNav();
+
+      // Keep the incoming card fully hidden until the outgoing card has
+      // reached its edge. This prevents two transparent cards from being
+      // composited on top of each other during the turn.
       window.setTimeout(() => {
         outgoing.classList.remove('is-leaving', 'leave-next', 'leave-prev');
-        incoming.classList.remove('enter-next', 'enter-prev');
-        locked = false;
-      }, 720);
+        incoming.classList.remove('is-leaving', 'leave-next', 'leave-prev', 'enter-next', 'enter-prev');
+        incoming.classList.add('is-active', `enter-${side}`);
+        incoming.setAttribute('aria-hidden', 'false');
+        active = target;
+        updateNav();
+
+        window.setTimeout(() => {
+          incoming.classList.remove('enter-next', 'enter-prev');
+          locked = false;
+        }, 360);
+      }, 360);
     };
 
     previous.addEventListener('click', () => show(active - 1, -1));
