@@ -11,8 +11,8 @@
 
 /* A single viewport prevents overlap. The two cards involved in a change
    are animated together so the complete panel visibly turns by 90 degrees. */
-.custom-stage{position:relative;min-height:570px;overflow:hidden;perspective:1400px;transform-style:preserve-3d}
-.custom-stage .custom-card{position:absolute;inset:0;display:none;width:100%;margin:0;transform:none;transform-origin:center center;backface-visibility:hidden;will-change:transform,opacity}
+.custom-stage{position:relative;min-height:570px;overflow:hidden;isolation:isolate}
+.custom-stage .custom-card{position:absolute;inset:0;display:none;width:100%;margin:0;transform:none;transform-origin:center center;will-change:transform,opacity}
 .custom-stage .custom-card.is-active,.custom-stage .custom-card.is-leaving{display:grid;visibility:visible}
 .custom-stage .custom-card.is-active{z-index:2}
 .custom-stage .custom-card[aria-hidden="true"]{visibility:hidden;pointer-events:none}
@@ -23,10 +23,10 @@
 .custom-stage .custom-card.enter-prev{animation:wheelEnterPrev .72s cubic-bezier(.2,.75,.2,1) both}
 .custom-stage .custom-card.leave-prev{animation:wheelLeavePrev .72s cubic-bezier(.2,.75,.2,1) both}
 
-@keyframes wheelEnterNext{from{opacity:.15;transform:rotateY(90deg) scale(.96)}to{opacity:1;transform:rotateY(0deg) scale(1)}}
-@keyframes wheelLeaveNext{from{opacity:1;transform:rotateY(0deg) scale(1)}to{opacity:.15;transform:rotateY(-90deg) scale(.96)}}
-@keyframes wheelEnterPrev{from{opacity:.15;transform:rotateY(-90deg) scale(.96)}to{opacity:1;transform:rotateY(0deg) scale(1)}}
-@keyframes wheelLeavePrev{from{opacity:1;transform:rotateY(0deg) scale(1)}to{opacity:.15;transform:rotateY(90deg) scale(.96)}}
+@keyframes wheelEnterNext{from{opacity:.15;transform:rotate(90deg) scale(.92)}to{opacity:1;transform:rotate(0deg) scale(1)}}
+@keyframes wheelLeaveNext{from{opacity:1;transform:rotate(0deg) scale(1)}to{opacity:.15;transform:rotate(-90deg) scale(.92)}}
+@keyframes wheelEnterPrev{from{opacity:.15;transform:rotate(-90deg) scale(.92)}to{opacity:1;transform:rotate(0deg) scale(1)}}
+@keyframes wheelLeavePrev{from{opacity:1;transform:rotate(0deg) scale(1)}to{opacity:.15;transform:rotate(90deg) scale(.92)}}
 
 /* The profile-section wheel is an explicit product interaction. Keep it
    animated even when the browser requests reduced motion, because the user
