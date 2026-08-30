@@ -29,7 +29,9 @@
       if (cursorUrl === appliedCursor) return;
       appliedCursor = cursorUrl;
       document.documentElement.classList.toggle('has-custom-cursor', Boolean(cursorUrl));
-      document.body.style.cursor = cursorUrl ? `url("${cursorUrl}"), auto` : '';
+      const cursorValue = cursorUrl ? `url("${cursorUrl}"), auto` : '';
+      document.documentElement.style.cursor = cursorValue;
+      document.body.style.cursor = cursorValue;
     };
 
     const render = () => {
