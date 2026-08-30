@@ -32,5 +32,5 @@
    animated even when the browser requests reduced motion, because the user
    asked for this transition to be enabled. Other page animations still obey
    the global reduced-motion rule in styles.css. */
-@media(prefers-reduced-motion:reduce){.custom-stage .custom-card.enter-next,.custom-stage .custom-card.leave-next,.custom-stage .custom-card.enter-prev,.custom-stage .custom-card.leave-prev{animation-duration:.72s!important;animation-iteration-count:1!important}.custom-stage .custom-card{transition-duration:.35s!important}.carousel-arrow{transition-duration:.18s!important}}
+@media(prefers-reduced-motion:reduce){.custom-stage .custom-card.enter-next,.custom-stage .custom-card.leave-next,.custom-stage .custom-card.enter-prev,.custom-stage .custom-card.leave-prev{animation-duration:.36s!important;animation-iteration-count:1!important}.custom-stage .custom-card{transition-duration:.35s!important}.carousel-arrow{transition-duration:.18s!important}}
 @media(max-width:760px){.custom-carousel-nav{grid-template-columns:42px 1fr 42px;padding:11px 12px;gap:10px}.carousel-arrow{width:38px;height:38px}.custom-wheel-label{min-width:120px}.custom-stage{min-height:690px}}
