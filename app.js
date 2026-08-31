@@ -194,6 +194,8 @@ const baseDashboardWithoutEmbedCode = dashboard;
 dashboard = () => baseDashboardWithoutEmbedCode().replace('<label class="field-label">Kod iframe<textarea id="embed-code" rows="3" readonly></textarea><small>Wybierz wariant powyżej, a potem wklej ten kod na swoją stronę.</small></label>', '<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>').replace('<div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">', '<div class="embed-mode-heading"><span>Rodzaj embedu</span><small>Wybierz, jak ma wyglądać osadzony profil.</small></div><div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">');
 const baseDashboardWithEmbedDefaults = dashboard;
 dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><input id="dynamic-embed-positions" name="dynamic_embed_positions" type="hidden" value="{}"><div class="embed-mode-heading">').replace('<div class="embed-code-card">', '<div class="embed-default-row"><span data-embed-default-label>Domyślny embed: zwykły</span><button class="button button-small button-dark" data-embed-default-button type="button">Ustaw dynamic embed jako domyślny</button></div><div class="embed-position-row"><span data-embed-position-label>Ustaw układ kafelków dynamicznego embedu.</span><button class="button button-small button-dark" data-embed-position-toggle type="button">Edytuj pozycje kafelków</button></div><div class="embed-code-card">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
+const baseDashboardWithoutLiveEmbedPreview = dashboard;
+dashboard = () => baseDashboardWithoutLiveEmbedPreview().replace('<div class="embed-code-card"><div class="embed-preview-shell"><iframe id="embed-preview" title="Podgląd dynamicznego embedu" loading="lazy"></iframe></div></div>', '').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>', '<h2>Embed Builder</h2><p>Wybierz wariant embedu i ustaw jego układ.</p>');
 const baseDashboardWithFlatSidebar = dashboard;
 dashboard = () => baseDashboardWithFlatSidebar().replace(/<div class="sidebar-brand">[\s\S]*?<\/div>/, '').replace('</nav><div class="sidebar-rule"></div><span class="sidebar-label">ACCOUNT</span>', '').replace('</button><div class="sidebar-account">', '</button></nav><div class="sidebar-account">');
 function profileAssetPreview() {
@@ -337,7 +339,7 @@ wireDashboard = async function () {
   const embedDefault = form.elements.default_embed;
   const embedDefaultButton = document.querySelector("[data-embed-default-button]");
   const embedDefaultLabel = document.querySelector("[data-embed-default-label]");
-  if (embedTab && embedPanel && embedPreview && embedTab.dataset.bound !== "true") {
+  if (embedTab && embedPanel && embedTab.dataset.bound !== "true") {
     embedTab.dataset.bound = "true";
     let embedMode = embedDefault?.value === "dynamic" ? "dynamic" : sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : "standard";
     const getEmbedUrl = () => {
@@ -353,8 +355,10 @@ wireDashboard = async function () {
     const updateEmbed = () => {
       const embedUrl = getEmbedUrl();
       const height = embedMode === "dynamic" ? 480 : 720;
-      embedPreview.src = embedUrl || "about:blank";
-      embedPreview.style.height = `${height}px`;
+      if (embedPreview) {
+        embedPreview.src = embedUrl || "about:blank";
+        embedPreview.style.height = `${height}px`;
+      }
       updateEmbedModeUi();
       if (embedDefaultButton) {
         const defaultMode = embedDefault?.value === "dynamic" ? "dynamic" : "standard";
@@ -369,7 +373,7 @@ wireDashboard = async function () {
       document.querySelector("#topbar-section").textContent = "Embed Builder";
       document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / EMBED BUILDER";
       document.querySelector("#dashboard-title").textContent = "Pokaż swój profil.";
-      document.querySelector("#dashboard-subtitle").textContent = "Wybierz zwykły lub dynamiczny embed i zobacz podgląd.";
+      document.querySelector("#dashboard-subtitle").textContent = "Wybierz wariant embedu i ustaw jego układ.";
       sessionStorage.setItem("sqezen_dashboard_tab", "embed");
       updateEmbed();
     };
@@ -404,7 +408,7 @@ wireDashboard = async function () {
       event.stopImmediatePropagation();
       document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === tab));
       document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
-      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed Builder", "SQEZEN / EMBED BUILDER", "Pokaż swój profil.", "Wybierz zwykły lub dynamiczny embed i zobacz podgląd."];
+      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed Builder", "SQEZEN / EMBED BUILDER", "Pokaż swój profil.", "Wybierz wariant embedu i ustaw jego układ."];
       document.querySelector("#topbar-section").textContent = copy[0];
       document.querySelector("#dashboard-eyebrow").textContent = copy[1];
       document.querySelector("#dashboard-title").textContent = copy[2];
