@@ -123,6 +123,7 @@ html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enha
 .badge-card:hover,.badge-card.is-selected{background:rgba(88,101,238,.1);border-color:var(--blue-accent);transform:translateY(-1px)}
 .badge-card-symbol{display:grid;width:29px;height:29px;place-items:center;background:rgba(255,255,255,.05);border-radius:9px}
 .badge-symbol{display:inline-grid;place-items:center;font-family:"Segoe UI Symbol",Inter,ui-sans-serif,sans-serif;font-size:1.1rem;font-weight:900;line-height:1}
+.badge-symbol svg{display:block;width:1.3em;height:1.3em;overflow:visible}
 .badge-card .badge-symbol{font-size:1.05rem}
 .badge-card-copy{display:grid;min-width:0;gap:4px}
 .badge-card-copy strong{overflow:hidden;color:var(--text);font-size:.73rem;text-overflow:ellipsis;white-space:nowrap}
