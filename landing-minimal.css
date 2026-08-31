@@ -1,5 +1,5 @@
-.landing-reference-page{min-height:100vh;background:#000;color:#f5f6fb;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
-.landing-reference-layout{display:grid;width:min(100%,1220px);min-height:100vh;grid-template-columns:minmax(360px,1fr) minmax(430px,550px);align-items:center;gap:clamp(60px,10vw,150px);margin:0 auto;padding:54px 30px}
+.landing-reference-page{min-height:100svh;background:#000;color:#f5f6fb;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+.landing-reference-layout{display:grid;width:min(100%,1220px);min-height:100svh;grid-template-columns:minmax(360px,1fr) minmax(430px,550px);align-items:center;gap:clamp(60px,10vw,150px);margin:0 auto;padding:54px 30px}
 .landing-reference-copy{padding-bottom:3px}
 .landing-reference-copy h1{margin:0;color:#f5f6fb;font-size:clamp(4.2rem,7vw,6.6rem);font-weight:450;letter-spacing:-.105em;line-height:.9}
 .landing-reference-tagline,.landing-reference-profile-tagline{margin:25px 0 0;color:#c5cad5;font-size:clamp(1.35rem,2.3vw,1.8rem);font-weight:400;letter-spacing:-.045em}
