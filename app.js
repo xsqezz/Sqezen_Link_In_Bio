@@ -92,6 +92,26 @@ icon = (name) => PLATFORM_ICON_NAMES.includes(name) ? brandIcon(name) : baseIcon
 const baseProfileIcon = profileIcon;
 profileIcon = (link) => { const value = String(link?.icon || "").toLowerCase(); if (PLATFORM_ICON_NAMES.includes(value) && value !== "website") return value; const url = String(link?.url || "").toLowerCase(); const matches = [["snapchat", "snapchat"], ["youtube", "youtube"], ["discord", "discord"], ["spotify", "spotify"], ["instagram", "instagram"], ["x", "x.com"], ["tiktok", "tiktok"], ["telegram", "t.me"], ["soundcloud", "soundcloud"], ["paypal", "paypal"], ["github", "github"], ["roblox", "roblox"], ["xbox", "xbox"], ["gitlab", "gitlab"], ["twitch", "twitch"], ["reddit", "reddit"], ["namemc", "namemc"], ["steam", "steam"], ["threads", "threads"], ["linkedin", "linkedin"], ["pinterest", "pinterest"], ["email", "mailto:"]]; const detected = matches.find(([, needle]) => url.includes(needle)); return detected?.[0] || baseProfileIcon(link); };
 iconOptions = (selected = "website") => PLATFORM_ICON_NAMES.map((value) => `<option value="${value}"${selected === value ? " selected" : ""}>${escapeHtml(PLATFORM_ICON_LABELS[value])}</option>`).join("");
+const baseWirePublic = wirePublic;
+wirePublic = function () {
+  baseWirePublic();
+  const audio = document.querySelector("[data-profile-audio]");
+  if (!audio) return;
+  audio.autoplay = true;
+  audio.preload = "auto";
+  const unlockEvents = ["pointerdown", "keydown", "touchstart"];
+  const removeUnlockListeners = () => unlockEvents.forEach((eventName) => document.removeEventListener(eventName, unlockAudio));
+  const unlockAudio = () => {
+    if (!document.contains(audio)) {
+      removeUnlockListeners();
+      return;
+    }
+    audio.play().then(removeUnlockListeners).catch(() => {});
+  };
+  audio.addEventListener("play", removeUnlockListeners, { once: true });
+  unlockEvents.forEach((eventName) => document.addEventListener(eventName, unlockAudio, { passive: true }));
+  unlockAudio();
+};
 const basePublicProfile = publicProfile;
 publicProfile = async function (username) {
   const markup = await basePublicProfile(username);
