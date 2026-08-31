@@ -128,17 +128,17 @@ button.profile-asset-preview{cursor:pointer}
 .dashboard-sidebar .sidebar-bottom{display:none}
 .dashboard-sidebar .account-avatar{color:#fff;background:var(--blue-accent,#5865ee)}
 @media(min-width:1001px){.dashboard-sidebar .sidebar-account{margin-top:auto}}
-.dynamic-embed-page .dynamic-audio-widget{position:fixed;right:auto;bottom:28px;left:28px;z-index:4;display:grid;width:min(360px,calc(100% - 56px));gap:12px;padding:12px 14px 13px;background:rgba(5,5,7,.86);border:1px solid rgba(255,255,255,.14);border-radius:16px;box-shadow:0 16px 42px rgba(0,0,0,.42);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.dynamic-embed-page .dynamic-audio-widget{position:fixed;right:auto;bottom:28px;left:28px;z-index:4;display:grid;width:min(360px,calc(100% - 56px));gap:12px;padding:13px 15px 14px;background:rgba(var(--profile-card-rgb,17,17,22),.74);border:1px solid rgba(255,255,255,.15);border-radius:30px;box-shadow:0 24px 70px rgba(0,0,0,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .dynamic-audio-controls{display:flex;align-items:center;gap:8px}
-.dynamic-audio-control{display:grid;width:33px;height:33px;place-items:center;padding:0;color:#aeb6c4;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:pointer;transition:color .18s ease,background .18s ease,border-color .18s ease,transform .18s ease}
-.dynamic-audio-control:hover{color:#fff;background:rgba(255,255,255,.1);border-color:rgba(88,101,238,.7);transform:translateY(-1px)}
+.dynamic-audio-control{display:grid;width:33px;height:33px;place-items:center;padding:0;color:var(--profile-text,var(--text));background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.15);border-radius:10px;cursor:pointer;transition:color .18s ease,background .18s ease,border-color .18s ease,transform .18s ease}
+.dynamic-audio-control:hover{color:var(--profile-text,var(--text));background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);transform:translateY(-1px)}
 .dynamic-audio-control svg{width:15px;height:15px}
-.dynamic-audio-play{width:38px;height:38px;color:#fff;background:var(--blue-accent);border-color:var(--blue-accent);border-radius:50%}
-.dynamic-audio-play:hover,.dynamic-audio-play.is-playing{color:#fff;background:var(--blue-accent-hover);border-color:var(--blue-accent-hover)}
+.dynamic-audio-play{width:33px;height:33px;color:var(--profile-text,var(--text));background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.28);border-radius:10px}
+.dynamic-audio-play:hover,.dynamic-audio-play.is-playing{color:var(--profile-text,var(--text));background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.42)}
 .dynamic-audio-progress-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px}
-.dynamic-audio-progress-row time{min-width:27px;color:#b9c1ce;font-size:.58rem;font-variant-numeric:tabular-nums;line-height:1}
-.dynamic-audio-progress{width:100%;height:4px;min-height:0;padding:0;appearance:none;background:linear-gradient(90deg,var(--blue-accent) 0 var(--audio-progress,0%),rgba(255,255,255,.22) var(--audio-progress,0%) 100%);border:0;border-radius:999px;cursor:pointer;outline:0;color-scheme:dark}
-.dynamic-audio-progress::-webkit-slider-thumb{width:11px;height:11px;appearance:none;background:#fff;border:0;border-radius:50%;box-shadow:0 0 0 2px rgba(88,101,238,.32);transition:transform .15s ease}
+.dynamic-audio-progress-row time{min-width:27px;color:var(--dim);font-size:.58rem;font-variant-numeric:tabular-nums;line-height:1}
+.dynamic-audio-progress{width:100%;height:4px;min-height:0;padding:0;appearance:none;background:linear-gradient(90deg,var(--profile-text,var(--text)) 0 var(--audio-progress,0%),rgba(255,255,255,.22) var(--audio-progress,0%) 100%);border:0;border-radius:999px;cursor:pointer;outline:0;color-scheme:dark}
+.dynamic-audio-progress::-webkit-slider-thumb{width:11px;height:11px;appearance:none;background:var(--profile-text,var(--text));border:0;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.14);transition:transform .15s ease}
 .dynamic-audio-progress::-webkit-slider-thumb:hover{transform:scale(1.15)}
-.dynamic-audio-progress::-moz-range-thumb{width:11px;height:11px;background:#fff;border:0;border-radius:50%;box-shadow:0 0 0 2px rgba(88,101,238,.32)}
+.dynamic-audio-progress::-moz-range-thumb{width:11px;height:11px;background:var(--profile-text,var(--text));border:0;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.14)}
 @media(max-width:760px){.dynamic-embed-page .dynamic-audio-widget{right:18px;bottom:18px;left:18px;width:auto}}
