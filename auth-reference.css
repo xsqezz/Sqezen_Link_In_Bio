@@ -1,0 +1,41 @@
+.auth-reference-page{min-height:100svh;background:#000;color:#f5f6fb;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+.auth-reference-shell{width:min(1296px,calc(100% - 64px));margin:0 auto}
+.auth-reference-header{display:flex;min-height:102px;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.18)}
+.auth-reference-brand{color:#f5f6fb;font-size:1.14rem;font-weight:600;letter-spacing:-.08em}
+.auth-reference-home{display:inline-flex;align-items:center;gap:13px;color:#f5f6fb;font-size:.95rem;letter-spacing:-.035em;transition:color .18s ease}
+.auth-reference-home:hover{color:var(--blue-accent)}
+.auth-reference-home svg{width:22px;height:22px;color:var(--blue-accent);stroke-width:1.8}
+.auth-reference-main{display:grid;min-height:calc(100svh - 165px);grid-template-columns:minmax(0,1fr) minmax(440px,540px);gap:clamp(70px,11vw,170px);align-items:center;padding:55px 20px 70px}
+.auth-reference-pitch{padding-bottom:4px}
+.auth-reference-pitch h1{max-width:620px;margin:0;color:#f5f6fb;font-size:clamp(4.1rem,7vw,7rem);font-weight:450;letter-spacing:-.115em;line-height:.88}
+.auth-reference-pitch h1 em{color:var(--blue-accent);font-style:normal}
+.auth-reference-pitch>p:not(.auth-reference-eyebrow){max-width:430px;margin:31px 0 0;color:#c5cad5;font-size:1.05rem;line-height:1.6;letter-spacing:-.035em}
+.auth-reference-eyebrow{margin:0 0 24px;color:var(--blue-accent);font-size:.67rem;font-weight:800;letter-spacing:.17em}
+.auth-reference-actions{display:flex;align-items:center;gap:42px;margin-top:48px}
+.auth-reference-actions a{min-height:50px;border-radius:3px;font-size:1rem;font-weight:450;letter-spacing:-.035em}
+.auth-reference-actions .button-ghost{min-height:48px;padding:0 0 12px;background:transparent;border:0;border-bottom:2px solid var(--blue-accent);border-radius:0}
+.auth-reference-actions .button-ghost:hover{color:#fff;background:transparent;transform:none}
+.auth-reference-actions .button-primary{padding:0 25px;box-shadow:0 14px 36px rgba(88,101,238,.15)}
+.auth-reference-card{width:100%;padding:42px 40px 34px;background:#000;border:1px solid rgba(255,255,255,.28);border-radius:19px;box-shadow:none;animation:fadeUp .4s ease both}
+.auth-reference-card-head{display:flex;align-items:center;justify-content:flex-end;margin-bottom:43px}
+.auth-reference-step{color:var(--blue-accent);font-size:.86rem;font-weight:600;letter-spacing:.02em}
+.auth-reference-card h2{margin:0;color:#f5f6fb;font-size:2.1rem;font-weight:500;letter-spacing:-.085em;line-height:1}
+.auth-reference-card .form-intro{margin:17px 0 0;color:#c5cad5;font-size:1.02rem;line-height:1.5;letter-spacing:-.035em}
+.auth-reference-card .stack-form{gap:19px;margin-top:29px}
+.auth-reference-card .field-label{gap:8px;color:#f5f6fb;font-size:1rem;font-weight:500;letter-spacing:-.035em}
+.auth-reference-card .field-label input{min-height:60px;padding:0 18px;color:#f5f6fb;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.18);border-radius:8px;font-size:1rem}
+.auth-reference-card .field-label input:focus{background:rgba(255,255,255,.1);border-color:var(--blue-accent)}
+.auth-reference-card .field-label input::placeholder{color:#8b929e}
+.auth-reference-card .code-input{text-align:center;font-size:1.35rem!important;letter-spacing:.3em}
+.auth-reference-card .button-wide{min-height:60px;margin-top:4px;border-radius:8px;font-size:1rem}
+.auth-reference-card .form-note{margin-top:21px;color:#c5cad5;font-size:.95rem;line-height:1.5}
+.auth-reference-card .form-note a{color:var(--blue-accent);text-decoration:none}
+.auth-reference-card .text-button{justify-self:start;margin-top:1px;color:#aeb5c1;font-size:.88rem;text-decoration:underline;text-underline-offset:4px}
+.auth-reference-card .text-button:hover{color:#fff}
+.auth-reference-card .back-link{margin-top:28px;padding-top:25px;border-top:1px solid rgba(255,255,255,.18);color:#f5f6fb;font-size:.95rem}
+.auth-reference-card .back-link svg{color:#f5f6fb}
+.auth-reference-card .form-feedback{font-size:.85rem}
+.auth-reference-footer{display:flex;justify-content:space-between;gap:20px;padding:0 20px 28px;color:#6e7682;font-size:.68rem;letter-spacing:.06em}
+.auth-reference-footer span:last-child{color:#939aa5}
+@media(max-width:900px){.auth-reference-main{grid-template-columns:1fr;gap:52px;padding-top:55px}.auth-reference-pitch{max-width:620px}.auth-reference-card{max-width:540px;justify-self:center}.auth-reference-footer{padding-top:10px}}
+@media(max-width:560px){.auth-reference-shell{width:calc(100% - 32px)}.auth-reference-header{min-height:76px}.auth-reference-brand{font-size:1rem}.auth-reference-home{font-size:.75rem}.auth-reference-home svg{width:18px;height:18px}.auth-reference-main{gap:39px;padding:47px 0 55px}.auth-reference-pitch h1{font-size:clamp(3.6rem,16vw,5.5rem)}.auth-reference-pitch>p:not(.auth-reference-eyebrow){margin-top:22px;font-size:.92rem}.auth-reference-eyebrow{margin-bottom:18px;font-size:.58rem}.auth-reference-actions{gap:23px;margin-top:34px}.auth-reference-actions a{font-size:.86rem}.auth-reference-actions .button-primary{padding-inline:17px}.auth-reference-card{padding:28px 20px 25px;border-radius:15px}.auth-reference-card-head{margin-bottom:34px}.auth-reference-card h2{font-size:1.8rem}.auth-reference-card .form-intro{font-size:.9rem}.auth-reference-card .field-label{font-size:.87rem}.auth-reference-card .field-label input{min-height:54px;font-size:.9rem}.auth-reference-card .button-wide{min-height:54px;font-size:.9rem}.auth-reference-card .form-note,.auth-reference-card .back-link{font-size:.8rem}.auth-reference-footer{padding:0 0 20px;font-size:.58rem}}
