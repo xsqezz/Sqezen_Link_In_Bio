@@ -70,5 +70,9 @@ body[data-route="/dashboard"]{background:#000!important}
 .brand>span:not(.brand-mark),.public-brand>span:not(.brand-mark){display:none}
 .auth-reference-brand{display:none}
 .auth-reference-header{justify-content:flex-end!important}
+
+/* Keep the preview card free of dashboard-only cursor decoration. */
+html.cursor-enhanced:has(#dashboard-preview:hover) #dashboard-preview,html.cursor-enhanced:has(#dashboard-preview:hover) #dashboard-preview *{cursor:auto!important}
+html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enhanced:has(#dashboard-preview:hover) .site-cursor{opacity:0!important}
 @media(max-width:1000px){.dashboard-layout{gap:24px}.dashboard-grid{grid-template-columns:1fr}.preview-column{order:-1}.preview-sticky{position:static}.dashboard-preview{min-height:420px}}
 @media(max-width:760px){.dashboard-page{width:calc(100% - 32px)}.dashboard-topbar{min-height:72px}.dashboard-layout{padding-top:28px}.dashboard-intro h1{font-size:clamp(3rem,13vw,4.6rem)}.editor-panel,.preview-sticky{padding:19px 16px}.custom-carousel-nav{margin-top:17px}.empty-page{padding:110px 0 80px}}
