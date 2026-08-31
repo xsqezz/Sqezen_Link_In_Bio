@@ -27,7 +27,7 @@ const icons = {
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
 
-const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", cursorUrl: "", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
+const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", cursorUrl: "", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
 
 function icon(name) { return icons[name] || icons.link; }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char])); }
@@ -49,13 +49,41 @@ sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), curs
 const NAME_EFFECT_VALUES = ["none", "glitch", "typewrite", "rainbow", "shuffle", "gradient", "soft-glow", "outline"];
 const NAME_PARTICLE_VALUES = ["none", "blue", "green", "pink", "red", "white", "yellow"];
 let lastProfileParticles = "none";
+const BADGE_DEFINITIONS = [
+  { id: "staff", name: "Staff", description: "Be a part of the sqezen.lol staff team.", symbol: "⚒" },
+  { id: "helper", name: "Helper", description: "Be active and help users in the community.", symbol: "💡" },
+  { id: "premium", name: "Premium", description: "Purchase the premium package.", symbol: "◆" },
+  { id: "verified", name: "Verified", description: "Purchase or be a known content creator.", symbol: "✹" },
+  { id: "donor", name: "Donor", description: "Donate at least 10€ to sqezen.lol.", symbol: "$" },
+  { id: "gifter", name: "Gifter", description: "Gift a sqezen.lol product to another user.", symbol: "✚" },
+  { id: "image-host", name: "Image Host", description: "Purchase the Image Host.", symbol: "★" },
+  { id: "domain-legend", name: "Domain Legend", description: "Add a public custom domain to sqezen.lol Image Host.", symbol: "◈" },
+  { id: "server-booster", name: "Server Booster", description: "Boost the sqezen.lol Discord server.", symbol: "♨" },
+  { id: "hone-gg", name: "Hone.gg", description: "Earned by redeeming the Hone.gg sqezen.lol reward.", symbol: "◔" },
+  { id: "bug-hunter", name: "Bug Hunter", description: "Report a bug to the sqezen.lol team.", symbol: "✿" },
+  { id: "og", name: "OG", description: "Be an early supporter of sqezen.lol.", symbol: "▮" },
+  { id: "summer-2026", name: "Summer 2026", description: "Exclusive badge from the 2026 summer sale.", symbol: "☀" },
+  { id: "easter-2026", name: "Easter 2026", description: "Exclusive badge from the 2026 easter sale.", symbol: "♢" },
+  { id: "christmas-2025", name: "Christmas 2025", description: "Exclusive badge from the 2025 winter sale.", symbol: "❄" },
+  { id: "easter-2025", name: "Easter 2025", description: "Exclusive badge from the 2025 easter sale.", symbol: "◉" },
+  { id: "christmas-2024", name: "Christmas 2024", description: "Exclusive badge from the 2024 winter sale.", symbol: "❯" },
+  { id: "the-million", name: "The Million", description: "Celebration badge for 1M users.", symbol: "♨" },
+  { id: "winner", name: "Winner", description: "Win a sqezen.lol event.", symbol: "♛" },
+  { id: "second-place", name: "Second Place", description: "Get second place in a sqezen.lol event.", symbol: "●" },
+  { id: "third-place", name: "Third Place", description: "Get third place in a sqezen.lol event.", symbol: "●" }
+];
+const BADGE_VALUES = BADGE_DEFINITIONS.map((badge) => badge.id);
+const BADGE_MAX = 8;
+let lastProfileBadges = [];
 const baseNameSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => {
   const value = baseNameSanitizeCustomization(raw);
   const usernameEffect = String(raw?.usernameEffect || "");
   const nameParticles = String(raw?.nameParticles || "");
+  const badges = Array.isArray(raw?.badges) ? raw.badges.filter((badge) => BADGE_VALUES.includes(String(badge))).map(String).filter((badge, index, list) => list.indexOf(badge) === index).slice(0, BADGE_MAX) : [];
   lastProfileParticles = NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none";
-  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(usernameEffect) ? usernameEffect : value.usernameEffect, nameParticles: lastProfileParticles };
+  lastProfileBadges = badges;
+  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(usernameEffect) ? usernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges };
 };
 const baseReadCustomization = readCustomization;
 readCustomization = (form) => {
@@ -67,13 +95,24 @@ const baseSetCustomization = setCustomization;
 setCustomization = (form, raw) => {
   const config = baseSetCustomization(form, raw);
   if (form?.elements.name_particles) form.elements.name_particles.value = config.nameParticles || "none";
+  form?.querySelectorAll("[data-badge-option]").forEach((option) => {
+    const selected = config.badges?.includes(option.dataset.badgeOption);
+    option.classList.toggle("is-selected", selected);
+    const action = option.querySelector("[data-badge-action]");
+    if (action) action.textContent = selected ? "Selected" : "Select";
+  });
   return config;
 };
+const baseReadBadgesCustomization = readCustomization;
+readCustomization = (form) => ({ ...baseReadBadgesCustomization(form), badges: Array.from(form?.querySelectorAll("[data-badge-option].is-selected") || []).map((option) => option.dataset.badgeOption).filter((badge) => BADGE_VALUES.includes(badge)).slice(0, BADGE_MAX) });
 function feedback(message, error = false) { const node = document.querySelector("#form-feedback"); if (!node) return; node.textContent = message; node.className = `form-feedback ${message ? error ? "is-error" : "is-success" : ""}`; }
 function busy(button, value, label = "Pracuję…") { if (!button) return; if (value) { button.dataset.original = button.innerHTML; button.disabled = true; button.innerHTML = `<span class="button-spinner"></span>${escapeHtml(label)}`; } else { button.disabled = false; button.innerHTML = button.dataset.original || button.innerHTML; } }
 function errorText(error) { const message = String(error?.message || error || "").toLowerCase(); if (message.includes("invalid login")) return "Nieprawidłowy e-mail lub hasło."; if (message.includes("already registered")) return "To konto już istnieje. Zaloguj się."; if (message.includes("rate limit")) return "Za dużo prób. Odczekaj chwilę."; if (message.includes("expired")) return "Kod wygasł. Wyślij nowy."; if (message.includes("invalid token") || message.includes("otp is invalid")) return "Kod jest nieprawidłowy."; if (message.includes("duplicate") || message.includes("unique")) return "Ta nazwa użytkownika jest już zajęta."; if (message.includes("fetch") || message.includes("network")) return "Nie udało się połączyć z serwerem."; return "Coś poszło nie tak. Spróbuj ponownie."; }
 function layout(content, pageClass = "site-page") { return `<div class="${pageClass}"><header class="site-nav"><a class="brand" href="/"><span class="brand-mark">s</span><span>sqezen</span></a><nav class="nav-actions"><a class="nav-link" href="/">O projekcie</a><a class="button button-small button-ghost" href="/login">Zaloguj się</a><a class="button button-small button-primary" href="/register">Stwórz profil ${icon("arrow")}</a></nav></header>${content}<footer class="site-footer"><span>sqezen.lol</span><span>your space online</span></footer></div>`; }
 function button(href, label, primary = false) { return `<a class="button ${primary ? "button-primary" : "button-ghost"}" href="${escapeHtml(href)}">${escapeHtml(label)} ${icon("arrow")}</a>`; }
+function badgeIcon(badge) { return `<span class="badge-symbol badge-${escapeHtml(badge.id)}" aria-hidden="true">${escapeHtml(badge.symbol)}</span>`; }
+function badgePills(badges = []) { return badges.map((id) => BADGE_DEFINITIONS.find((badge) => badge.id === id)).filter(Boolean).map((badge) => `<span class="profile-badge" title="${escapeHtml(badge.name)}" aria-label="${escapeHtml(badge.name)}">${badgeIcon(badge)}</span>`).join(""); }
+function badgeCards() { return BADGE_DEFINITIONS.map((badge) => `<button class="badge-card" data-badge-option="${escapeHtml(badge.id)}" type="button"><span class="badge-card-symbol">${badgeIcon(badge)}</span><span class="badge-card-copy"><strong>${escapeHtml(badge.name)}</strong><small>${escapeHtml(badge.description)}</small></span><span class="badge-card-action" data-badge-action>Select</span></button>`).join(""); }
 
 function landing() { return layout(`<main class="landing-main"><section class="landing-hero"><div class="hero-copy"><p class="eyebrow"><i class="eyebrow-dot"></i> YOUR SPACE ONLINE</p><h1>Twój internet.<br><em>W jednym miejscu.</em></h1><p class="hero-lead">Minimalistyczny profil bio dla ludzi, którzy budują, tworzą i są gdzieś pomiędzy. Jeden adres. Twoje zasady.</p><div class="hero-actions">${button("/register", "Zacznij za darmo", true)}${button("/login", "Zaloguj się")}</div><div class="trust-row"><span>${icon("check")} Bez reklam</span><span>${icon("lock")} Prywatne konto</span><span>${icon("link")} Jeden link</span></div></div><div class="landing-showcase"><div class="showcase-chrome"><span><i></i><i></i><i></i></span><small>sqezen.lol / profile</small><b>${icon("arrowUp")}</b></div><div class="showcase-profile"><div class="showcase-top"><span class="showcase-avatar">s</span><span class="showcase-menu">•••</span></div><p class="showcase-handle">@sqezen</p><h2>sqezen</h2><p class="showcase-bio">developer <b>·</b> gamer <b>·</b> digital chaos</p><div class="showcase-links"><div>${icon("github")}<span>GitHub</span><b>↗</b></div><div>${icon("discord")}<span>Discord</span><b>↗</b></div><div>${icon("youtube")}<span>YouTube</span><b>↗</b></div></div><div class="showcase-footer"><span>online now</span><span>sqezen.lol/sqezen</span></div></div></div></section><section class="landing-stats"><div><strong>01</strong><span>Stwórz swój profil</span></div><div><strong>∞</strong><span>Możliwości personalizacji</span></div><div><strong>24/7</strong><span>Twój adres jest online</span></div></section><section class="landing-manifesto"><div><p class="eyebrow">DLACZEGO SQEZEN</p><h2>Ma wyglądać jak Ty,<br><em>nie jak kolejny link-in-bio.</em></h2></div><div class="manifesto-copy"><p>Profil, który jest szybki, spokojny i gotowy do udostępnienia. Zbierasz linki, ustawiasz klimat i dostajesz własny adres pod sqezen.lol.</p><div class="manifesto-list"><div><span>01</span><strong>Wyraźny profil</strong><small>Nick, opis i linki bez zbędnego hałasu.</small></div><div><span>02</span><strong>Pełna kontrola</strong><small>Kolory, karta, tło, font i układ w jednym panelu.</small></div><div><span>03</span><strong>Gotowe do wysłania</strong><small>Jeden adres dla znajomych, społeczności i bio.</small></div></div></div></section><section class="landing-cta"><div><p class="eyebrow">MAKE IT YOURS</p><h2>Masz już miejsce<br>dla swoich linków.</h2></div>${button("/register", "Zarezerwuj nazwę", true)}</section></main>`, "site-page landing-page"); }
 
@@ -112,18 +151,31 @@ const baseDashboardWithEmbed = dashboard;
 dashboard = () => baseDashboardWithEmbed().replace('<button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button>', '<button class="sidebar-item" data-dashboard-tab="embed" type="button">${icon("link")}<span>Embed</span><kbd>04</kbd></button><button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button>').replace('<section data-tab-panel="account" hidden>', `<section data-tab-panel="embed" hidden><div class="panel-heading"><div><span class="panel-index">EMBED</span><h2>Dynamic embed</h2><p>Osadź aktualny profil na stronie, portfolio albo w swoim panelu.</p></div><button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button></div><div class="embed-code-card"><label class="field-label">Adres embedu<textarea id="embed-code" rows="3" readonly></textarea><small>Ten adres zawsze pobiera najnowsze dane Twojego profilu.</small></label><div class="embed-preview-shell"><iframe id="embed-preview" title="Podgląd dynamicznego embedu" loading="lazy"></iframe></div></div></section><section data-tab-panel="account" hidden>`);
 const baseDashboardWithEmbedNav = dashboard;
 dashboard = () => baseDashboardWithEmbedNav().replace('<button class="sidebar-item" data-dashboard-tab="account" type="button">', `<button class="sidebar-item" data-dashboard-tab="embed" type="button">${icon("link")}<span>Embed</span><kbd>04</kbd></button><button class="sidebar-item" data-dashboard-tab="account" type="button">`);
+const baseDashboardWithBadges = dashboard;
+dashboard = () => baseDashboardWithBadges().replace('<button class="sidebar-item" data-dashboard-tab="embed" type="button">', `<button class="sidebar-item" data-dashboard-tab="badges" type="button">${icon("sparkle")}<span>Badges</span><kbd>05</kbd></button><button class="sidebar-item" data-dashboard-tab="embed" type="button">`).replace('<section data-tab-panel="embed" hidden>', `<section data-tab-panel="badges" hidden><div class="panel-heading"><div><span class="panel-index">BADGES</span><h2>Twój zestaw odznak</h2><p>Wybierz odznaki, które mają pojawić się przy Twoim nicku.</p></div><span class="badge-count" data-badge-count>0 / ${BADGE_MAX}</span></div><div class="badges-note">Możesz wybrać maksymalnie ${BADGE_MAX} odznak. Zmiany opublikują się po zapisaniu profilu.</div><div class="badge-grid">${badgeCards()}</div></section><section data-tab-panel="embed" hidden>`);
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
   const particles = String(document.querySelector("#profile-form")?.elements.name_particles?.value || "none");
+  const selectedBadges = Array.from(document.querySelectorAll("#profile-form [data-badge-option].is-selected"))
+    .map((option) => option.dataset.badgeOption)
+    .filter((badge) => BADGE_VALUES.includes(badge))
+    .slice(0, BADGE_MAX);
   document.querySelectorAll(".preview-name").forEach((node) => {
     node.dataset.name = String(node.textContent || "").trim();
     node.querySelector(".name-particles")?.remove();
+    node.parentElement?.querySelector(".preview-badges")?.remove();
     if (NAME_PARTICLE_VALUES.includes(particles) && particles !== "none") {
       const particleLayer = document.createElement("span");
       particleLayer.className = `name-particles is-${particles}`;
       particleLayer.setAttribute("aria-hidden", "true");
       node.appendChild(particleLayer);
+    }
+    if (selectedBadges.length) {
+      const badgeRow = document.createElement("div");
+      badgeRow.className = "preview-badges";
+      badgeRow.innerHTML = badgePills(selectedBadges);
+      node.after(badgeRow);
     }
   });
   return result;
@@ -174,6 +226,38 @@ wireDashboard = async function () {
     form.addEventListener("change", syncParticlePicker);
     document.querySelector("#reset-customization")?.addEventListener("click", () => setTimeout(syncParticlePicker));
     syncParticlePicker();
+  }
+  const badgeTab = document.querySelector('[data-dashboard-tab="badges"]');
+  const badgePanel = document.querySelector('[data-tab-panel="badges"]');
+  const badgeOptions = Array.from(document.querySelectorAll("[data-badge-option]"));
+  const badgeCount = document.querySelector("[data-badge-count]");
+  if (badgeTab && badgePanel && badgeOptions.length && badgeTab.dataset.bound !== "true") {
+    badgeTab.dataset.bound = "true";
+    const syncBadgePicker = () => {
+      const selected = badgeOptions.filter((option) => option.classList.contains("is-selected")).length;
+      badgeOptions.forEach((option) => { const active = option.classList.contains("is-selected"); const action = option.querySelector("[data-badge-action]"); option.setAttribute("aria-pressed", String(active)); if (action) action.textContent = active ? "Selected" : "Select"; });
+      if (badgeCount) badgeCount.textContent = `${selected} / ${BADGE_MAX}`;
+    };
+    badgeOptions.forEach((option) => option.addEventListener("click", () => {
+      const active = option.classList.contains("is-selected");
+      if (!active && badgeOptions.filter((item) => item.classList.contains("is-selected")).length >= BADGE_MAX) return feedback(`Możesz wybrać maksymalnie ${BADGE_MAX} odznak.`, true);
+      option.classList.toggle("is-selected", !active);
+      syncBadgePicker();
+      renderPreview();
+    }));
+    const showBadges = () => {
+      document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item === badgeTab));
+      document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel !== badgePanel; });
+      document.querySelector("#topbar-section").textContent = "Badges";
+      document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / BADGES";
+      document.querySelector("#dashboard-title").textContent = "Pokaż, kim jesteś.";
+      document.querySelector("#dashboard-subtitle").textContent = "Wybierz odznaki, które wyróżnią Twój profil.";
+      sessionStorage.setItem("sqezen_dashboard_tab", "badges");
+      syncBadgePicker();
+    };
+    badgeTab.addEventListener("click", showBadges);
+    syncBadgePicker();
+    if (sessionStorage.getItem("sqezen_dashboard_tab") === "badges") showBadges();
   }
   const embedTab = document.querySelector('[data-dashboard-tab="embed"]');
   const embedPanel = document.querySelector('[data-tab-panel="embed"]');
@@ -253,13 +337,20 @@ wireDashboard = async function () {
 const baseWirePublic = wirePublic;
 wirePublic = function () {
   baseWirePublic();
-  document.querySelectorAll(".public-card h1").forEach((node) => {
+  document.querySelectorAll(".public-card h1,.embed-profile-card h1").forEach((node) => {
     node.dataset.name = String(node.textContent || "").trim();
     if (NAME_PARTICLE_VALUES.includes(lastProfileParticles) && lastProfileParticles !== "none") {
       const particleLayer = document.createElement("span");
       particleLayer.className = `name-particles is-${lastProfileParticles}`;
       particleLayer.setAttribute("aria-hidden", "true");
       node.appendChild(particleLayer);
+    }
+    const badges = badgePills(lastProfileBadges);
+    if (badges) {
+      const badgeRow = document.createElement("div");
+      badgeRow.className = "profile-badges";
+      badgeRow.innerHTML = badges;
+      node.after(badgeRow);
     }
   });
   const audio = document.querySelector("[data-profile-audio]");
