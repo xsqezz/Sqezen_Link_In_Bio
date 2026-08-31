@@ -20,9 +20,13 @@ const icons = {
   palette: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 0 16h1.2a1.8 1.8 0 0 0 1.2-3.1 1.8 1.8 0 0 1 1.2-3.1H18A2 2 0 0 0 20 12a8 8 0 0 0-8-8Z"/><path d="M8 10h.1M10 7h.1M7 14h.1"/></svg>',
   pencil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6 4 4M5 19l3.5-.8L18.5 8a2.1 2.1 0 0 0-3-3L5.5 15.2 5 19Z"/></svg>',
   plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="m8 5 11 7-11 7V5Z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
+  rewind: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M11 6 4 12l7 6V6Zm9 0-7 6 7 6V6Z"/></svg>',
   settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.5-1.2.9-1.9-2.1-2.1-1.9.9-1.2-.5-.7-2h-3l-.7 2-1.2.5-1.9-.9-2.1 2.1.9 1.9-.5 1.2-2 .7v3l2 .7.5 1.2-.9 1.9 2.1 2.1 1.9-.9 1.2.5.7 2h3l.7-2 1.2-.5 1.9.9 2.1-2.1-.9-1.9.5-1.2 2-.7Z"/></svg>',
   sparkle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>',
   volume: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 3V7l-4 3H5ZM16 9.5a4 4 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10"/></svg>',
+  forward: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="m13 6 7 6-7 6V6ZM4 6l7 6-7 6V6Z"/></svg>',
   tiktok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5v9.2a4 4 0 1 1-3-3.9M14 5c.5 2.2 1.9 3.6 4 4"/></svg>',
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
@@ -657,6 +661,59 @@ wirePublic = function () {
   unlockEvents.forEach((eventName) => document.addEventListener(eventName, unlockAudio, { passive: true }));
   unlockAudio();
 };
+const baseWirePublicWithDynamicControls = wirePublic;
+wirePublic = function () {
+  baseWirePublicWithDynamicControls();
+  const widget = document.querySelector(".dynamic-audio-widget");
+  const audio = widget?.querySelector("[data-profile-audio]");
+  const progress = widget?.querySelector("[data-audio-progress]");
+  if (!widget || !audio || !progress || widget.dataset.controlsBound === "true") return;
+  widget.dataset.controlsBound = "true";
+  const playButton = widget.querySelector("[data-audio-toggle]");
+  const iconNode = widget.querySelector("[data-audio-icon]");
+  const rewindButton = widget.querySelector("[data-audio-rewind]");
+  const forwardButton = widget.querySelector("[data-audio-forward]");
+  const currentTime = widget.querySelector("[data-audio-current]");
+  const durationTime = widget.querySelector("[data-audio-duration]");
+  const formatTime = (value) => {
+    if (!Number.isFinite(value) || value < 0) return "0:00";
+    const seconds = Math.floor(value);
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  };
+  const updateProgress = () => {
+    const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+    const current = Math.max(0, Math.min(Number(audio.currentTime) || 0, duration || Number.MAX_SAFE_INTEGER));
+    progress.max = String(duration);
+    progress.value = String(current);
+    progress.style.setProperty("--audio-progress", `${duration ? (current / duration) * 100 : 0}%`);
+    if (currentTime) currentTime.textContent = formatTime(current);
+    if (durationTime) durationTime.textContent = formatTime(duration);
+  };
+  const updateState = () => {
+    const playing = !audio.paused && !audio.ended;
+    playButton?.classList.toggle("is-playing", playing);
+    playButton?.setAttribute("aria-label", playing ? "Wstrzymaj audio" : "Odtwórz audio");
+    if (iconNode) iconNode.innerHTML = icon(playing ? "pause" : "play");
+    updateProgress();
+  };
+  const seekBy = (seconds) => {
+    if (!Number.isFinite(audio.duration)) return;
+    audio.currentTime = Math.max(0, Math.min(audio.duration, (audio.currentTime || 0) + seconds));
+    updateProgress();
+  };
+  rewindButton?.addEventListener("click", () => seekBy(-10));
+  forwardButton?.addEventListener("click", () => seekBy(10));
+  progress.addEventListener("input", () => {
+    const next = Number(progress.value);
+    if (Number.isFinite(next)) audio.currentTime = next;
+    updateProgress();
+  });
+  ["loadedmetadata", "durationchange", "timeupdate", "progress", "seeking", "seeked", "play", "pause", "ended"].forEach((eventName) => audio.addEventListener(eventName, updateState));
+  updateState();
+};
+function dynamicAudioWidget(audioUrl) {
+  return `<div class="profile-audio-widget dynamic-audio-widget" data-audio-widget><div class="dynamic-audio-controls" role="group" aria-label="Sterowanie muzyką"><button class="dynamic-audio-control" data-audio-rewind type="button" aria-label="Cofnij 10 sekund" title="Cofnij 10 sekund">${icon("rewind")}</button><button class="dynamic-audio-control dynamic-audio-play" data-audio-toggle type="button" aria-label="Odtwórz audio"><span data-audio-icon>${icon("play")}</span></button><button class="dynamic-audio-control" data-audio-forward type="button" aria-label="Przewiń 10 sekund" title="Przewiń 10 sekund">${icon("forward")}</button></div><div class="dynamic-audio-progress-row"><time data-audio-current>0:00</time><input class="dynamic-audio-progress" data-audio-progress type="range" min="0" max="0" step="0.1" value="0" aria-label="Pozycja utworu"><time data-audio-duration>0:00</time></div><audio data-profile-audio preload="auto" src="${escapeHtml(audioUrl)}"></audio></div>`;
+}
 async function dynamicEmbedProfile(username) {
   const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle();
   if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / EMBED</p><h1>Nie udało się wczytać embedu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`);
@@ -669,7 +726,7 @@ async function dynamicEmbedProfile(username) {
   const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary;
   const style = [`--profile-accent:${safeColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";");
   const connections = (links || []).map((link) => { const href = safeUrl(link.url); if (!href) return ""; const title = String(link.title || "Link").trim() || "Link"; return `<a class="embed-connection" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${icon(profileIcon(link))}</a>`; }).filter(Boolean).slice(0, 5).join("") || `<span class="embed-connection embed-connection-empty">${icon("globe")}</span>`;
-  const audioMarkup = config.audioUrl ? `<div class="profile-audio-widget" data-audio-widget><button class="profile-audio-toggle" data-audio-toggle type="button" aria-label="Sound off"><span>${icon("volume")}</span><span data-audio-label>SOUND OFF</span></button><label class="profile-audio-volume"><span class="sr-only">Volume</span><input data-audio-volume type="range" min="0" max="1" step="0.01" value="0.72" aria-label="Profile volume"></label><audio data-profile-audio preload="auto" src="${escapeHtml(config.audioUrl)}"></audio></div>` : "";
+  const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl) : "";
   const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
   const positions = config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions();
   return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section></main>${audioMarkup}</div>`;
