@@ -27,7 +27,7 @@ const icons = {
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
 
-const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", cursorUrl: "", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
+const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", cursorUrl: "", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], defaultEmbed: "standard", textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
 
 function icon(name) { return icons[name] || icons.link; }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char])); }
@@ -84,7 +84,8 @@ sanitizeCustomization = (raw = {}) => {
   const badges = Array.isArray(raw?.badges) ? raw.badges.filter((badge) => BADGE_VALUES.includes(String(badge))).map(String).filter((badge, index, list) => list.indexOf(badge) === index).slice(0, BADGE_MAX) : [];
   lastProfileParticles = NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none";
   lastProfileBadges = badges;
-  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges };
+  const defaultEmbed = String(raw?.defaultEmbed || "");
+  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges, defaultEmbed: choice(defaultEmbed, ["standard", "dynamic"], "standard") };
 };
 const baseReadCustomization = readCustomization;
 readCustomization = (form) => {
@@ -104,8 +105,16 @@ setCustomization = (form, raw) => {
   });
   return config;
 };
+const baseSetEmbedCustomization = setCustomization;
+setCustomization = (form, raw) => {
+  const config = baseSetEmbedCustomization(form, raw);
+  if (form?.elements.default_embed) form.elements.default_embed.value = config.defaultEmbed || "standard";
+  return config;
+};
 const baseReadBadgesCustomization = readCustomization;
 readCustomization = (form) => ({ ...baseReadBadgesCustomization(form), badges: Array.from(form?.querySelectorAll("[data-badge-option].is-selected") || []).map((option) => option.dataset.badgeOption).filter((badge) => BADGE_VALUES.includes(badge)).slice(0, BADGE_MAX) });
+const baseReadEmbedCustomization = readCustomization;
+readCustomization = (form) => ({ ...baseReadEmbedCustomization(form), defaultEmbed: choice(String(form?.elements.default_embed?.value || "standard"), ["standard", "dynamic"], "standard") });
 function feedback(message, error = false) { const node = document.querySelector("#form-feedback"); if (!node) return; node.textContent = message; node.className = `form-feedback ${message ? error ? "is-error" : "is-success" : ""}`; }
 function busy(button, value, label = "Pracuję…") { if (!button) return; if (value) { button.dataset.original = button.innerHTML; button.disabled = true; button.innerHTML = `<span class="button-spinner"></span>${escapeHtml(label)}`; } else { button.disabled = false; button.innerHTML = button.dataset.original || button.innerHTML; } }
 function errorText(error) { const message = String(error?.message || error || "").toLowerCase(); if (message.includes("invalid login")) return "Nieprawidłowy e-mail lub hasło."; if (message.includes("already registered")) return "To konto już istnieje. Zaloguj się."; if (message.includes("rate limit")) return "Za dużo prób. Odczekaj chwilę."; if (message.includes("expired")) return "Kod wygasł. Wyślij nowy."; if (message.includes("invalid token") || message.includes("otp is invalid")) return "Kod jest nieprawidłowy."; if (message.includes("duplicate") || message.includes("unique")) return "Ta nazwa użytkownika jest już zajęta."; if (message.includes("fetch") || message.includes("network")) return "Nie udało się połączyć z serwerem."; return "Coś poszło nie tak. Spróbuj ponownie."; }
@@ -162,6 +171,8 @@ const baseDashboardWithEmbedBuilder = dashboard;
 dashboard = () => baseDashboardWithEmbedBuilder().replace('<span>Embed</span><kbd>04</kbd>', '<span>Embed Builder</span><kbd>04</kbd>').replace('<h2>Dynamic embed</h2><p>Osadź aktualny profil na stronie, portfolio albo w swoim panelu.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>').replace('<label class="field-label">Adres embedu<textarea', '<label class="field-label">Kod iframe<textarea').replace('<small>Ten adres zawsze pobiera najnowsze dane Twojego profilu.</small>', '<small>Wybierz wariant powyżej, a potem wklej ten kod na swoją stronę.</small>').replace('<div class="embed-code-card">', `<div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu"><button class="embed-mode-option is-active" data-embed-mode="standard" type="button" aria-pressed="true"><span class="embed-mode-kicker">STANDARD</span><strong>Zwykły embed</strong><small>Pełna karta profilu, tak jak na publicznej stronie.</small></button><button class="embed-mode-option" data-embed-mode="dynamic" type="button" aria-pressed="false"><span class="embed-mode-kicker">DYNAMIC</span><strong>Dynamic embed</strong><small>Układ z kartą profilu i sekcją Connections.</small></button></div><div class="embed-code-card">`);
 const baseDashboardWithoutEmbedCode = dashboard;
 dashboard = () => baseDashboardWithoutEmbedCode().replace('<label class="field-label">Kod iframe<textarea id="embed-code" rows="3" readonly></textarea><small>Wybierz wariant powyżej, a potem wklej ten kod na swoją stronę.</small></label>', '<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>').replace('<div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">', '<div class="embed-mode-heading"><span>Rodzaj embedu</span><small>Wybierz, jak ma wyglądać osadzony profil.</small></div><div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">');
+const baseDashboardWithEmbedDefaults = dashboard;
+dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><div class="embed-mode-heading">').replace('<div class="embed-code-card">', '<div class="embed-default-row"><span data-embed-default-label>Domyślny embed: zwykły</span><button class="button button-small button-dark" data-embed-default-button type="button">Ustaw dynamic embed jako domyślny</button></div><div class="embed-code-card">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
@@ -270,13 +281,14 @@ wireDashboard = async function () {
   }
   const embedTab = document.querySelector('[data-dashboard-tab="embed"]');
   const embedPanel = document.querySelector('[data-tab-panel="embed"]');
-  const embedCode = document.querySelector("#embed-code");
   const embedPreview = document.querySelector("#embed-preview");
-  const copyEmbed = document.querySelector("#copy-embed-code");
   const embedModes = Array.from(document.querySelectorAll("[data-embed-mode]"));
-  if (embedTab && embedPanel && embedCode && embedPreview && embedTab.dataset.bound !== "true") {
+  const embedDefault = form.elements.default_embed;
+  const embedDefaultButton = document.querySelector("[data-embed-default-button]");
+  const embedDefaultLabel = document.querySelector("[data-embed-default-label]");
+  if (embedTab && embedPanel && embedPreview && embedTab.dataset.bound !== "true") {
     embedTab.dataset.bound = "true";
-    let embedMode = sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : "standard";
+    let embedMode = sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : embedDefault?.value === "dynamic" ? "dynamic" : "standard";
     const getEmbedUrl = () => {
       const username = String(form.elements.username?.value || "").trim().toLowerCase();
       return username ? `${location.origin}/${encodeURIComponent(username)}${embedMode === "dynamic" ? "?embed=1" : ""}` : "";
@@ -285,14 +297,20 @@ wireDashboard = async function () {
       const active = mode.dataset.embedMode === embedMode;
       mode.classList.toggle("is-active", active);
       mode.setAttribute("aria-pressed", String(active));
+      if (active && embedDefaultLabel) embedDefaultLabel.textContent = `Domyślny embed: ${embedDefault?.value === "dynamic" ? "dynamiczny" : "zwykły"}`;
     });
     const updateEmbed = () => {
       const embedUrl = getEmbedUrl();
       const height = embedMode === "dynamic" ? 480 : 720;
-      embedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:${height}px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
       embedPreview.src = embedUrl || "about:blank";
       embedPreview.style.height = `${height}px`;
       updateEmbedModeUi();
+      if (embedDefaultButton) {
+        const defaultMode = embedDefault?.value === "dynamic" ? "dynamic" : "standard";
+        const sameAsDefault = embedMode === defaultMode;
+        embedDefaultButton.disabled = sameAsDefault;
+        embedDefaultButton.textContent = sameAsDefault ? `${embedMode === "dynamic" ? "Dynamic embed" : "Zwykły embed"} jest domyślny` : `Ustaw ${embedMode === "dynamic" ? "dynamic embed" : "zwykły embed"} jako domyślny`;
+      }
     };
     const showEmbed = () => {
       document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item === embedTab));
@@ -300,7 +318,7 @@ wireDashboard = async function () {
       document.querySelector("#topbar-section").textContent = "Embed Builder";
       document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / EMBED BUILDER";
       document.querySelector("#dashboard-title").textContent = "Pokaż swój profil.";
-      document.querySelector("#dashboard-subtitle").textContent = "Wybierz zwykły lub dynamiczny embed i skopiuj gotowy kod iframe.";
+      document.querySelector("#dashboard-subtitle").textContent = "Wybierz zwykły lub dynamiczny embed i zobacz podgląd.";
       sessionStorage.setItem("sqezen_dashboard_tab", "embed");
       updateEmbed();
     };
@@ -310,12 +328,14 @@ wireDashboard = async function () {
       sessionStorage.setItem("sqezen_embed_mode", embedMode);
       updateEmbed();
     }));
+    embedDefaultButton?.addEventListener("click", () => {
+      if (!embedDefault) return;
+      embedDefault.value = embedMode;
+      updateEmbed();
+      feedback(`${embedMode === "dynamic" ? "Dynamic embed" : "Zwykły embed"} ustawiony jako domyślny. Zapisz profil, aby opublikować zmianę.`);
+    });
     form.addEventListener("input", updateEmbed);
     form.addEventListener("change", updateEmbed);
-    copyEmbed?.addEventListener("click", async () => {
-      if (!embedCode.value.startsWith("<iframe")) return feedback("Najpierw ustaw nazwę użytkownika.", true);
-      try { await navigator.clipboard.writeText(embedCode.value); feedback("Kod embedu skopiowany."); } catch { feedback("Nie udało się skopiować kodu.", true); }
-    });
     updateEmbed();
     if (sessionStorage.getItem("sqezen_dashboard_tab") === "embed") showEmbed();
   }
@@ -332,7 +352,7 @@ wireDashboard = async function () {
       event.stopImmediatePropagation();
       document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === tab));
       document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
-      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed Builder", "SQEZEN / EMBED BUILDER", "Pokaż swój profil.", "Wybierz zwykły lub dynamiczny embed i skopiuj gotowy kod iframe."];
+      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed Builder", "SQEZEN / EMBED BUILDER", "Pokaż swój profil.", "Wybierz zwykły lub dynamiczny embed i zobacz podgląd."];
       document.querySelector("#topbar-section").textContent = copy[0];
       document.querySelector("#dashboard-eyebrow").textContent = copy[1];
       document.querySelector("#dashboard-title").textContent = copy[2];
@@ -353,9 +373,7 @@ wireDashboard = async function () {
           modeButton.classList.toggle("is-active", active);
           modeButton.setAttribute("aria-pressed", String(active));
         });
-        const currentEmbedCode = document.querySelector("#embed-code");
         const currentEmbedPreview = document.querySelector("#embed-preview");
-        if (currentEmbedCode) currentEmbedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:${height}px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
         if (currentEmbedPreview) { currentEmbedPreview.src = embedUrl || "about:blank"; currentEmbedPreview.style.height = `${height}px`; }
       }
     }, true);
@@ -465,7 +483,12 @@ publicProfile = async function (username) {
 };
 const basePublicProfileWithAudio = publicProfile;
 publicProfile = async function (username) {
-  if (new URLSearchParams(location.search).get("embed") === "1") return dynamicEmbedProfile(username);
+  const embedMode = new URLSearchParams(location.search).get("embed");
+  if (embedMode === "1") return dynamicEmbedProfile(username);
+  if (embedMode !== "0") {
+    const { data } = await supabaseClient.from("profiles").select("customization").eq("username", username).maybeSingle();
+    if (sanitizeCustomization(data?.customization).defaultEmbed === "dynamic") return dynamicEmbedProfile(username);
+  }
   return basePublicProfileWithAudio(username);
 };
 const baseRender = render;
