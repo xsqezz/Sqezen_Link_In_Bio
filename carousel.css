@@ -20,15 +20,15 @@
 .custom-stage .custom-card[aria-hidden="true"]{visibility:hidden;pointer-events:none}
 .custom-stage .custom-card.is-leaving{visibility:visible;pointer-events:none;z-index:1}
 
-.custom-stage .custom-card.enter-next{animation:wheelEnterNext .72s cubic-bezier(.2,.75,.2,1) both}
-.custom-stage .custom-card.leave-next{animation:wheelLeaveNext .72s cubic-bezier(.2,.75,.2,1) both}
-.custom-stage .custom-card.enter-prev{animation:wheelEnterPrev .72s cubic-bezier(.2,.75,.2,1) both}
-.custom-stage .custom-card.leave-prev{animation:wheelLeavePrev .72s cubic-bezier(.2,.75,.2,1) both}
+.custom-stage .custom-card.enter-next{animation:swooshEnterNext .46s cubic-bezier(.2,.78,.2,1) both}
+.custom-stage .custom-card.leave-next{animation:swooshLeaveNext .46s cubic-bezier(.2,.78,.2,1) both}
+.custom-stage .custom-card.enter-prev{animation:swooshEnterPrev .46s cubic-bezier(.2,.78,.2,1) both}
+.custom-stage .custom-card.leave-prev{animation:swooshLeavePrev .46s cubic-bezier(.2,.78,.2,1) both}
 
-@keyframes wheelEnterNext{from{opacity:.15;transform:rotate(90deg) scale(.92)}to{opacity:1;transform:rotate(0deg) scale(1)}}
-@keyframes wheelLeaveNext{from{opacity:1;transform:rotate(0deg) scale(1)}to{opacity:.15;transform:rotate(-90deg) scale(.92)}}
-@keyframes wheelEnterPrev{from{opacity:.15;transform:rotate(-90deg) scale(.92)}to{opacity:1;transform:rotate(0deg) scale(1)}}
-@keyframes wheelLeavePrev{from{opacity:1;transform:rotate(0deg) scale(1)}to{opacity:.15;transform:rotate(90deg) scale(.92)}}
+@keyframes swooshEnterNext{from{opacity:0;filter:blur(2px);transform:translate3d(58px,0,0) scale(.985)}65%{opacity:1}to{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1)}}
+@keyframes swooshLeaveNext{from{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1)}to{opacity:0;filter:blur(2px);transform:translate3d(-58px,0,0) scale(.985)}}
+@keyframes swooshEnterPrev{from{opacity:0;filter:blur(2px);transform:translate3d(-58px,0,0) scale(.985)}65%{opacity:1}to{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1)}}
+@keyframes swooshLeavePrev{from{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1)}to{opacity:0;filter:blur(2px);transform:translate3d(58px,0,0) scale(.985)}}
 
 /* The profile-section wheel is an explicit product interaction. Keep it
    animated even when the browser requests reduced motion, because the user
