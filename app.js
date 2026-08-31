@@ -56,22 +56,11 @@ const BADGE_DEFINITIONS = [
   { id: "premium", name: "Premium", description: "Purchase the premium package.", symbol: "◆" },
   { id: "verified", name: "Verified", description: "Purchase or be a known content creator.", symbol: "✹" },
   { id: "donor", name: "Donor", description: "Donate at least 10€ to sqezen.lol.", symbol: "$" },
-  { id: "gifter", name: "Gifter", description: "Gift a sqezen.lol product to another user.", symbol: "✚" },
-  { id: "image-host", name: "Image Host", description: "Purchase the Image Host.", symbol: "★" },
-  { id: "domain-legend", name: "Domain Legend", description: "Add a public custom domain to sqezen.lol Image Host.", symbol: "◈" },
   { id: "server-booster", name: "Server Booster", description: "Boost the sqezen.lol Discord server.", symbol: "♨" },
-  { id: "hone-gg", name: "Hone.gg", description: "Earned by redeeming the Hone.gg sqezen.lol reward.", symbol: "◔" },
   { id: "bug-hunter", name: "Bug Hunter", description: "Report a bug to the sqezen.lol team.", symbol: "✿" },
   { id: "og", name: "OG", description: "Be an early supporter of sqezen.lol.", symbol: "▮" },
   { id: "summer-2026", name: "Summer 2026", description: "Exclusive badge from the 2026 summer sale.", symbol: "☀" },
-  { id: "easter-2026", name: "Easter 2026", description: "Exclusive badge from the 2026 easter sale.", symbol: "♢" },
-  { id: "christmas-2025", name: "Christmas 2025", description: "Exclusive badge from the 2025 winter sale.", symbol: "❄" },
-  { id: "easter-2025", name: "Easter 2025", description: "Exclusive badge from the 2025 easter sale.", symbol: "◉" },
-  { id: "christmas-2024", name: "Christmas 2024", description: "Exclusive badge from the 2024 winter sale.", symbol: "❯" },
-  { id: "the-million", name: "The Million", description: "Celebration badge for 1M users.", symbol: "♨" },
-  { id: "winner", name: "Winner", description: "Win a sqezen.lol event.", symbol: "♛" },
-  { id: "second-place", name: "Second Place", description: "Get second place in a sqezen.lol event.", symbol: "●" },
-  { id: "third-place", name: "Third Place", description: "Get third place in a sqezen.lol event.", symbol: "●" }
+  { id: "winner", name: "Winner", description: "Win a sqezen.lol event.", symbol: "♛" }
 ];
 const BADGE_VALUES = BADGE_DEFINITIONS.map((badge) => badge.id);
 const BADGE_MAX = 8;
