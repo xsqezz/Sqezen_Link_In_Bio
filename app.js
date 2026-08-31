@@ -27,7 +27,7 @@ const icons = {
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
 
-const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", cursorUrl: "", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], defaultEmbed: "standard", textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
+const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", cursorUrl: "", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], defaultEmbed: "standard", dynamicEmbedPositions: { profile: { x: 0, y: 0 }, connections: { x: 0, y: 0 } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
 
 function icon(name) { return icons[name] || icons.link; }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char])); }
@@ -43,6 +43,7 @@ function safeNumber(value, min, max, fallback) { const number = Number(value); r
 function choice(value, list, fallback) { return list.includes(value) ? value : fallback; }
 function bool(value, fallback) { return typeof value === "boolean" ? value : fallback; }
 function hexRgb(value) { const hex = safeColor(value).slice(1); return `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`; }
+function sanitizeDynamicEmbedPositions(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; const position = (candidate) => ({ x: safeNumber(candidate?.x, -35, 35, 0), y: safeNumber(candidate?.y, -30, 30, 0) }); return { profile: position(value.profile), connections: position(value.connections) }; }
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), cursorUrl: safeMediaUrl(value.cursorUrl), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: migrateColor(value.buttonColor, "#ffffff", "#5865ee"), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
@@ -85,7 +86,7 @@ sanitizeCustomization = (raw = {}) => {
   lastProfileParticles = NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none";
   lastProfileBadges = badges;
   const defaultEmbed = String(raw?.defaultEmbed || "");
-  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges, defaultEmbed: choice(defaultEmbed, ["standard", "dynamic"], "standard") };
+  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges, defaultEmbed: choice(defaultEmbed, ["standard", "dynamic"], "standard"), dynamicEmbedPositions: sanitizeDynamicEmbedPositions(raw?.dynamicEmbedPositions) };
 };
 const baseReadCustomization = readCustomization;
 readCustomization = (form) => {
@@ -115,6 +116,10 @@ const baseReadBadgesCustomization = readCustomization;
 readCustomization = (form) => ({ ...baseReadBadgesCustomization(form), badges: Array.from(form?.querySelectorAll("[data-badge-option].is-selected") || []).map((option) => option.dataset.badgeOption).filter((badge) => BADGE_VALUES.includes(badge)).slice(0, BADGE_MAX) });
 const baseReadEmbedCustomization = readCustomization;
 readCustomization = (form) => ({ ...baseReadEmbedCustomization(form), defaultEmbed: choice(String(form?.elements.default_embed?.value || "standard"), ["standard", "dynamic"], "standard") });
+const baseReadDynamicEmbedCustomization = readCustomization;
+readCustomization = (form) => { let positions = {}; try { positions = JSON.parse(String(form?.elements.dynamic_embed_positions?.value || "{}")); } catch {} return { ...baseReadDynamicEmbedCustomization(form), dynamicEmbedPositions: sanitizeDynamicEmbedPositions(positions) }; };
+const baseSetDynamicEmbedCustomization = setCustomization;
+setCustomization = (form, raw) => { const config = baseSetDynamicEmbedCustomization(form, raw); if (form?.elements.dynamic_embed_positions) form.elements.dynamic_embed_positions.value = JSON.stringify(config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions()); return config; };
 function feedback(message, error = false) { const node = document.querySelector("#form-feedback"); if (!node) return; node.textContent = message; node.className = `form-feedback ${message ? error ? "is-error" : "is-success" : ""}`; }
 function busy(button, value, label = "Pracuję…") { if (!button) return; if (value) { button.dataset.original = button.innerHTML; button.disabled = true; button.innerHTML = `<span class="button-spinner"></span>${escapeHtml(label)}`; } else { button.disabled = false; button.innerHTML = button.dataset.original || button.innerHTML; } }
 function errorText(error) { const message = String(error?.message || error || "").toLowerCase(); if (message.includes("invalid login")) return "Nieprawidłowy e-mail lub hasło."; if (message.includes("already registered")) return "To konto już istnieje. Zaloguj się."; if (message.includes("rate limit")) return "Za dużo prób. Odczekaj chwilę."; if (message.includes("expired")) return "Kod wygasł. Wyślij nowy."; if (message.includes("invalid token") || message.includes("otp is invalid")) return "Kod jest nieprawidłowy."; if (message.includes("duplicate") || message.includes("unique")) return "Ta nazwa użytkownika jest już zajęta."; if (message.includes("fetch") || message.includes("network")) return "Nie udało się połączyć z serwerem."; return "Coś poszło nie tak. Spróbuj ponownie."; }
@@ -195,7 +200,7 @@ dashboard = () => baseDashboardWithEmbedBuilder().replace('<span>Embed</span><kb
 const baseDashboardWithoutEmbedCode = dashboard;
 dashboard = () => baseDashboardWithoutEmbedCode().replace('<label class="field-label">Kod iframe<textarea id="embed-code" rows="3" readonly></textarea><small>Wybierz wariant powyżej, a potem wklej ten kod na swoją stronę.</small></label>', '<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>').replace('<div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">', '<div class="embed-mode-heading"><span>Rodzaj embedu</span><small>Wybierz, jak ma wyglądać osadzony profil.</small></div><div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">');
 const baseDashboardWithEmbedDefaults = dashboard;
-dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><div class="embed-mode-heading">').replace('<div class="embed-code-card">', '<div class="embed-default-row"><span data-embed-default-label>Domyślny embed: zwykły</span><button class="button button-small button-dark" data-embed-default-button type="button">Ustaw dynamic embed jako domyślny</button></div><div class="embed-code-card">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
+dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><input id="dynamic-embed-positions" name="dynamic_embed_positions" type="hidden" value="{}"><div class="embed-mode-heading">').replace('<div class="embed-code-card">', '<div class="embed-default-row"><span data-embed-default-label>Domyślny embed: zwykły</span><button class="button button-small button-dark" data-embed-default-button type="button">Ustaw dynamic embed jako domyślny</button></div><div class="embed-position-row"><span data-embed-position-label>Ustaw układ kafelków dynamicznego embedu.</span><button class="button button-small button-dark" data-embed-position-toggle type="button">Edytuj pozycje kafelków</button></div><div class="embed-code-card">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
@@ -443,6 +448,115 @@ wireDashboard = async function () {
   urlInput.addEventListener("input", updatePreview);
   updatePreview();
 };
+const baseWireDashboardWithEmbedPositions = wireDashboard;
+wireDashboard = async function () {
+  await baseWireDashboardWithEmbedPositions();
+  const form = document.querySelector("#profile-form");
+  const embedPreview = document.querySelector("#embed-preview");
+  const positionButton = document.querySelector("[data-embed-position-toggle]");
+  const positionLabel = document.querySelector("[data-embed-position-label]");
+  const positionInput = form?.elements.dynamic_embed_positions;
+  if (!form || !embedPreview || !positionButton || positionButton.dataset.bound === "true") return;
+  positionButton.dataset.bound = "true";
+  let editing = false;
+  let editorCleanup = () => {};
+  const currentMode = () => document.querySelector("[data-embed-mode].is-active")?.dataset.embedMode || "standard";
+  const readPositions = () => {
+    try { return sanitizeDynamicEmbedPositions(JSON.parse(String(positionInput?.value || "{}"))); } catch { return sanitizeDynamicEmbedPositions(); }
+  };
+  const writePositions = (positions) => { if (positionInput) positionInput.value = JSON.stringify(sanitizeDynamicEmbedPositions(positions)); };
+  const getEmbedDocument = () => { try { return embedPreview.contentDocument || embedPreview.contentWindow?.document || null; } catch { return null; } };
+  const applyPositions = () => {
+    const doc = getEmbedDocument();
+    if (!doc) return [];
+    const positions = readPositions();
+    return Array.from(doc.querySelectorAll("[data-dynamic-tile]")).map((tile) => {
+      const position = positions[tile.dataset.dynamicTile] || { x: 0, y: 0 };
+      tile.style.setProperty("--dynamic-x", String(position.x));
+      tile.style.setProperty("--dynamic-y", String(position.y));
+      return tile;
+    });
+  };
+  const syncPositionButton = () => {
+    const dynamic = currentMode() === "dynamic";
+    if (!dynamic && editing) stopEditing();
+    positionButton.disabled = !dynamic;
+    if (!editing) {
+      positionButton.textContent = dynamic ? "Edytuj pozycje kafelków" : "Wybierz Dynamic embed";
+      if (positionLabel) positionLabel.textContent = dynamic ? "Przeciągnij karty w podglądzie, aby ustawić ich układ." : "Wybierz Dynamic embed, aby edytować pozycje kafelków.";
+    }
+  };
+  const stopEditing = () => {
+    editorCleanup();
+    editorCleanup = () => {};
+    editing = false;
+    const doc = getEmbedDocument();
+    const page = doc?.querySelector(".dynamic-embed-page");
+    page?.classList.remove("is-position-editing");
+    syncPositionButton();
+  };
+  const startEditing = () => {
+    if (currentMode() !== "dynamic") return feedback("Najpierw wybierz Dynamic embed.", true);
+    const doc = getEmbedDocument();
+    const tiles = applyPositions();
+    const page = doc?.querySelector(".dynamic-embed-page");
+    if (!doc || !page || tiles.length < 2) return feedback("Podgląd dynamicznego embedu jeszcze się ładuje. Spróbuj ponownie za chwilę.", true);
+    editing = true;
+    page.classList.add("is-position-editing");
+    positionButton.disabled = false;
+    positionButton.textContent = "Zakończ edycję pozycji";
+    if (positionLabel) positionLabel.textContent = "Przeciągnij kartę profilu i Connections. Zapisz profil, aby opublikować układ.";
+    const cleanups = [];
+    const previousUserSelect = doc.body?.style.userSelect || "";
+    if (doc.body) doc.body.style.userSelect = "none";
+    tiles.forEach((tile) => {
+      const onPointerDown = (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const key = tile.dataset.dynamicTile;
+        const start = readPositions()[key] || { x: 0, y: 0 };
+        const frame = embedPreview.getBoundingClientRect();
+        const startX = event.clientX;
+        const startY = event.clientY;
+        tile.classList.add("is-dragging");
+        const onPointerMove = (moveEvent) => {
+          const x = Math.min(35, Math.max(-35, start.x + ((moveEvent.clientX - startX) / Math.max(frame.width, 1)) * 100));
+          const y = Math.min(30, Math.max(-30, start.y + ((moveEvent.clientY - startY) / Math.max(frame.height, 1)) * 100));
+          const next = readPositions();
+          next[key] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+          writePositions(next);
+          tile.style.setProperty("--dynamic-x", String(next[key].x));
+          tile.style.setProperty("--dynamic-y", String(next[key].y));
+        };
+        const finish = () => {
+          tile.classList.remove("is-dragging");
+          tile.removeEventListener("pointermove", onPointerMove);
+          tile.removeEventListener("pointerup", finish);
+          tile.removeEventListener("pointercancel", finish);
+          doc.removeEventListener("pointerup", finish);
+          doc.removeEventListener("pointercancel", finish);
+          try { tile.releasePointerCapture?.(event.pointerId); } catch {}
+        };
+        tile.addEventListener("pointermove", onPointerMove);
+        tile.addEventListener("pointerup", finish);
+        tile.addEventListener("pointercancel", finish);
+        doc.addEventListener("pointerup", finish);
+        doc.addEventListener("pointercancel", finish);
+        try { tile.setPointerCapture?.(event.pointerId); } catch {}
+      };
+      tile.addEventListener("pointerdown", onPointerDown);
+      cleanups.push(() => tile.removeEventListener("pointerdown", onPointerDown));
+    });
+    editorCleanup = () => { cleanups.splice(0).forEach((cleanup) => cleanup()); if (doc.body) doc.body.style.userSelect = previousUserSelect; tiles.forEach((tile) => tile.classList.remove("is-dragging")); };
+  };
+  const onPreviewLoad = () => { if (editing) stopEditing(); applyPositions(); syncPositionButton(); };
+  embedPreview.addEventListener("load", onPreviewLoad);
+  positionButton.addEventListener("click", () => { if (editing) stopEditing(); else startEditing(); });
+  document.querySelectorAll("[data-embed-mode]").forEach((mode) => mode.addEventListener("click", () => setTimeout(syncPositionButton, 0)));
+  syncPositionButton();
+  applyPositions();
+};
 const baseWirePublic = wirePublic;
 wirePublic = function () {
   baseWirePublic();
@@ -493,7 +607,8 @@ async function dynamicEmbedProfile(username) {
   const connections = (links || []).map((link) => { const href = safeUrl(link.url); if (!href) return ""; const title = String(link.title || "Link").trim() || "Link"; return `<a class="embed-connection" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${icon(profileIcon(link))}</a>`; }).filter(Boolean).slice(0, 5).join("") || `<span class="embed-connection embed-connection-empty">${icon("globe")}</span>`;
   const audioMarkup = config.audioUrl ? `<div class="profile-audio-widget" data-audio-widget><button class="profile-audio-toggle" data-audio-toggle type="button" aria-label="Sound off"><span>${icon("volume")}</span><span data-audio-label>SOUND OFF</span></button><label class="profile-audio-volume"><span class="sr-only">Volume</span><input data-audio-volume type="range" min="0" max="1" step="0.01" value="0.72" aria-label="Profile volume"></label><audio data-profile-audio preload="auto" src="${escapeHtml(config.audioUrl)}"></audio></div>` : "";
   const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
-  return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section></main>${audioMarkup}</div>`;
+  const positions = config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions();
+  return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section></main>${audioMarkup}</div>`;
 }
 const basePublicProfile = publicProfile;
 publicProfile = async function (username) {
