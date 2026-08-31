@@ -11,8 +11,9 @@
 
 /* A single viewport prevents overlap. Cards keep their natural content
    height while the stage provides one stable animation area. */
-.custom-stage{position:relative;min-height:520px;overflow:hidden;isolation:isolate}
+.custom-stage{position:relative;min-height:0;overflow:hidden;isolation:isolate}
 .custom-stage .custom-card{position:absolute;inset:0;display:none;width:100%;margin:0;align-content:start;grid-auto-rows:max-content;transform:none;transform-origin:center center;will-change:transform,opacity}
+.custom-stage .custom-card.is-active,.custom-stage .custom-card.is-leaving{position:relative;inset:auto}
 .custom-stage .custom-card .field-label,.custom-stage .custom-card .field-grid,.custom-stage .custom-card .range-grid,.custom-stage .custom-card .color-grid,.custom-stage .custom-card .toggle-grid{align-content:start}
 .custom-stage .custom-card.is-active,.custom-stage .custom-card.is-leaving{display:grid;visibility:visible}
 .custom-stage .custom-card.is-active{z-index:2}
@@ -34,4 +35,4 @@
    asked for this transition to be enabled. Other page animations still obey
    the global reduced-motion rule in styles.css. */
 @media(prefers-reduced-motion:reduce){.custom-stage .custom-card.enter-next,.custom-stage .custom-card.leave-next,.custom-stage .custom-card.enter-prev,.custom-stage .custom-card.leave-prev{animation-duration:.36s!important;animation-iteration-count:1!important}.custom-stage .custom-card{transition-duration:.35s!important}.carousel-arrow{transition-duration:.18s!important}}
-@media(max-width:760px){.custom-carousel-nav{grid-template-columns:42px 1fr 42px;padding:11px 12px;gap:10px}.carousel-arrow{width:38px;height:38px}.custom-wheel-label{min-width:120px}.custom-stage{min-height:560px}}
+@media(max-width:760px){.custom-carousel-nav{grid-template-columns:42px 1fr 42px;padding:11px 12px;gap:10px}.carousel-arrow{width:38px;height:38px}.custom-wheel-label{min-width:120px}.custom-stage{min-height:0}}
