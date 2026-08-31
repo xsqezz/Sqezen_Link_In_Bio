@@ -74,5 +74,15 @@ body[data-route="/dashboard"]{background:#000!important}
 /* Keep the preview card free of dashboard-only cursor decoration. */
 html.cursor-enhanced:has(#dashboard-preview:hover) #dashboard-preview,html.cursor-enhanced:has(#dashboard-preview:hover) #dashboard-preview *{cursor:auto!important}
 html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enhanced:has(#dashboard-preview:hover) .site-cursor{opacity:0!important}
+.profile-audio-widget{position:fixed;left:28px;bottom:28px;z-index:4;display:grid;width:140px;gap:7px}
+.profile-audio-toggle{display:flex;width:max-content;min-width:112px;height:34px;align-items:center;gap:9px;padding:0 12px;color:#f5f6fb;background:#050507;border:1px solid rgba(255,255,255,.13);border-radius:999px;box-shadow:0 10px 28px rgba(0,0,0,.36);cursor:pointer;font:inherit;font-size:.55rem;font-weight:800;letter-spacing:.12em;line-height:1;transition:background .18s ease,border-color .18s ease,color .18s ease}
+.profile-audio-toggle:hover{background:#101014;border-color:rgba(88,101,238,.62)}
+.profile-audio-toggle.is-playing{border-color:rgba(88,101,238,.62);color:#fff}
+.profile-audio-toggle span:first-child{display:grid;place-items:center;color:var(--blue-accent)}
+.profile-audio-toggle svg{width:16px;height:16px}
+.profile-audio-volume{display:block;width:112px;padding:0 8px}
+.profile-audio-volume input{display:block;width:100%;height:3px;min-height:0;padding:0;accent-color:var(--blue-accent);cursor:pointer}
+.profile-audio-widget audio{display:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:1000px){.dashboard-layout{gap:24px}.dashboard-grid{grid-template-columns:1fr}.preview-column{order:-1}.preview-sticky{position:static}.dashboard-preview{min-height:420px}}
 @media(max-width:760px){.dashboard-page{width:calc(100% - 32px)}.dashboard-topbar{min-height:72px}.dashboard-layout{padding-top:28px}.dashboard-intro h1{font-size:clamp(3rem,13vw,4.6rem)}.editor-panel,.preview-sticky{padding:19px 16px}.custom-carousel-nav{margin-top:17px}.empty-page{padding:110px 0 80px}}
