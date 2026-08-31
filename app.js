@@ -108,6 +108,10 @@ const baseDashboardMarkup = dashboard;
 dashboard = () => baseDashboardMarkup().replace('<label class="field-label">Własny kursor<input name="cursor_url" type="text" placeholder="https://.../cursor.png"><small>Najlepiej obraz 32×32 px.</small></label>', '<div class="field-label"><span>Własny kursor</span><div class="cursor-input-row"><input id="cursor-url" name="cursor_url" type="text" inputmode="url" placeholder="https://.../cursor.png"><button id="cursor-file-trigger" class="button button-small button-dark" type="button">Wybierz plik</button><input id="cursor-file-input" class="cursor-file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp"></div><span class="cursor-preview" data-cursor-preview aria-hidden="true"></span><small>URL albo PNG, JPG, GIF lub WebP — najlepiej 32×32 px.</small></div>').replace('<label class="field-label">Efekt nazwy<select name="username_effect"><option value="none">Brak</option><option value="gradient">Gradient</option><option value="soft-glow">Delikatny glow</option><option value="outline">Kontur</option></select></label>', '<div class="field-label name-effect-field"><span>Efekt nazwy</span><div class="name-effect-picker" role="group" aria-label="Wybierz efekt nazwy"><button class="name-effect-option" data-name-effect-option="none" type="button"><span class="name-effect-sample is-none">sqezen</span><small>Brak</small></button><button class="name-effect-option" data-name-effect-option="glitch" type="button"><span class="name-effect-sample is-glitch">sqezen</span><small>Glitch</small></button><button class="name-effect-option" data-name-effect-option="typewrite" type="button"><span class="name-effect-sample is-typewrite">sqezen</span><small>Typewrite</small></button><button class="name-effect-option" data-name-effect-option="rainbow" type="button"><span class="name-effect-sample is-rainbow">sqezen</span><small>Rainbow</small></button><button class="name-effect-option" data-name-effect-option="shuffle" type="button"><span class="name-effect-sample is-shuffle">sqezen</span><small>Shuffle</small></button></div><select class="name-effect-value" name="username_effect" aria-label="Efekt nazwy"><option value="none">Brak</option><option value="glitch">Glitch</option><option value="typewrite">Typewrite</option><option value="rainbow">Rainbow</option><option value="shuffle">Shuffle</option><option value="gradient">Gradient</option><option value="soft-glow">Delikatny glow</option><option value="outline">Kontur</option></select><small>Wybierz animację, którą zobaczą osoby odwiedzające Twój profil.</small></div>');
 const baseDashboardWithParticles = dashboard;
 dashboard = () => baseDashboardWithParticles().replace('<small>Wybierz animację, którą zobaczą osoby odwiedzające Twój profil.</small>', '<span class="name-effect-subtitle">Cząsteczki</span><div class="particle-picker" role="group" aria-label="Wybierz kolor cząsteczek"><button class="particle-option" data-particle-option="none" type="button" aria-label="Brak cząsteczek"><span class="particle-sample is-none"></span></button><button class="particle-option" data-particle-option="blue" type="button" aria-label="Niebieskie cząsteczki"><span class="particle-sample is-blue"></span></button><button class="particle-option" data-particle-option="green" type="button" aria-label="Zielone cząsteczki"><span class="particle-sample is-green"></span></button><button class="particle-option" data-particle-option="pink" type="button" aria-label="Różowe cząsteczki"><span class="particle-sample is-pink"></span></button><button class="particle-option" data-particle-option="red" type="button" aria-label="Czerwone cząsteczki"><span class="particle-sample is-red"></span></button><button class="particle-option" data-particle-option="white" type="button" aria-label="Białe cząsteczki"><span class="particle-sample is-white"></span></button><button class="particle-option" data-particle-option="yellow" type="button" aria-label="Żółte cząsteczki"><span class="particle-sample is-yellow"></span></button></div><select class="name-effect-value particle-value" name="name_particles" aria-label="Cząsteczki"><option value="none">Brak</option><option value="blue">Niebieskie</option><option value="green">Zielone</option><option value="pink">Różowe</option><option value="red">Czerwone</option><option value="white">Białe</option><option value="yellow">Żółte</option></select><small>Dodaj delikatne punkty światła wokół nazwy.</small>');
+const baseDashboardWithEmbed = dashboard;
+dashboard = () => baseDashboardWithEmbed().replace('<button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button>', '<button class="sidebar-item" data-dashboard-tab="embed" type="button">${icon("link")}<span>Embed</span><kbd>04</kbd></button><button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button>').replace('<section data-tab-panel="account" hidden>', `<section data-tab-panel="embed" hidden><div class="panel-heading"><div><span class="panel-index">EMBED</span><h2>Dynamic embed</h2><p>Osadź aktualny profil na stronie, portfolio albo w swoim panelu.</p></div><button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button></div><div class="embed-code-card"><label class="field-label">Adres embedu<textarea id="embed-code" rows="3" readonly></textarea><small>Ten adres zawsze pobiera najnowsze dane Twojego profilu.</small></label><div class="embed-preview-shell"><iframe id="embed-preview" title="Podgląd dynamicznego embedu" loading="lazy"></iframe></div></div></section><section data-tab-panel="account" hidden>`);
+const baseDashboardWithEmbedNav = dashboard;
+dashboard = () => baseDashboardWithEmbedNav().replace('<button class="sidebar-item" data-dashboard-tab="account" type="button">', `<button class="sidebar-item" data-dashboard-tab="embed" type="button">${icon("link")}<span>Embed</span><kbd>04</kbd></button><button class="sidebar-item" data-dashboard-tab="account" type="button">`);
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
@@ -170,6 +174,39 @@ wireDashboard = async function () {
     form.addEventListener("change", syncParticlePicker);
     document.querySelector("#reset-customization")?.addEventListener("click", () => setTimeout(syncParticlePicker));
     syncParticlePicker();
+  }
+  const embedTab = document.querySelector('[data-dashboard-tab="embed"]');
+  const embedPanel = document.querySelector('[data-tab-panel="embed"]');
+  const embedCode = document.querySelector("#embed-code");
+  const embedPreview = document.querySelector("#embed-preview");
+  const copyEmbed = document.querySelector("#copy-embed-code");
+  if (embedTab && embedPanel && embedCode && embedPreview && embedTab.dataset.bound !== "true") {
+    embedTab.dataset.bound = "true";
+    const updateEmbed = () => {
+      const username = String(form.elements.username?.value || "").trim().toLowerCase();
+      const embedUrl = username ? `${location.origin}/${encodeURIComponent(username)}?embed=1` : "";
+      embedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:480px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
+      embedPreview.src = embedUrl || "about:blank";
+    };
+    const showEmbed = () => {
+      document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item === embedTab));
+      document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel !== embedPanel; });
+      document.querySelector("#topbar-section").textContent = "Embed";
+      document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / EMBED";
+      document.querySelector("#dashboard-title").textContent = "Pokaż swój profil.";
+      document.querySelector("#dashboard-subtitle").textContent = "Wklej gotowy kod iframe na dowolną stronę.";
+      sessionStorage.setItem("sqezen_dashboard_tab", "embed");
+      updateEmbed();
+    };
+    embedTab.addEventListener("click", showEmbed);
+    form.addEventListener("input", updateEmbed);
+    form.addEventListener("change", updateEmbed);
+    copyEmbed?.addEventListener("click", async () => {
+      if (!embedCode.value.startsWith("<iframe")) return feedback("Najpierw ustaw nazwę użytkownika.", true);
+      try { await navigator.clipboard.writeText(embedCode.value); feedback("Kod embedu skopiowany."); } catch { feedback("Nie udało się skopiować kodu.", true); }
+    });
+    updateEmbed();
+    if (sessionStorage.getItem("sqezen_dashboard_tab") === "embed") showEmbed();
   }
   const fileInput = document.querySelector("#cursor-file-input");
   const trigger = document.querySelector("#cursor-file-trigger");
@@ -242,6 +279,22 @@ wirePublic = function () {
   unlockEvents.forEach((eventName) => document.addEventListener(eventName, unlockAudio, { passive: true }));
   unlockAudio();
 };
+async function dynamicEmbedProfile(username) {
+  const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle();
+  if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / EMBED</p><h1>Nie udało się wczytać embedu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`);
+  if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`);
+  const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true });
+  const config = sanitizeCustomization(data.customization);
+  const display = String(data.display_name || data.username || username).trim();
+  const media = config.backgroundMediaUrl;
+  const mediaMarkup = media ? (/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : "";
+  const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary;
+  const style = [`--profile-accent:${safeColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";");
+  const connections = (links || []).map((link) => { const href = safeUrl(link.url); if (!href) return ""; const title = String(link.title || "Link").trim() || "Link"; return `<a class="embed-connection" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${icon(profileIcon(link))}</a>`; }).filter(Boolean).slice(0, 5).join("") || `<span class="embed-connection embed-connection-empty">${icon("globe")}</span>`;
+  const audioMarkup = config.audioUrl ? `<div class="profile-audio-widget" data-audio-widget><button class="profile-audio-toggle" data-audio-toggle type="button" aria-label="Sound off"><span>${icon("volume")}</span><span data-audio-label>SOUND OFF</span></button><label class="profile-audio-volume"><span class="sr-only">Volume</span><input data-audio-volume type="range" min="0" max="1" step="0.01" value="0.72" aria-label="Profile volume"></label><audio data-profile-audio preload="auto" src="${escapeHtml(config.audioUrl)}"></audio></div>` : "";
+  const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
+  return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section></main>${audioMarkup}</div>`;
+}
 const basePublicProfile = publicProfile;
 publicProfile = async function (username) {
   const markup = await basePublicProfile(username);
@@ -250,6 +303,11 @@ publicProfile = async function (username) {
   const audioControl = /<button class="icon-button audio-toggle"[\s\S]*?<\/button><audio data-profile-audio[^>]*><\/audio>/;
   const audioWidget = `<div class="profile-audio-widget" data-audio-widget><button class="profile-audio-toggle" data-audio-toggle type="button" aria-label="Sound off"><span>${icon("volume")}</span><span data-audio-label>SOUND OFF</span></button><label class="profile-audio-volume"><span class="sr-only">Volume</span><input data-audio-volume type="range" min="0" max="1" step="0.01" value="0.72" aria-label="Profile volume"></label>${audioMarkup.replace('preload="none"', 'preload="auto"')}</div>`;
   return markup.replace(audioControl, "").replace('<div class="public-shade"></div>', `<div class="public-shade"></div>${audioWidget}`);
+};
+const basePublicProfileWithAudio = publicProfile;
+publicProfile = async function (username) {
+  if (new URLSearchParams(location.search).get("embed") === "1") return dynamicEmbedProfile(username);
+  return basePublicProfileWithAudio(username);
 };
 const baseRender = render;
 render = async function () { const path = currentPath(); if (!["/login", "/register", "/register/code"].includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; document.title = `${path === "/login" ? "Sign in" : path === "/register" ? "Create an account" : "Confirm your email"} — sqezen`; const app = document.querySelector("#app"); const kind = path === "/register/code" ? "code" : path.slice(1); app.innerHTML = typeof window.auth === "function" ? window.auth(kind) : auth(kind); await wireAuth(); };
