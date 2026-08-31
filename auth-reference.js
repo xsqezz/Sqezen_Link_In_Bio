@@ -26,5 +26,5 @@
     return `<div class="auth-reference-page auth-reference-${pageType}"><div class="auth-reference-shell"><header class="auth-reference-header"><a class="auth-reference-brand" href="/">sqezen</a><a class="auth-reference-home" href="/">Back to home ${external}</a></header><main class="auth-reference-main"><section class="auth-reference-pitch"><p class="auth-reference-eyebrow">SQEZEN / ${isCode ? "VERIFY" : isRegister ? "CREATE" : "SIGN IN"}</p><h1>${pitchTitle}</h1><p>${pitchCopy}</p><div class="auth-reference-actions">${sideActions}</div></section><section class="auth-card auth-reference-card"><div class="auth-reference-card-head"><span class="auth-reference-step">${step}</span></div><h2>${cardTitle}</h2><p class="form-intro">${cardIntro}</p>${form}</section></main><footer class="auth-reference-footer"><span>sqezen.lol</span><span>your space online</span></footer></div></div>`;
   };
 
-  window.dispatchEvent(new PopStateEvent("popstate"));
+  window.dispatchEvent(new Event("popstate"));
 })();
