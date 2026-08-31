@@ -74,3 +74,12 @@
 @keyframes social-modal-out{from{opacity:1}to{opacity:0}}
 @media(max-width:480px){.social-modal-backdrop{padding:13px}.social-modal-head{padding-inline:16px}.social-modal-body{padding-inline:16px}.social-modal{border-radius:13px}}
 @media(prefers-reduced-motion:reduce){.social-modal-backdrop,.social-modal-backdrop.is-closing{animation:none}.platform-button,.social-modal-close,.social-mode-switch button,.social-modal-input-wrap{transition:none}}
+
+/* Keep the expanded link editor inside its card at every dashboard width. */
+.link-card .link-fields{display:none;grid-template-columns:minmax(0,.8fr) minmax(0,1.35fr) minmax(130px,.7fr);align-items:start;gap:14px;margin:0;padding:16px 14px 17px;min-width:0}
+.link-card.is-editing .link-fields{display:grid}
+.link-card .link-fields .field-label{min-width:0;gap:7px;line-height:1.25}
+.link-card .link-fields input,.link-card .link-fields select{box-sizing:border-box;min-width:0;width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-card .link-fields small{min-width:0;overflow-wrap:anywhere}
+@media(max-width:900px){.link-card .link-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.link-card .link-fields .field-label:last-child{grid-column:1/-1}}
+@media(max-width:560px){.link-card .link-fields{grid-template-columns:1fr;gap:11px;padding:14px 11px 15px}.link-card .link-fields .field-label:last-child{grid-column:auto}}
