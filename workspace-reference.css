@@ -141,6 +141,10 @@ html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enha
 @media(max-width:1000px){.badge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.badge-grid{grid-template-columns:1fr}.badge-card{min-height:78px}}
 .embed-mode-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:22px}
+.embed-mode-heading{display:grid;gap:4px;margin-top:22px;color:var(--text);font-size:.68rem;font-weight:700}
+.embed-mode-heading small{color:var(--dim);font-size:.6rem;font-weight:400}
+.embed-mode-picker{margin-top:10px}
+.embed-code-value{display:none!important}
 .embed-mode-option{display:grid;min-width:0;gap:6px;padding:15px;color:var(--muted);text-align:left;background:#0b0b0e;border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
 .embed-mode-option:hover,.embed-mode-option.is-active{color:var(--text);background:rgba(88,101,238,.1);border-color:var(--blue-accent);transform:translateY(-1px)}
 .embed-mode-option strong{color:var(--text);font-size:.72rem}
