@@ -97,7 +97,7 @@
 .dashboard-dynamic-link{display:grid;width:21px;height:21px;place-items:center;color:var(--preview-text,var(--text))}
 .dashboard-dynamic-link svg,.dashboard-dynamic-link .platform-logo{width:18px;height:18px}
 .dashboard-dynamic-link-empty{color:var(--dim)}
-.dashboard-grid-assets{grid-template-columns:minmax(0,1fr)}
+.dashboard-grid.dashboard-grid-assets{grid-template-columns:minmax(0,1fr)}
 .profile-assets-top{margin:0 0 24px}
 .profile-assets-column{min-width:0}
 .profile-assets-section-heading{margin:0 0 16px}
