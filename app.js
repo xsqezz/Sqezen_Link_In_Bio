@@ -46,7 +46,7 @@ function hexRgb(value) { const hex = safeColor(value).slice(1); return `${parseI
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), cursorUrl: safeMediaUrl(value.cursorUrl), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: migrateColor(value.buttonColor, "#ffffff", "#5865ee"), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
-const NAME_EFFECT_VALUES = ["none", "glitch", "typewrite", "rainbow", "shuffle", "gradient", "soft-glow", "outline"];
+const NAME_EFFECT_VALUES = ["none", "fuzzy", "typewrite", "rainbow", "shuffle", "gradient", "soft-glow", "outline"];
 const NAME_PARTICLE_VALUES = ["none", "blue", "green", "pink", "red", "white", "yellow"];
 let lastProfileParticles = "none";
 const BADGE_DEFINITIONS = [
@@ -79,11 +79,12 @@ const baseNameSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => {
   const value = baseNameSanitizeCustomization(raw);
   const usernameEffect = String(raw?.usernameEffect || "");
+  const normalizedUsernameEffect = usernameEffect === "glitch" ? "fuzzy" : usernameEffect;
   const nameParticles = String(raw?.nameParticles || "");
   const badges = Array.isArray(raw?.badges) ? raw.badges.filter((badge) => BADGE_VALUES.includes(String(badge))).map(String).filter((badge, index, list) => list.indexOf(badge) === index).slice(0, BADGE_MAX) : [];
   lastProfileParticles = NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none";
   lastProfileBadges = badges;
-  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(usernameEffect) ? usernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges };
+  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges };
 };
 const baseReadCustomization = readCustomization;
 readCustomization = (form) => {
@@ -153,6 +154,8 @@ const baseDashboardWithEmbedNav = dashboard;
 dashboard = () => baseDashboardWithEmbedNav().replace('<button class="sidebar-item" data-dashboard-tab="account" type="button">', `<button class="sidebar-item" data-dashboard-tab="embed" type="button">${icon("link")}<span>Embed</span><kbd>04</kbd></button><button class="sidebar-item" data-dashboard-tab="account" type="button">`);
 const baseDashboardWithBadges = dashboard;
 dashboard = () => baseDashboardWithBadges().replace('<button class="sidebar-item" data-dashboard-tab="embed" type="button">', `<button class="sidebar-item" data-dashboard-tab="badges" type="button">${icon("sparkle")}<span>Badges</span><kbd>05</kbd></button><button class="sidebar-item" data-dashboard-tab="embed" type="button">`).replace('<section data-tab-panel="embed" hidden>', `<section data-tab-panel="badges" hidden><div class="panel-heading"><div><span class="panel-index">BADGES</span><h2>Twój zestaw odznak</h2><p>Wybierz odznaki, które mają pojawić się przy Twoim nicku.</p></div><span class="badge-count" data-badge-count>0 / ${BADGE_MAX}</span></div><div class="badges-note">Możesz wybrać maksymalnie ${BADGE_MAX} odznak. Zmiany opublikują się po zapisaniu profilu.</div><div class="badge-grid">${badgeCards()}</div></section><section data-tab-panel="embed" hidden>`);
+const baseDashboardWithFuzzyEffect = dashboard;
+dashboard = () => baseDashboardWithFuzzyEffect().replace('data-name-effect-option="glitch"', 'data-name-effect-option="fuzzy"').replace('is-glitch">sqezen</span><small>Glitch', 'is-fuzzy">sqezen</span><small>Fuzzy').replace('<option value="glitch">Glitch</option>', '<option value="fuzzy">Fuzzy</option>');
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
