@@ -573,6 +573,46 @@ wireDashboard = async function () {
   syncPositionButton();
   applyPositions();
 };
+const baseWireDashboardWithFullscreenPositionEditor = wireDashboard;
+wireDashboard = async function () {
+  await baseWireDashboardWithFullscreenPositionEditor();
+  const form = document.querySelector("#profile-form");
+  const positionButton = document.querySelector("[data-embed-position-toggle]");
+  const positionLabel = document.querySelector("[data-embed-position-label]");
+  const positionInput = form?.elements.dynamic_embed_positions;
+  if (!form || !positionButton || !positionInput || positionButton.dataset.fullscreenBound === "true") return;
+  const replacement = positionButton.cloneNode(true);
+  positionButton.replaceWith(replacement);
+  replacement.dataset.fullscreenBound = "true";
+  const currentMode = () => document.querySelector("[data-embed-mode].is-active")?.dataset.embedMode || "standard";
+  const syncButton = () => {
+    const dynamic = currentMode() === "dynamic";
+    replacement.disabled = !dynamic;
+    replacement.textContent = dynamic ? "Edytuj pozycje w pełnym wymiarze" : "Wybierz Dynamic embed";
+    if (positionLabel) positionLabel.textContent = dynamic ? "Otwórz pełnoekranowy edytor, aby ustawić układ elementów." : "Wybierz Dynamic embed, aby edytować pozycje elementów.";
+  };
+  const syncSavedPositions = () => {
+    try {
+      const payload = JSON.parse(localStorage.getItem("sqezen_dynamic_embed_positions") || "null");
+      const username = String(form.elements.username?.value || "").trim().toLowerCase();
+      if (payload?.username === username && payload.positions) positionInput.value = JSON.stringify(sanitizeDynamicEmbedPositions(payload.positions));
+    } catch {}
+  };
+  replacement.addEventListener("click", () => {
+    if (currentMode() !== "dynamic") return feedback("Najpierw wybierz Dynamic embed.", true);
+    const username = String(form.elements.username?.value || "").trim().toLowerCase();
+    if (!username) return feedback("Najpierw ustaw nazwę użytkownika.", true);
+    const editorUrl = `${location.origin}/${encodeURIComponent(username)}?embed=1&edit=1`;
+    const editorWindow = window.open(editorUrl, "_blank", "noopener,noreferrer");
+    if (!editorWindow) window.location.href = editorUrl;
+  });
+  document.querySelectorAll("[data-embed-mode]").forEach((mode) => mode.addEventListener("click", () => setTimeout(syncButton, 0)));
+  window.addEventListener("storage", syncSavedPositions);
+  window.addEventListener("focus", syncSavedPositions);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) syncSavedPositions(); });
+  syncSavedPositions();
+  syncButton();
+};
 function bindProfileAssetPreview() {
   const form = document.querySelector("#profile-form");
   const assetsPanel = document.querySelector(".profile-assets-panel");
@@ -711,6 +751,81 @@ wirePublic = function () {
   ["loadedmetadata", "durationchange", "timeupdate", "progress", "seeking", "seeked", "play", "pause", "ended"].forEach((eventName) => audio.addEventListener(eventName, updateState));
   updateState();
 };
+function dynamicEmbedEditorToolbar() {
+  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag profile, Connections and music player.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
+}
+const baseWirePublicWithEmbedEditor = wirePublic;
+wirePublic = function () {
+  baseWirePublicWithEmbedEditor();
+  const page = document.querySelector(".dynamic-embed-page.is-embed-editor");
+  const main = page?.querySelector(".dynamic-embed-main");
+  const saveButton = page?.querySelector("[data-embed-editor-save]");
+  const status = page?.querySelector("[data-embed-editor-status]");
+  if (!page || !main || !saveButton || page.dataset.editorBound === "true") return;
+  page.dataset.editorBound = "true";
+  const tiles = Array.from(main.querySelectorAll("[data-dynamic-tile]"));
+  const readPositions = () => sanitizeDynamicEmbedPositions(Object.fromEntries(tiles.map((tile) => [tile.dataset.dynamicTile, { x: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-x")) || 0, y: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-y")) || 0 }])));
+  const applyPosition = (tile, position) => { tile.style.setProperty("--dynamic-x", String(position.x)); tile.style.setProperty("--dynamic-y", String(position.y)); };
+  const setStatus = (message, error = false) => { if (status) { status.textContent = message; status.classList.toggle("is-error", error); } };
+  tiles.forEach((tile) => {
+    const onPointerDown = (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const key = tile.dataset.dynamicTile;
+      const start = readPositions()[key] || { x: 0, y: 0 };
+      const frame = main.getBoundingClientRect();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      tile.classList.add("is-dragging");
+      const onPointerMove = (moveEvent) => {
+        const x = Math.min(35, Math.max(-35, start.x + ((moveEvent.clientX - startX) / Math.max(frame.width, 1)) * 100));
+        const y = Math.min(30, Math.max(-30, start.y + ((moveEvent.clientY - startY) / Math.max(frame.height, 1)) * 100));
+        const position = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+        applyPosition(tile, position);
+        setStatus("Unsaved layout");
+      };
+      const finish = () => {
+        tile.classList.remove("is-dragging");
+        tile.removeEventListener("pointermove", onPointerMove);
+        tile.removeEventListener("pointerup", finish);
+        tile.removeEventListener("pointercancel", finish);
+        document.removeEventListener("pointerup", finish);
+        document.removeEventListener("pointercancel", finish);
+        try { tile.releasePointerCapture?.(event.pointerId); } catch {}
+      };
+      tile.addEventListener("pointermove", onPointerMove);
+      tile.addEventListener("pointerup", finish);
+      tile.addEventListener("pointercancel", finish);
+      document.addEventListener("pointerup", finish);
+      document.addEventListener("pointercancel", finish);
+      try { tile.setPointerCapture?.(event.pointerId); } catch {}
+    };
+    tile.addEventListener("pointerdown", onPointerDown);
+  });
+  saveButton.addEventListener("click", async () => {
+    const username = page.dataset.embedUsername;
+    if (!username) return;
+    busy(saveButton, true, "Saving…");
+    setStatus("Saving…");
+    try {
+      const { data: profile, error: fetchError } = await supabaseClient.from("profiles").select("id,customization").eq("username", username).maybeSingle();
+      if (fetchError || !profile) throw fetchError || new Error("Profile not found");
+      const customization = sanitizeCustomization(profile.customization);
+      customization.dynamicEmbedPositions = readPositions();
+      const { error: updateError } = await supabaseClient.from("profiles").update({ customization }).eq("id", profile.id);
+      if (updateError) throw updateError;
+      try { localStorage.setItem("sqezen_dynamic_embed_positions", JSON.stringify({ username, positions: customization.dynamicEmbedPositions, timestamp: Date.now() })); } catch {}
+      setStatus("Layout saved");
+    } catch (error) {
+      console.error("Embed layout save failed", error);
+      setStatus("Could not save layout.", true);
+    } finally {
+      busy(saveButton, false);
+    }
+  });
+  setStatus("Drag any element to arrange it");
+};
 function dynamicAudioWidget(audioUrl, position = { x: 0, y: 0 }) {
   const x = safeNumber(position?.x, -35, 35, 0);
   const y = safeNumber(position?.y, -30, 30, 0);
@@ -733,6 +848,12 @@ async function dynamicEmbedProfile(username) {
   const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl, positions.audio) : "";
   return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section>${audioMarkup}</main></div>`;
 }
+const baseDynamicEmbedProfileForEditor = dynamicEmbedProfile;
+dynamicEmbedProfile = async function (username) {
+  const markup = await baseDynamicEmbedProfileForEditor(username);
+  if (new URLSearchParams(location.search).get("edit") !== "1" || !markup.includes('class="public-page dynamic-embed-page ')) return markup;
+  return markup.replace('<div class="public-page dynamic-embed-page ', '<div class="public-page dynamic-embed-page is-embed-editor ').replace(' style="', ` data-embed-editor="true" data-embed-username="${escapeHtml(username)}" style="`).replace('<div class="public-shade"></div>', `${dynamicEmbedEditorToolbar()}<div class="public-shade"></div>`);
+};
 const basePublicProfile = publicProfile;
 publicProfile = async function (username) {
   const markup = await basePublicProfile(username);
