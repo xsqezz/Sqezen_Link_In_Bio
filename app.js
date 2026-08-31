@@ -295,6 +295,40 @@ wireDashboard = async function () {
     updateEmbed();
     if (sessionStorage.getItem("sqezen_dashboard_tab") === "embed") showEmbed();
   }
+  if (document.documentElement.dataset.dashboardTabsCapture !== "true") {
+    document.documentElement.dataset.dashboardTabsCapture = "true";
+    document.addEventListener("click", (event) => {
+      const item = event.target.closest?.("[data-dashboard-tab]");
+      const tab = item?.dataset.dashboardTab;
+      if (!item || !["badges", "embed"].includes(tab)) return;
+      const currentForm = document.querySelector("#profile-form");
+      const panel = document.querySelector(`[data-tab-panel="${tab}"]`);
+      if (!currentForm || !panel) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === tab));
+      document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
+      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed", "SQEZEN / EMBED", "Pokaż swój profil.", "Wklej gotowy kod iframe na dowolną stronę."];
+      document.querySelector("#topbar-section").textContent = copy[0];
+      document.querySelector("#dashboard-eyebrow").textContent = copy[1];
+      document.querySelector("#dashboard-title").textContent = copy[2];
+      document.querySelector("#dashboard-subtitle").textContent = copy[3];
+      sessionStorage.setItem("sqezen_dashboard_tab", tab);
+      document.querySelector("#dashboard-sidebar")?.classList.remove("is-open");
+      if (tab === "badges") {
+        const count = currentForm.querySelectorAll("[data-badge-option].is-selected").length;
+        const badgeCount = document.querySelector("[data-badge-count]");
+        if (badgeCount) badgeCount.textContent = `${count} / ${BADGE_MAX}`;
+      } else {
+        const username = String(currentForm.elements.username?.value || "").trim().toLowerCase();
+        const embedUrl = username ? `${location.origin}/${encodeURIComponent(username)}?embed=1` : "";
+        const currentEmbedCode = document.querySelector("#embed-code");
+        const currentEmbedPreview = document.querySelector("#embed-preview");
+        if (currentEmbedCode) currentEmbedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:480px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
+        if (currentEmbedPreview) currentEmbedPreview.src = embedUrl || "about:blank";
+      }
+    }, true);
+  }
   const fileInput = document.querySelector("#cursor-file-input");
   const trigger = document.querySelector("#cursor-file-trigger");
   const urlInput = form?.elements.cursor_url;
