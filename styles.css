@@ -125,3 +125,6 @@ button.profile-asset-preview{cursor:pointer}
 .profile-asset-clear:hover{color:#ff7180;background:rgba(73,28,34,.9)}
 @media(max-width:760px){.profile-assets-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.profile-assets-section-heading{margin-left:2px}.profile-assets-panel{padding:15px 13px}.profile-assets-grid{grid-template-columns:1fr}.profile-asset-preview{height:150px}}
+.dashboard-sidebar .sidebar-bottom{display:none}
+.dashboard-sidebar .account-avatar{color:#fff;background:var(--blue-accent,#5865ee)}
+@media(min-width:1001px){.dashboard-sidebar .sidebar-account{margin-top:auto}}
