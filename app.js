@@ -156,6 +156,8 @@ const baseDashboardWithBadges = dashboard;
 dashboard = () => baseDashboardWithBadges().replace('<button class="sidebar-item" data-dashboard-tab="embed" type="button">', `<button class="sidebar-item" data-dashboard-tab="badges" type="button">${icon("sparkle")}<span>Badges</span><kbd>05</kbd></button><button class="sidebar-item" data-dashboard-tab="embed" type="button">`).replace('<section data-tab-panel="embed" hidden>', `<section data-tab-panel="badges" hidden><div class="panel-heading"><div><span class="panel-index">BADGES</span><h2>Twój zestaw odznak</h2><p>Wybierz odznaki, które mają pojawić się przy Twoim nicku.</p></div><span class="badge-count" data-badge-count>0 / ${BADGE_MAX}</span></div><div class="badges-note">Możesz wybrać maksymalnie ${BADGE_MAX} odznak. Zmiany opublikują się po zapisaniu profilu.</div><div class="badge-grid">${badgeCards()}</div></section><section data-tab-panel="embed" hidden>`);
 const baseDashboardWithFuzzyEffect = dashboard;
 dashboard = () => baseDashboardWithFuzzyEffect().replace('data-name-effect-option="glitch"', 'data-name-effect-option="fuzzy"').replace('is-glitch">sqezen</span><small>Glitch', 'is-fuzzy">sqezen</span><small>Fuzzy').replace('<option value="glitch">Glitch</option>', '<option value="fuzzy">Fuzzy</option>');
+const baseDashboardWithEmbedBuilder = dashboard;
+dashboard = () => baseDashboardWithEmbedBuilder().replace('<span>Embed</span><kbd>04</kbd>', '<span>Embed Builder</span><kbd>04</kbd>').replace('<h2>Dynamic embed</h2><p>Osadź aktualny profil na stronie, portfolio albo w swoim panelu.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>').replace('<label class="field-label">Adres embedu<textarea', '<label class="field-label">Kod iframe<textarea').replace('<small>Ten adres zawsze pobiera najnowsze dane Twojego profilu.</small>', '<small>Wybierz wariant powyżej, a potem wklej ten kod na swoją stronę.</small>').replace('<div class="embed-code-card">', `<div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu"><button class="embed-mode-option is-active" data-embed-mode="standard" type="button" aria-pressed="true"><span class="embed-mode-kicker">STANDARD</span><strong>Zwykły embed</strong><small>Pełna karta profilu, tak jak na publicznej stronie.</small></button><button class="embed-mode-option" data-embed-mode="dynamic" type="button" aria-pressed="false"><span class="embed-mode-kicker">DYNAMIC</span><strong>Dynamic embed</strong><small>Układ z kartą profilu i sekcją Connections.</small></button></div><div class="embed-code-card">`);
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
@@ -267,25 +269,43 @@ wireDashboard = async function () {
   const embedCode = document.querySelector("#embed-code");
   const embedPreview = document.querySelector("#embed-preview");
   const copyEmbed = document.querySelector("#copy-embed-code");
+  const embedModes = Array.from(document.querySelectorAll("[data-embed-mode]"));
   if (embedTab && embedPanel && embedCode && embedPreview && embedTab.dataset.bound !== "true") {
     embedTab.dataset.bound = "true";
-    const updateEmbed = () => {
+    let embedMode = sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : "standard";
+    const getEmbedUrl = () => {
       const username = String(form.elements.username?.value || "").trim().toLowerCase();
-      const embedUrl = username ? `${location.origin}/${encodeURIComponent(username)}?embed=1` : "";
-      embedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:480px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
+      return username ? `${location.origin}/${encodeURIComponent(username)}${embedMode === "dynamic" ? "?embed=1" : ""}` : "";
+    };
+    const updateEmbedModeUi = () => embedModes.forEach((mode) => {
+      const active = mode.dataset.embedMode === embedMode;
+      mode.classList.toggle("is-active", active);
+      mode.setAttribute("aria-pressed", String(active));
+    });
+    const updateEmbed = () => {
+      const embedUrl = getEmbedUrl();
+      const height = embedMode === "dynamic" ? 480 : 720;
+      embedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:${height}px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
       embedPreview.src = embedUrl || "about:blank";
+      embedPreview.style.height = `${height}px`;
+      updateEmbedModeUi();
     };
     const showEmbed = () => {
       document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item === embedTab));
       document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel !== embedPanel; });
-      document.querySelector("#topbar-section").textContent = "Embed";
-      document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / EMBED";
+      document.querySelector("#topbar-section").textContent = "Embed Builder";
+      document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / EMBED BUILDER";
       document.querySelector("#dashboard-title").textContent = "Pokaż swój profil.";
-      document.querySelector("#dashboard-subtitle").textContent = "Wklej gotowy kod iframe na dowolną stronę.";
+      document.querySelector("#dashboard-subtitle").textContent = "Wybierz zwykły lub dynamiczny embed i skopiuj gotowy kod iframe.";
       sessionStorage.setItem("sqezen_dashboard_tab", "embed");
       updateEmbed();
     };
     embedTab.addEventListener("click", showEmbed);
+    embedModes.forEach((mode) => mode.addEventListener("click", () => {
+      embedMode = mode.dataset.embedMode === "dynamic" ? "dynamic" : "standard";
+      sessionStorage.setItem("sqezen_embed_mode", embedMode);
+      updateEmbed();
+    }));
     form.addEventListener("input", updateEmbed);
     form.addEventListener("change", updateEmbed);
     copyEmbed?.addEventListener("click", async () => {
@@ -308,7 +328,7 @@ wireDashboard = async function () {
       event.stopImmediatePropagation();
       document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === tab));
       document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
-      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed", "SQEZEN / EMBED", "Pokaż swój profil.", "Wklej gotowy kod iframe na dowolną stronę."];
+      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed Builder", "SQEZEN / EMBED BUILDER", "Pokaż swój profil.", "Wybierz zwykły lub dynamiczny embed i skopiuj gotowy kod iframe."];
       document.querySelector("#topbar-section").textContent = copy[0];
       document.querySelector("#dashboard-eyebrow").textContent = copy[1];
       document.querySelector("#dashboard-title").textContent = copy[2];
@@ -321,11 +341,18 @@ wireDashboard = async function () {
         if (badgeCount) badgeCount.textContent = `${count} / ${BADGE_MAX}`;
       } else {
         const username = String(currentForm.elements.username?.value || "").trim().toLowerCase();
-        const embedUrl = username ? `${location.origin}/${encodeURIComponent(username)}?embed=1` : "";
+        const embedMode = sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : document.querySelector("[data-embed-mode].is-active")?.dataset.embedMode || "standard";
+        const embedUrl = username ? `${location.origin}/${encodeURIComponent(username)}${embedMode === "dynamic" ? "?embed=1" : ""}` : "";
+        const height = embedMode === "dynamic" ? 480 : 720;
+        document.querySelectorAll("[data-embed-mode]").forEach((modeButton) => {
+          const active = modeButton.dataset.embedMode === embedMode;
+          modeButton.classList.toggle("is-active", active);
+          modeButton.setAttribute("aria-pressed", String(active));
+        });
         const currentEmbedCode = document.querySelector("#embed-code");
         const currentEmbedPreview = document.querySelector("#embed-preview");
-        if (currentEmbedCode) currentEmbedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:480px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
-        if (currentEmbedPreview) currentEmbedPreview.src = embedUrl || "about:blank";
+        if (currentEmbedCode) currentEmbedCode.value = embedUrl ? `<iframe src="${embedUrl}" title="sqezen profile" loading="lazy" style="width:100%;height:${height}px;border:0;border-radius:24px"></iframe>` : "Ustaw nazwę użytkownika, aby wygenerować embed.";
+        if (currentEmbedPreview) { currentEmbedPreview.src = embedUrl || "about:blank"; currentEmbedPreview.style.height = `${height}px`; }
       }
     }, true);
   }
