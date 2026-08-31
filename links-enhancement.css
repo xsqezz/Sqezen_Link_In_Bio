@@ -34,3 +34,43 @@
 .link-custom-row .button{flex:0 0 auto}
 @media(max-width:1000px){.link-platform-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:760px){.link-platform-picker{padding:17px 13px}.link-platform-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.platform-button{min-height:62px}.link-card-summary{grid-template-columns:14px 34px minmax(0,1fr) auto;gap:8px;min-height:74px;padding:10px}.link-card-brand{width:34px;height:34px}.link-card-brand .platform-glyph{width:28px;height:28px}.link-card-summary-actions{gap:3px}.link-card-summary-actions button,.link-card-summary-actions a{width:26px;height:26px}.link-custom-row{align-items:flex-start;flex-direction:column}.link-custom-row .button{width:100%}}
+
+.platform-logo{display:block;width:21px;height:21px;object-fit:contain}
+.platform-logo.is-monochrome{filter:invert(1)}
+.platform-glyph .platform-logo{width:22px;height:22px}
+.platform-glyph.social-modal-glyph .platform-logo{width:25px;height:25px}
+.inline-platform-glyph{display:inline-grid;width:18px;height:18px;place-items:center;color:currentColor;line-height:1}
+.inline-platform-glyph .platform-logo{width:17px;height:17px;object-fit:contain}
+.link-platform-heading>span .platform-logo{width:16px;height:16px}
+.social-modal-open{overflow:hidden}
+.social-modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.64);backdrop-filter:blur(4px);animation:social-modal-in .18s ease both}
+.social-modal-backdrop.is-closing{animation:social-modal-out .16s ease both}
+.social-modal{width:min(100%,438px);overflow:hidden;color:var(--text);background:var(--panel,#0b0b0e);border:1px solid var(--line);border-radius:15px;box-shadow:0 24px 70px rgba(0,0,0,.42)}
+.social-modal-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:17px 20px 8px}
+.social-modal-head h2{margin:0;color:var(--text);font-size:1rem;letter-spacing:-.04em}
+.social-modal-close{display:grid;width:27px;height:27px;place-items:center;padding:0;color:var(--muted);background:transparent;border:0;border-radius:8px;cursor:pointer;font-size:1.35rem;line-height:1;transition:color .18s ease,background .18s ease}
+.social-modal-close:hover,.social-modal-close:focus-visible{color:var(--text);background:var(--soft)}
+.social-modal-body{padding:6px 20px 20px}
+.social-modal-label{display:flex;align-items:center;gap:6px;margin:9px 0 11px;color:var(--text);font-size:.79rem;font-weight:650}
+.social-modal-help{display:inline-grid;width:15px;height:15px;place-items:center;color:var(--muted);border:1px solid var(--muted);border-radius:50%;font-size:.6rem;font-weight:800;cursor:help}
+.social-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:4px;margin-bottom:11px;background:rgba(255,255,255,.045);border:1px solid var(--soft);border-radius:25px}
+.social-mode-switch button{display:flex;min-height:34px;align-items:center;justify-content:center;gap:7px;color:var(--muted);background:transparent;border:0;border-radius:19px;cursor:pointer;font:inherit;font-size:.75rem;transition:color .18s ease,background .18s ease}
+.social-mode-switch button:hover,.social-mode-switch button.is-active{color:var(--text);background:var(--soft)}
+.social-mode-switch button svg{width:16px;height:16px}
+.social-text-icon{display:inline-grid;width:16px;height:16px;place-items:center;color:currentColor;border-bottom:2px solid currentColor;font-family:Georgia,serif;font-size:.88rem;line-height:1}
+.social-modal-input-wrap{display:flex;min-height:46px;align-items:center;gap:10px;padding:0 11px;background:rgba(0,0,0,.3);border:1px solid transparent;border-radius:10px;transition:border-color .18s ease,background .18s ease}
+.social-modal-input-wrap:focus-within{background:rgba(0,0,0,.42);border-color:var(--accent)}
+.social-modal-input-wrap>span{display:grid;width:27px;height:27px;flex:0 0 27px;place-items:center;color:var(--muted);border-radius:8px}
+.social-modal-input{width:100%;min-width:0;height:44px;padding:0;color:var(--text);background:transparent;border:0;outline:0;font:inherit;font-size:.78rem}
+.social-modal-input::placeholder{color:var(--dim);opacity:1}
+.social-modal-input.has-error{color:var(--danger)}
+.social-modal-input-wrap:has(.has-error){border-color:var(--danger)}
+.social-modal-feedback{min-height:17px;margin:7px 0 0;color:var(--danger);font-size:.65rem}
+.social-modal-footer{display:flex;align-items:center;gap:12px;margin-top:2px}
+.social-modal-add{min-width:63px}
+.social-modal-help-link{color:var(--muted);font-size:.73rem;text-decoration:none;transition:color .18s ease}
+.social-modal-help-link:hover{color:var(--text)}
+@keyframes social-modal-in{from{opacity:0}to{opacity:1}}
+@keyframes social-modal-out{from{opacity:1}to{opacity:0}}
+@media(max-width:480px){.social-modal-backdrop{padding:13px}.social-modal-head{padding-inline:16px}.social-modal-body{padding-inline:16px}.social-modal{border-radius:13px}}
+@media(prefers-reduced-motion:reduce){.social-modal-backdrop,.social-modal-backdrop.is-closing{animation:none}.platform-button,.social-modal-close,.social-mode-switch button,.social-modal-input-wrap{transition:none}}
