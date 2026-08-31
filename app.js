@@ -190,12 +190,14 @@ const baseDashboardWithEmbedDefaults = dashboard;
 dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><input id="dynamic-embed-positions" name="dynamic_embed_positions" type="hidden" value="{}"><div class="embed-mode-heading">').replace('<div class="embed-code-card">', '<div class="embed-default-row"><span data-embed-default-label>Domyślny embed: zwykły</span><button class="button button-small button-dark" data-embed-default-button type="button">Ustaw dynamic embed jako domyślny</button></div><div class="embed-position-row"><span data-embed-position-label>Ustaw układ kafelków dynamicznego embedu.</span><button class="button button-small button-dark" data-embed-position-toggle type="button">Edytuj pozycje kafelków</button></div><div class="embed-code-card">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
 const baseDashboardWithFlatSidebar = dashboard;
 dashboard = () => baseDashboardWithFlatSidebar().replace(/<div class="sidebar-brand">[\s\S]*?<\/div>/, '').replace('</nav><div class="sidebar-rule"></div><span class="sidebar-label">ACCOUNT</span>', '').replace('</button><div class="sidebar-account">', '</button></nav><div class="sidebar-account">');
-function profileAssetPreview() { return `<aside class="preview-column profile-assets-column"><div class="profile-assets-panel"><div class="profile-assets-heading"><div><span class="panel-index">PROFILE ASSETS</span><h2>Materiały profilu</h2><p>Podgląd elementów ustawionych na Twoim profilu.</p></div></div><div class="profile-assets-grid"><article class="profile-asset-card" data-profile-asset-card="background"><h3>Background</h3><div class="profile-asset-preview" data-asset-preview="background"><span class="profile-asset-empty">Brak tła</span></div><span class="profile-asset-type" data-asset-type="background" hidden></span><button class="profile-asset-clear" data-asset-clear="background" type="button" aria-label="Usuń tło" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="audio"><h3>Audio</h3><button class="profile-asset-preview profile-asset-audio-action" data-asset-preview="audio" data-asset-open="audio" type="button"><span class="profile-asset-empty-icon">${icon("volume")}</span><span>Kliknij, aby otworzyć ustawienia audio</span></button><span class="profile-asset-type" data-asset-type="audio" hidden></span><button class="profile-asset-clear" data-asset-clear="audio" type="button" aria-label="Usuń audio" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="avatar"><h3>Profile Avatar</h3><div class="profile-asset-preview" data-asset-preview="avatar"><span class="profile-asset-avatar-fallback">S</span></div><span class="profile-asset-type" data-asset-type="avatar" hidden></span><button class="profile-asset-clear" data-asset-clear="avatar" type="button" aria-label="Usuń avatar" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="cursor"><h3>Custom Cursor</h3><div class="profile-asset-preview" data-asset-preview="cursor"><span class="profile-asset-empty">Brak custom cursora</span></div><span class="profile-asset-type" data-asset-type="cursor" hidden></span><button class="profile-asset-clear" data-asset-clear="cursor" type="button" aria-label="Usuń custom cursora" hidden>×</button></article></div></div></aside>`; }
+function profileAssetPreview() {
+  return `<aside class="preview-column profile-assets-column"><div class="profile-assets-section-heading"><span class="panel-index">PROFILE ASSETS</span><h2>Assets Uploader</h2><p>Podgląd elementów ustawionych na Twoim profilu.</p></div><div class="profile-assets-panel"><div class="profile-assets-grid"><article class="profile-asset-card" data-profile-asset-card="background"><h3>Background</h3><div class="profile-asset-preview" data-asset-preview="background"><span class="profile-asset-empty">Brak tła</span></div><span class="profile-asset-type" data-asset-type="background" hidden></span><button class="profile-asset-clear" data-asset-clear="background" type="button" aria-label="Usuń tło" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="audio"><h3>Audio</h3><button class="profile-asset-preview profile-asset-audio-action" data-asset-preview="audio" data-asset-open="audio" type="button"><span class="profile-asset-empty-icon">${icon("volume")}</span><span>Kliknij, aby otworzyć ustawienia audio</span></button><span class="profile-asset-type" data-asset-type="audio" hidden></span><button class="profile-asset-clear" data-asset-clear="audio" type="button" aria-label="Usuń audio" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="avatar"><h3>Profile Avatar</h3><div class="profile-asset-preview" data-asset-preview="avatar"><span class="profile-asset-avatar-fallback">S</span></div><span class="profile-asset-type" data-asset-type="avatar" hidden></span><button class="profile-asset-clear" data-asset-clear="avatar" type="button" aria-label="Usuń avatar" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="cursor"><h3>Custom Cursor</h3><div class="profile-asset-preview" data-asset-preview="cursor"><span class="profile-asset-empty">Brak custom cursora</span></div><span class="profile-asset-type" data-asset-type="cursor" hidden></span><button class="profile-asset-clear" data-asset-clear="cursor" type="button" aria-label="Usuń custom cursora" hidden>×</button></article></div></div></aside>`;
+}
 const baseDashboardWithProfileAssets = dashboard;
 dashboard = () => baseDashboardWithProfileAssets().replace('<form id="profile-form" class="dashboard-grid">', '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column">[\s\S]*?<\/aside>/, profileAssetPreview());
 const profileAssetTopPreview = () => profileAssetPreview().replace('<aside class="preview-column profile-assets-column">', '<section class="profile-assets-top">').replace('</aside>', '</section>');
 const baseDashboardWithTopProfileAssets = dashboard;
-dashboard = () => baseDashboardWithTopProfileAssets().replace('<form id="profile-form" class="dashboard-grid dashboard-grid-assets">', profileAssetTopPreview() + '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column profile-assets-column">[\s\S]*?<\/aside>/, '');
+dashboard = () => baseDashboardWithTopProfileAssets().replace('<form id="profile-form" class="dashboard-grid dashboard-grid-assets">', profileAssetTopPreview() + '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column profile-assets-column">[\s\S]*?<\/aside>/, '').replace('<h2>Twój klimat</h2><p>Ustaw profil dokładnie tak, jak chcesz go pokazywać.</p>', '<h2>General Customization</h2><p>Background, card, type and colors — all under your control.</p>');
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
@@ -565,15 +567,13 @@ wireDashboard = async function () {
   syncPositionButton();
   applyPositions();
 };
-const baseWireDashboardWithProfileAssets = wireDashboard;
-wireDashboard = async function () {
-  await baseWireDashboardWithProfileAssets();
+function bindProfileAssetPreview() {
   const form = document.querySelector("#profile-form");
   const assetsPanel = document.querySelector(".profile-assets-panel");
-  if (!form || !assetsPanel || assetsPanel.dataset.bound === "true") return;
-  assetsPanel.dataset.bound = "true";
+  if (!form || !assetsPanel) return;
   const fields = { background: "background_media_url", audio: "audio_url", avatar: "avatar_url", cursor: "cursor_url" };
   const extension = (url) => { const value = String(url || "").split(/[?#]/)[0].split(".").pop()?.toUpperCase() || ""; return value && value.length <= 5 ? `.${value}` : "FILE"; };
+  const readField = (name) => { const field = form.elements.namedItem(name); return String(field?.value || "").trim(); };
   const syncAsset = (kind, value) => {
     const preview = assetsPanel.querySelector(`[data-asset-preview="${kind}"]`);
     const type = assetsPanel.querySelector(`[data-asset-type="${kind}"]`);
@@ -588,7 +588,14 @@ wireDashboard = async function () {
     if (kind === "avatar") { const name = String(form.elements.display_name?.value || form.elements.username?.value || "S").trim() || "S"; preview.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : `<span class="profile-asset-avatar-fallback">${escapeHtml(name.slice(0, 1).toUpperCase())}</span>`; }
     if (kind === "cursor") preview.innerHTML = url ? `<img class="profile-asset-cursor-image" src="${escapeHtml(url)}" alt="">` : `<span class="profile-asset-empty">Brak custom cursora</span>`;
   };
-  const syncAssets = () => Object.entries(fields).forEach(([kind, fieldName]) => syncAsset(kind, form.elements[fieldName]?.value || ""));
+  const syncAssets = () => {
+    let config = {};
+    try { config = readCustomization(form) || {}; } catch {}
+    const fallback = { background: config.backgroundMediaUrl, audio: config.audioUrl, avatar: readField("avatar_url"), cursor: config.cursorUrl };
+    Object.entries(fields).forEach(([kind, fieldName]) => syncAsset(kind, readField(fieldName) || fallback[kind] || ""));
+  };
+  if (assetsPanel.dataset.bound === "true") { syncAssets(); return; }
+  assetsPanel.dataset.bound = "true";
   assetsPanel.querySelectorAll("[data-asset-clear]").forEach((button) => button.addEventListener("click", () => {
     const field = form.elements[fields[button.dataset.assetClear]];
     if (!field) return;
@@ -604,6 +611,13 @@ wireDashboard = async function () {
   form.addEventListener("input", syncAssets);
   form.addEventListener("change", syncAssets);
   syncAssets();
+  window.setTimeout(syncAssets, 250);
+}
+const baseWireDashboardWithProfileAssets = wireDashboard;
+wireDashboard = async function () {
+  try { await baseWireDashboardWithProfileAssets(); } catch (error) { console.error("Dashboard wiring failed", error); }
+  bindProfileAssetPreview();
+  window.setTimeout(bindProfileAssetPreview, 350);
 };
 const baseWirePublic = wirePublic;
 wirePublic = function () {
