@@ -118,9 +118,48 @@
     "To konto już istnieje. Zaloguj się.": "This account already exists. Sign in.",
     "Za dużo prób. Odczekaj chwilę.": "Too many attempts. Wait a moment.",
     "Nie udało się połączyć z serwerem.": "Could not connect to the server.",
-    "Coś poszło nie tak. Spróbuj ponownie.": "Something went wrong. Please try again."
+    "Coś poszło nie tak. Spróbuj ponownie.": "Something went wrong. Please try again.",
+    "zaloguj się": "sign in",
+    "stwórz profil": "create profile",
+    "Tożsamość": "Identity",
+    "Bezpośredni adres do zdjęcia profilowego.": "Direct URL to your profile image.",
+    "Adres lub tekst": "Address or text",
+    "Tytuł": "Title",
+    "Strona / link": "Website / link",
+    "Brak": "None",
+    "Subtelny noise": "Subtle noise",
+    "Delikatna siatka": "Subtle grid",
+    "Miękki spotlight": "Soft spotlight",
+    "Delikatny glow": "Subtle glow",
+    "Najlepiej obraz 32×32 px.": "Best as a 32×32 px image.",
+    "Odwiedzający uruchamiają ręcznie.": "Visitors start it manually.",
+    "Ustaw profil dokładnie tak, jak chcesz go pokazywać.": "Set your profile exactly how you want it to appear.",
+    "Wróć": "Back",
+    "Otwórz profil": "Open profile",
+    "Wyloguj": "Sign out",
+    "Zmień dane": "Change details",
+    "Potwierdź kod": "Confirm code",
+    "Wyślij kod ponownie": "Send a new code",
+    "Kod z wiadomości": "Verification code",
+    "Wróć na stronę główną": "Back to home",
+    "Nie masz konta?": "Don't have an account?",
+    "Masz już konto?": "Already have an account?",
+    "Zaczniemy od e-maila i hasła.": "Let's start with your email and password.",
+    "Twoje dane są obsługiwane bezpiecznie przez Supabase.": "Your details are handled securely by Supabase.",
+    "Wpisz kod": "Enter the code",
+    "Potwierdź swój e-mail": "Confirm your email",
+    "Wpisz 8-cyfrowy kod z wiadomości. Nie używamy linków, więc zawsze wiesz, co potwierdzasz.": "Enter the 8-digit code from your email. We do not use links, so you always know what you are confirming.",
+    "Wysłaliśmy kod na": "We sent a code to",
+    "Wróć do rejestracji i wpisz e-mail.": "Return to registration and enter your email.",
+    "Wpisz dokładnie 8 cyfr z wiadomości.": "Enter exactly 8 digits from the email.",
+    "Sprawdzanie kodu…": "Checking the code…",
+    "Tworzenie konta…": "Creating your account…",
+    "Logowanie…": "Signing in…",
+    "Zapisywanie…": "Saving…",
+    "Pracuję…": "Working…"
   }));
-  const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"]]);
+  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Nie udało się", "Could not"]];
+  const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"]]);
   const translate = (root = document) => {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -132,6 +171,7 @@
       if (!trimmed) return;
       const translated = textMap.get(trimmed);
       if (translated) node.nodeValue = original.replace(trimmed, translated);
+      else node.nodeValue = partMap.reduce((value, [from, to]) => value.replaceAll(from, to), original);
     });
     root.querySelectorAll?.("input, textarea, select").forEach((field) => {
       ["placeholder", "aria-label"].forEach((name) => { const value = field.getAttribute(name); if (value && attrMap.has(value)) field.setAttribute(name, attrMap.get(value)); });
