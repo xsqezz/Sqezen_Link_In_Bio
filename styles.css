@@ -98,6 +98,7 @@
 .dashboard-dynamic-link svg,.dashboard-dynamic-link .platform-logo{width:18px;height:18px}
 .dashboard-dynamic-link-empty{color:var(--dim)}
 .dashboard-grid-assets{grid-template-columns:minmax(0,1fr)}
+.profile-assets-top{margin-bottom:17px}
 .profile-assets-column{min-width:0}
 .profile-assets-panel{padding:25px;background:rgba(255,255,255,.042);border:1px solid var(--line);border-radius:17px}
 .profile-assets-heading h2{margin:6px 0 0;font-size:1.13rem;letter-spacing:-.05em}
