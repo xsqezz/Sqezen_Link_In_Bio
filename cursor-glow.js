@@ -1,5 +1,6 @@
 (() => {
   const cleanCursorUrl = (value) => String(value || '').replace(/["\\\n\r]/g, '').trim();
+  const cleanColor = (value) => /^#[0-9a-f]{6}$/i.test(String(value || '').trim()) ? String(value).trim().toLowerCase() : '';
   const supportsFinePointer = () => window.matchMedia?.('(hover: hover) and (pointer: fine)').matches !== false;
 
   const startCursorGlow = () => {
@@ -23,6 +24,7 @@
     let frame = 0;
     let visible = false;
     let appliedCursor = '';
+    let appliedGlow = '';
     let appliedDashboard = null;
 
     const getCursorUrl = () => {
@@ -31,12 +33,20 @@
       return document.querySelector('#profile-form [name="cursor_url"]')?.value || '';
     };
 
+    const getGlowColor = () => {
+      const publicPage = document.querySelector('.public-page[data-cursor-glow]');
+      return publicPage?.dataset.cursorGlow || document.querySelector('#profile-form [name="cursor_glow_color"]')?.value || document.querySelector('#profile-form [name="background_color"]')?.value || '';
+    };
+
     const syncCursor = () => {
       const cursorUrl = cleanCursorUrl(getCursorUrl());
+      const glowColor = cleanColor(getGlowColor()) || '#5865ee';
       const isDashboard = document.body.dataset.route === '/dashboard';
-      if (cursorUrl === appliedCursor && isDashboard === appliedDashboard) return;
+      if (cursorUrl === appliedCursor && glowColor === appliedGlow && isDashboard === appliedDashboard) return;
       appliedCursor = cursorUrl;
+      appliedGlow = glowColor;
       appliedDashboard = isDashboard;
+      document.documentElement.style.setProperty('--cursor-glow', glowColor);
       const useCustomCursor = supportsFinePointer() && (isDashboard || Boolean(cursorUrl));
       document.documentElement.classList.toggle('has-custom-cursor', useCustomCursor);
       document.documentElement.classList.toggle('cursor-enhanced', useCustomCursor);
@@ -65,7 +75,8 @@
       const cursorX = targetX;
       const cursorY = targetY;
       glow.style.transform = `translate3d(${currentX}px,${currentY}px,0) translate3d(-50%,-50%,0)`;
-      cursor.style.transform = `translate3d(${cursorX}px,${cursorY}px,0) translate3d(-50%,-50%,0)`;
+      const cursorOffset = cursor.classList.contains('has-image') ? 'translate3d(-12px,-9px,0)' : 'translate3d(-50%,-50%,0)';
+      cursor.style.transform = `translate3d(${cursorX}px,${cursorY}px,0) ${cursorOffset}`;
       frame = requestAnimationFrame(render);
     };
 
