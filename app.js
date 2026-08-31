@@ -532,7 +532,7 @@ wireDashboard = async function () {
     if (doc.body) doc.body.style.userSelect = "none";
     tiles.forEach((tile) => {
       const onPointerDown = (event) => {
-        if (event.button !== 0) return;
+        if (event.button !== 0 || event.target.closest("button,input,a,select,textarea")) return;
         event.preventDefault();
         event.stopPropagation();
         const key = tile.dataset.dynamicTile;
@@ -542,10 +542,10 @@ wireDashboard = async function () {
         const startY = event.clientY;
         tile.classList.add("is-dragging");
         const onPointerMove = (moveEvent) => {
-          const x = Math.min(35, Math.max(-35, start.x + ((moveEvent.clientX - startX) / Math.max(frame.width, 1)) * 100));
-          const y = Math.min(30, Math.max(-30, start.y + ((moveEvent.clientY - startY) / Math.max(frame.height, 1)) * 100));
+          const x = Math.min(100, Math.max(0, start.x + ((moveEvent.clientX - startX) / Math.max(frame.width, 1)) * 100));
+          const y = Math.min(100, Math.max(0, start.y + ((moveEvent.clientY - startY) / Math.max(frame.height, 1)) * 100));
           const next = readPositions();
-          next[key] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+          next[key] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, free: true };
           writePositions(next);
           tile.style.setProperty("--dynamic-x", String(next[key].x));
           tile.style.setProperty("--dynamic-y", String(next[key].y));
@@ -756,12 +756,38 @@ wirePublic = function () {
   ["loadedmetadata", "durationchange", "timeupdate", "progress", "seeking", "seeked", "play", "pause", "ended"].forEach((eventName) => audio.addEventListener(eventName, updateState));
   updateState();
 };
+function clampDynamicEmbedTilePosition(tile, main, position = {}) {
+  const frame = main?.getBoundingClientRect();
+  if (!frame) return { x: safeNumber(position.x, 0, 100, 50), y: safeNumber(position.y, 0, 100, 50), free: true };
+  const rect = tile.getBoundingClientRect();
+  const halfWidth = Math.min(50, (rect.width / Math.max(frame.width, 1)) * 50);
+  const halfHeight = Math.min(50, (rect.height / Math.max(frame.height, 1)) * 50);
+  return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true };
+}
+function clampDynamicEmbedTiles(main) {
+  if (!main) return;
+  main.querySelectorAll("[data-dynamic-tile]").forEach((tile) => {
+    const styles = getComputedStyle(tile);
+    const position = clampDynamicEmbedTilePosition(tile, main, { x: Number.parseFloat(styles.getPropertyValue("--dynamic-x")), y: Number.parseFloat(styles.getPropertyValue("--dynamic-y")) });
+    tile.style.setProperty("--dynamic-x", String(position.x));
+    tile.style.setProperty("--dynamic-y", String(position.y));
+  });
+}
 function dynamicEmbedEditorToolbar() {
   return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag profile, Connections and music player.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
 }
 const baseWirePublicWithEmbedEditor = wirePublic;
 wirePublic = function () {
   baseWirePublicWithEmbedEditor();
+  const dynamicPage = document.querySelector(".dynamic-embed-page");
+  const dynamicMain = dynamicPage?.querySelector(".dynamic-embed-main");
+  if (dynamicMain) {
+    clampDynamicEmbedTiles(dynamicMain);
+    if (dynamicPage.dataset.layoutResizeBound !== "true") {
+      dynamicPage.dataset.layoutResizeBound = "true";
+      window.addEventListener("resize", () => clampDynamicEmbedTiles(dynamicMain));
+    }
+  }
   const page = document.querySelector(".dynamic-embed-page.is-embed-editor");
   const main = page?.querySelector(".dynamic-embed-main");
   const saveButton = page?.querySelector("[data-embed-editor-save]");
@@ -772,17 +798,11 @@ wirePublic = function () {
   const readPositions = () => sanitizeDynamicEmbedPositions(Object.fromEntries(tiles.map((tile) => [tile.dataset.dynamicTile, { x: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-x")) || 0, y: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-y")) || 0, free: true }])));
   const applyPosition = (tile, position) => { tile.style.setProperty("--dynamic-x", String(position.x)); tile.style.setProperty("--dynamic-y", String(position.y)); };
   const setStatus = (message, error = false) => { if (status) { status.textContent = message; status.classList.toggle("is-error", error); } };
-  const clampTilePosition = (tile, position) => {
-    const frame = main.getBoundingClientRect();
-    const rect = tile.getBoundingClientRect();
-    const halfWidth = Math.min(50, (rect.width / Math.max(frame.width, 1)) * 50);
-    const halfHeight = Math.min(50, (rect.height / Math.max(frame.height, 1)) * 50);
-    return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true };
-  };
+  const clampTilePosition = (tile, position) => clampDynamicEmbedTilePosition(tile, main, position);
   const clampTiles = () => { const positions = readPositions(); tiles.forEach((tile) => applyPosition(tile, clampTilePosition(tile, positions[tile.dataset.dynamicTile] || { x: 50, y: 50 }))); };
   tiles.forEach((tile) => {
     const onPointerDown = (event) => {
-      if (event.button !== 0) return;
+      if (event.button !== 0 || event.target.closest("button,input,a,select,textarea")) return;
       event.preventDefault();
       event.stopPropagation();
       const key = tile.dataset.dynamicTile;
@@ -846,9 +866,9 @@ function dynamicAudioTrackMeta(audioUrl, metadata = {}, fallbackArtist = "sqezen
   rawFilename = rawFilename.replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim();
   return { cover: safeMediaUrl(metadata.coverUrl), title: String(metadata.title || "").trim() || rawFilename || "Now playing", artist: String(metadata.artist || "").trim() || fallbackArtist || "sqezen" };
 }
-function dynamicAudioWidget(audioUrl, position = { x: 0, y: 0 }, metadata = {}, fallbackArtist = "sqezen") {
-  const x = safeNumber(position?.x, -35, 35, 0);
-  const y = safeNumber(position?.y, -30, 30, 0);
+function dynamicAudioWidget(audioUrl, position = { x: 25, y: 82 }, metadata = {}, fallbackArtist = "sqezen") {
+  const x = safeNumber(position?.x, 0, 100, 25);
+  const y = safeNumber(position?.y, 0, 100, 82);
   const track = dynamicAudioTrackMeta(audioUrl, metadata, fallbackArtist);
   const cover = track.cover ? `<img src="${escapeHtml(track.cover)}" alt="Okładka utworu ${escapeHtml(track.title)}" loading="eager">` : `<span class="dynamic-audio-cover-placeholder" aria-hidden="true">♪</span>`;
   return `<div class="profile-audio-widget dynamic-audio-widget" data-audio-widget data-dynamic-tile="audio" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-audio-track"><div class="dynamic-audio-cover">${cover}</div><div class="dynamic-audio-copy"><strong class="dynamic-audio-title">${escapeHtml(track.title)}</strong><span class="dynamic-audio-artist">${escapeHtml(track.artist)}</span></div></div><div class="dynamic-audio-controls" role="group" aria-label="Sterowanie muzyką"><button class="dynamic-audio-control" data-audio-rewind type="button" aria-label="Cofnij 10 sekund" title="Cofnij 10 sekund">${icon("rewind")}</button><button class="dynamic-audio-control dynamic-audio-play" data-audio-toggle type="button" aria-label="Odtwórz audio"><span data-audio-icon>${icon("play")}</span></button><button class="dynamic-audio-control" data-audio-forward type="button" aria-label="Przewiń 10 sekund" title="Przewiń 10 sekund">${icon("forward")}</button></div><div class="dynamic-audio-progress-row"><time data-audio-current>0:00</time><input class="dynamic-audio-progress" data-audio-progress type="range" min="0" max="0" step="0.1" value="0" aria-label="Pozycja utworu"><time data-audio-duration>0:00</time></div><audio data-profile-audio preload="auto" src="${escapeHtml(audioUrl)}"></audio></div>`;
