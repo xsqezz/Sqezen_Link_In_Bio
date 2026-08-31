@@ -1,0 +1,37 @@
+.brand-wordmark {
+  display: block;
+  width: 116px;
+  height: auto;
+  max-width: 42vw;
+  object-fit: contain;
+}
+
+.public-brand-logo {
+  display: block;
+  width: min(150px, 100%);
+  height: auto;
+  object-fit: contain;
+}
+
+.landing-reference-logo {
+  display: block;
+  width: min(560px, 100%);
+  margin: 0;
+  line-height: 0;
+}
+
+.landing-reference-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 760px) {
+  .brand-wordmark {
+    width: 104px;
+  }
+
+  .landing-reference-logo {
+    width: min(430px, 100%);
+  }
+}
