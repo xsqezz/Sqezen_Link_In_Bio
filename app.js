@@ -528,7 +528,7 @@ wireDashboard = async function () {
         event.stopPropagation();
         const key = tile.dataset.dynamicTile;
         const start = readPositions()[key] || { x: 0, y: 0 };
-        const frame = embedPreview.getBoundingClientRect();
+        const frame = doc.querySelector(".dynamic-embed-main")?.getBoundingClientRect() || embedPreview.getBoundingClientRect();
         const startX = event.clientX;
         const startY = event.clientY;
         tile.classList.add("is-dragging");
