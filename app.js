@@ -225,8 +225,8 @@ dashboard = () => {
   if (firstCard >= 0 && nextCard > firstCard) markup = markup.slice(0, firstCard) + markup.slice(nextCard);
   const locationField = '<label class="field-label">Lokalizacja<input name="location" maxlength="42" placeholder="np. Warszawa"></label>';
   markup = markup.replace('<label class="field-label">Efekt tła<select name="background_effect">', `${locationField}<label class="field-label">Efekt tła<select name="background_effect">`);
-  const hiddenAudioFields = '<input name="audio_cover_url" type="hidden"><input name="audio_title" type="hidden"><input name="audio_artist" type="hidden">';
-  return markup.replace('<section data-tab-panel="appearance" hidden>', `${hiddenAudioFields}<section data-tab-panel="appearance" hidden>`);
+  const hiddenAssetFields = '<input name="background_media_url" type="hidden"><input name="audio_url" type="hidden"><input name="audio_cover_url" type="hidden"><input name="audio_title" type="hidden"><input name="audio_artist" type="hidden"><input name="cursor_url" type="hidden">';
+  return markup.replace('<section data-tab-panel="appearance" hidden>', `${hiddenAssetFields}<section data-tab-panel="appearance" hidden>`);
 };
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
@@ -780,11 +780,11 @@ function bindProfileAssetPreview() {
       syncAssets();
       feedback(`${button.dataset.assetClear === "background" ? "Tło" : button.dataset.assetClear === "audio" ? "Audio" : button.dataset.assetClear === "avatar" ? "Avatar" : "Custom cursor"} usunięte. Zapisz zmiany, aby opublikować.`);
     }));
-    panel.addEventListener("click", (event) => {
+    panel.querySelectorAll("[data-profile-asset-card]").forEach((card) => card.addEventListener("click", (event) => {
       if (event.target.closest("[data-asset-clear]")) return;
-      const card = event.target.closest("[data-profile-asset-card]");
-      if (card && options[card.dataset.profileAssetCard]) openPicker(card.dataset.profileAssetCard);
-    });
+      const kind = card.dataset.profileAssetCard;
+      if (options[kind]) openPicker(kind);
+    }));
   });
   form.addEventListener("input", syncAssets);
   form.addEventListener("change", syncAssets);
