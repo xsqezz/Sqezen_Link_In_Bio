@@ -4,7 +4,7 @@
     ["instagram", "Instagram", "instagram.com/..."], ["x", "X", "x.com/..."], ["tiktok", "TikTok", "tiktok.com/@..."], ["telegram", "Telegram", "t.me/..."],
     ["soundcloud", "SoundCloud", "soundcloud.com/..."], ["paypal", "PayPal", "paypal.me/..."], ["github", "GitHub", "github.com/..."], ["roblox", "Roblox", "roblox.com/users/.../profile"],
     ["xbox", "Xbox", "xbox.com/play/user/..."], ["gitlab", "GitLab", "gitlab.com/..."], ["twitch", "Twitch", "twitch.tv/..."], ["reddit", "Reddit", "reddit.com/u/..."],
-    ["namemc", "NameMC", "namemc.com/profile/..."], ["steam", "Steam", "steamcommunity.com/id/..."], ["kick", "Kick", "kick.com/..."], ["threads", "Threads", "threads.net/@..."],
+    ["namemc", "NameMC", "namemc.com/profile/..."], ["steam", "Steam", "steamcommunity.com/id/..."], ["threads", "Threads", "threads.net/@..."],
     ["linkedin", "LinkedIn", "linkedin.com/in/..."], ["pinterest", "Pinterest", "pinterest.com/..."], ["email", "Email", "name@example.com"], ["facebook", "Facebook", "facebook.com/..."],
     ["website", "Custom URL", "https://example.com"]
   ];
