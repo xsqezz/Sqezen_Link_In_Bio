@@ -65,5 +65,10 @@ body[data-route="/dashboard"]{background:#000!important}
 .public-page .profile-link:hover{background:#151519;border-color:rgba(88,101,238,.65)}
 .public-page .profile-link-icon,.public-page .profile-link-arrow{color:var(--blue-accent)}
 .public-page .public-card-footer,.public-page .public-brand,.public-page .claim-link{color:#717987}
+
+/* Keep the upper-left corner clean: retain the mark, remove the wordmark. */
+.brand>span:not(.brand-mark),.public-brand>span:not(.brand-mark){display:none}
+.auth-reference-brand{display:none}
+.auth-reference-header{justify-content:flex-end!important}
 @media(max-width:1000px){.dashboard-layout{gap:24px}.dashboard-grid{grid-template-columns:1fr}.preview-column{order:-1}.preview-sticky{position:static}.dashboard-preview{min-height:420px}}
 @media(max-width:760px){.dashboard-page{width:calc(100% - 32px)}.dashboard-topbar{min-height:72px}.dashboard-layout{padding-top:28px}.dashboard-intro h1{font-size:clamp(3rem,13vw,4.6rem)}.editor-panel,.preview-sticky{padding:19px 16px}.custom-carousel-nav{margin-top:17px}.empty-page{padding:110px 0 80px}}
