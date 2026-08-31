@@ -128,7 +128,7 @@ button.profile-asset-preview{cursor:pointer}
 .dashboard-sidebar .sidebar-bottom{display:none}
 .dashboard-sidebar .account-avatar{color:#fff;background:var(--blue-accent,#5865ee)}
 @media(min-width:1001px){.dashboard-sidebar .sidebar-account{margin-top:auto}}
-.dynamic-embed-page .dynamic-audio-widget{position:fixed;right:auto;bottom:28px;left:28px;z-index:4;display:grid;width:min(360px,calc(100% - 56px));gap:12px;padding:13px 15px 14px;background:rgba(var(--profile-card-rgb,17,17,22),.74);border:1px solid rgba(255,255,255,.15);border-radius:30px;box-shadow:0 24px 70px rgba(0,0,0,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.dynamic-embed-page .dynamic-audio-widget{position:absolute;right:auto;bottom:calc(28px - var(--dynamic-y,0) * 1%);left:calc((100% - 100vw)/2 + 28px + var(--dynamic-x,0) * 1%);z-index:4;display:grid;width:min(360px,calc(100% - 56px));gap:12px;padding:13px 15px 14px;background:rgba(var(--profile-card-rgb,17,17,22),.74);border:1px solid rgba(255,255,255,.15);border-radius:30px;box-shadow:0 24px 70px rgba(0,0,0,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .dynamic-audio-controls{display:flex;align-items:center;gap:8px}
 .dynamic-audio-control{display:grid;width:33px;height:33px;place-items:center;padding:0;color:var(--profile-text,var(--text));background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.15);border-radius:10px;cursor:pointer;transition:color .18s ease,background .18s ease,border-color .18s ease,transform .18s ease}
 .dynamic-audio-control:hover{color:var(--profile-text,var(--text));background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);transform:translateY(-1px)}
@@ -141,4 +141,4 @@ button.profile-asset-preview{cursor:pointer}
 .dynamic-audio-progress::-webkit-slider-thumb{width:11px;height:11px;appearance:none;background:var(--profile-text,var(--text));border:0;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.14);transition:transform .15s ease}
 .dynamic-audio-progress::-webkit-slider-thumb:hover{transform:scale(1.15)}
 .dynamic-audio-progress::-moz-range-thumb{width:11px;height:11px;background:var(--profile-text,var(--text));border:0;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.14)}
-@media(max-width:760px){.dynamic-embed-page .dynamic-audio-widget{right:18px;bottom:18px;left:18px;width:auto}}
+@media(max-width:760px){.dynamic-embed-page .dynamic-audio-widget{position:fixed;right:18px;bottom:18px;left:18px;width:auto}}
