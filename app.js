@@ -46,6 +46,29 @@ function hexRgb(value) { const hex = safeColor(value).slice(1); return `${parseI
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), cursorUrl: safeMediaUrl(value.cursorUrl), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: migrateColor(value.buttonColor, "#ffffff", "#5865ee"), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
+const NAME_EFFECT_VALUES = ["none", "glitch", "typewrite", "rainbow", "shuffle", "gradient", "soft-glow", "outline"];
+const NAME_PARTICLE_VALUES = ["none", "blue", "green", "pink", "red", "white", "yellow"];
+let lastProfileParticles = "none";
+const baseNameSanitizeCustomization = sanitizeCustomization;
+sanitizeCustomization = (raw = {}) => {
+  const value = baseNameSanitizeCustomization(raw);
+  const usernameEffect = String(raw?.usernameEffect || "");
+  const nameParticles = String(raw?.nameParticles || "");
+  lastProfileParticles = NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none";
+  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(usernameEffect) ? usernameEffect : value.usernameEffect, nameParticles: lastProfileParticles };
+};
+const baseReadCustomization = readCustomization;
+readCustomization = (form) => {
+  const value = baseReadCustomization(form);
+  const nameParticles = String(form?.elements.name_particles?.value || "none");
+  return { ...value, nameParticles: NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none" };
+};
+const baseSetCustomization = setCustomization;
+setCustomization = (form, raw) => {
+  const config = baseSetCustomization(form, raw);
+  if (form?.elements.name_particles) form.elements.name_particles.value = config.nameParticles || "none";
+  return config;
+};
 function feedback(message, error = false) { const node = document.querySelector("#form-feedback"); if (!node) return; node.textContent = message; node.className = `form-feedback ${message ? error ? "is-error" : "is-success" : ""}`; }
 function busy(button, value, label = "Pracuję…") { if (!button) return; if (value) { button.dataset.original = button.innerHTML; button.disabled = true; button.innerHTML = `<span class="button-spinner"></span>${escapeHtml(label)}`; } else { button.disabled = false; button.innerHTML = button.dataset.original || button.innerHTML; } }
 function errorText(error) { const message = String(error?.message || error || "").toLowerCase(); if (message.includes("invalid login")) return "Nieprawidłowy e-mail lub hasło."; if (message.includes("already registered")) return "To konto już istnieje. Zaloguj się."; if (message.includes("rate limit")) return "Za dużo prób. Odczekaj chwilę."; if (message.includes("expired")) return "Kod wygasł. Wyślij nowy."; if (message.includes("invalid token") || message.includes("otp is invalid")) return "Kod jest nieprawidłowy."; if (message.includes("duplicate") || message.includes("unique")) return "Ta nazwa użytkownika jest już zajęta."; if (message.includes("fetch") || message.includes("network")) return "Nie udało się połączyć z serwerem."; return "Coś poszło nie tak. Spróbuj ponownie."; }
@@ -82,7 +105,25 @@ async function publicProfile(username) { const { data, error } = await supabaseC
 function wirePublic() { const copy = document.querySelector("[data-copy-profile]"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(copy.dataset.copyProfile); copy.innerHTML = icon("check"); setTimeout(() => { copy.innerHTML = icon("copy"); }, 1400); } catch {} }); const page = document.querySelector(".public-page"); const cursor = page?.dataset.customCursor; if (cursor) page.style.cursor = `url("${cursor.replace(/["\\\n\r]/g, "")}"),auto`; const audio = document.querySelector("[data-profile-audio]"); const toggle = document.querySelector("[data-audio-toggle]"); const volume = document.querySelector("[data-audio-volume]"); const label = document.querySelector("[data-audio-label]"); if (audio && toggle) { const updateAudioUi = () => { const playing = !audio.paused; toggle.classList.toggle("is-playing", playing); toggle.setAttribute("aria-label", playing ? "Sound on" : "Sound off"); if (label) label.textContent = playing ? "SOUND ON" : "SOUND OFF"; if (volume && document.activeElement !== volume) volume.value = String(audio.volume); }; audio.volume = Number(volume?.value || 0.72); toggle.addEventListener("click", async () => { try { if (audio.paused) await audio.play(); else audio.pause(); } catch {} updateAudioUi(); }); volume?.addEventListener("input", () => { audio.volume = Number(volume.value); updateAudioUi(); }); audio.addEventListener("play", updateAudioUi); audio.addEventListener("pause", updateAudioUi); audio.addEventListener("volumechange", updateAudioUi); updateAudioUi(); audio.play().then(updateAudioUi).catch(updateAudioUi); } }
 async function render() { if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } const path = currentPath(); document.body.dataset.route = path; document.title = path === "/" ? "sqezen — your space online" : `${path.slice(1).split("/")[0] || "sqezen"} — sqezen`; const app = document.querySelector("#app"); try { if (path === "/") app.innerHTML = landingMinimal(); else if (path === "/login") app.innerHTML = auth("login"); else if (path === "/register") app.innerHTML = auth("register"); else if (path === "/register/code") app.innerHTML = auth("code"); else if (path === "/dashboard") app.innerHTML = dashboard(); else app.innerHTML = await publicProfile(path.slice(1).split("/")[0].toLowerCase()); await wireAuth(); await wireDashboard(); setupCustomizationCarousel(); wirePublic(); } catch (error) { console.error(error); app.innerHTML = layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Coś poszło nie tak.</h1><p>Odśwież stronę i spróbuj ponownie.</p></main>`); } }
 const baseDashboardMarkup = dashboard;
-dashboard = () => baseDashboardMarkup().replace('<label class="field-label">Własny kursor<input name="cursor_url" type="text" placeholder="https://.../cursor.png"><small>Najlepiej obraz 32×32 px.</small></label>', '<div class="field-label"><span>Własny kursor</span><div class="cursor-input-row"><input id="cursor-url" name="cursor_url" type="text" inputmode="url" placeholder="https://.../cursor.png"><button id="cursor-file-trigger" class="button button-small button-dark" type="button">Wybierz plik</button><input id="cursor-file-input" class="cursor-file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp"></div><span class="cursor-preview" data-cursor-preview aria-hidden="true"></span><small>URL albo PNG, JPG, GIF lub WebP — najlepiej 32×32 px.</small></div>');
+dashboard = () => baseDashboardMarkup().replace('<label class="field-label">Własny kursor<input name="cursor_url" type="text" placeholder="https://.../cursor.png"><small>Najlepiej obraz 32×32 px.</small></label>', '<div class="field-label"><span>Własny kursor</span><div class="cursor-input-row"><input id="cursor-url" name="cursor_url" type="text" inputmode="url" placeholder="https://.../cursor.png"><button id="cursor-file-trigger" class="button button-small button-dark" type="button">Wybierz plik</button><input id="cursor-file-input" class="cursor-file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp"></div><span class="cursor-preview" data-cursor-preview aria-hidden="true"></span><small>URL albo PNG, JPG, GIF lub WebP — najlepiej 32×32 px.</small></div>').replace('<label class="field-label">Efekt nazwy<select name="username_effect"><option value="none">Brak</option><option value="gradient">Gradient</option><option value="soft-glow">Delikatny glow</option><option value="outline">Kontur</option></select></label>', '<div class="field-label name-effect-field"><span>Efekt nazwy</span><div class="name-effect-picker" role="group" aria-label="Wybierz efekt nazwy"><button class="name-effect-option" data-name-effect-option="none" type="button"><span class="name-effect-sample is-none">sqezen</span><small>Brak</small></button><button class="name-effect-option" data-name-effect-option="glitch" type="button"><span class="name-effect-sample is-glitch">sqezen</span><small>Glitch</small></button><button class="name-effect-option" data-name-effect-option="typewrite" type="button"><span class="name-effect-sample is-typewrite">sqezen</span><small>Typewrite</small></button><button class="name-effect-option" data-name-effect-option="rainbow" type="button"><span class="name-effect-sample is-rainbow">sqezen</span><small>Rainbow</small></button><button class="name-effect-option" data-name-effect-option="shuffle" type="button"><span class="name-effect-sample is-shuffle">sqezen</span><small>Shuffle</small></button></div><select class="name-effect-value" name="username_effect" aria-label="Efekt nazwy"><option value="none">Brak</option><option value="glitch">Glitch</option><option value="typewrite">Typewrite</option><option value="rainbow">Rainbow</option><option value="shuffle">Shuffle</option><option value="gradient">Gradient</option><option value="soft-glow">Delikatny glow</option><option value="outline">Kontur</option></select><small>Wybierz animację, którą zobaczą osoby odwiedzające Twój profil.</small></div>');
+const baseDashboardWithParticles = dashboard;
+dashboard = () => baseDashboardWithParticles().replace('<small>Wybierz animację, którą zobaczą osoby odwiedzające Twój profil.</small>', '<span class="name-effect-subtitle">Cząsteczki</span><div class="particle-picker" role="group" aria-label="Wybierz kolor cząsteczek"><button class="particle-option" data-particle-option="none" type="button" aria-label="Brak cząsteczek"><span class="particle-sample is-none"></span></button><button class="particle-option" data-particle-option="blue" type="button" aria-label="Niebieskie cząsteczki"><span class="particle-sample is-blue"></span></button><button class="particle-option" data-particle-option="green" type="button" aria-label="Zielone cząsteczki"><span class="particle-sample is-green"></span></button><button class="particle-option" data-particle-option="pink" type="button" aria-label="Różowe cząsteczki"><span class="particle-sample is-pink"></span></button><button class="particle-option" data-particle-option="red" type="button" aria-label="Czerwone cząsteczki"><span class="particle-sample is-red"></span></button><button class="particle-option" data-particle-option="white" type="button" aria-label="Białe cząsteczki"><span class="particle-sample is-white"></span></button><button class="particle-option" data-particle-option="yellow" type="button" aria-label="Żółte cząsteczki"><span class="particle-sample is-yellow"></span></button></div><select class="name-effect-value particle-value" name="name_particles" aria-label="Cząsteczki"><option value="none">Brak</option><option value="blue">Niebieskie</option><option value="green">Zielone</option><option value="pink">Różowe</option><option value="red">Czerwone</option><option value="white">Białe</option><option value="yellow">Żółte</option></select><small>Dodaj delikatne punkty światła wokół nazwy.</small>');
+const baseRenderPreview = renderPreview;
+renderPreview = function () {
+  const result = baseRenderPreview();
+  const particles = String(document.querySelector("#profile-form")?.elements.name_particles?.value || "none");
+  document.querySelectorAll(".preview-name").forEach((node) => {
+    node.dataset.name = String(node.textContent || "").trim();
+    node.querySelector(".name-particles")?.remove();
+    if (NAME_PARTICLE_VALUES.includes(particles) && particles !== "none") {
+      const particleLayer = document.createElement("span");
+      particleLayer.className = `name-particles is-${particles}`;
+      particleLayer.setAttribute("aria-hidden", "true");
+      node.appendChild(particleLayer);
+    }
+  });
+  return result;
+};
 const baseLandingMinimal = landingMinimal;
 landingMinimal = () => baseLandingMinimal().replace('<div class="landing-showcase landing-example">', `<div class="landing-minimal-actions">${button("/login", "Zaloguj się")}${button("/register", "Stwórz profil", true)}</div><div class="landing-showcase landing-example">`);
 const landingWithActions = landingMinimal;
@@ -101,11 +142,40 @@ const baseWireDashboard = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboard();
   const form = document.querySelector("#profile-form");
+  if (!form) return;
+  const effectSelect = form.elements.username_effect;
+  const effectOptions = Array.from(document.querySelectorAll("[data-name-effect-option]"));
+  const syncEffectPicker = () => effectOptions.forEach((option) => option.classList.toggle("is-active", option.dataset.nameEffectOption === effectSelect?.value));
+  const particleSelect = form.elements.name_particles;
+  const particleOptions = Array.from(document.querySelectorAll("[data-particle-option]"));
+  const syncParticlePicker = () => particleOptions.forEach((option) => option.classList.toggle("is-active", option.dataset.particleOption === particleSelect?.value));
+  if (effectSelect && effectOptions.length && effectSelect.dataset.bound !== "true") {
+    effectSelect.dataset.bound = "true";
+    effectOptions.forEach((option) => option.addEventListener("click", () => {
+      effectSelect.value = option.dataset.nameEffectOption;
+      syncEffectPicker();
+      effectSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }));
+    form.addEventListener("change", syncEffectPicker);
+    document.querySelector("#reset-customization")?.addEventListener("click", () => setTimeout(syncEffectPicker));
+    syncEffectPicker();
+  }
+  if (particleSelect && particleOptions.length && particleSelect.dataset.bound !== "true") {
+    particleSelect.dataset.bound = "true";
+    particleOptions.forEach((option) => option.addEventListener("click", () => {
+      particleSelect.value = option.dataset.particleOption;
+      syncParticlePicker();
+      particleSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }));
+    form.addEventListener("change", syncParticlePicker);
+    document.querySelector("#reset-customization")?.addEventListener("click", () => setTimeout(syncParticlePicker));
+    syncParticlePicker();
+  }
   const fileInput = document.querySelector("#cursor-file-input");
   const trigger = document.querySelector("#cursor-file-trigger");
   const urlInput = form?.elements.cursor_url;
   const preview = document.querySelector("[data-cursor-preview]");
-  if (!form || !fileInput || !trigger || !urlInput || !preview || trigger.dataset.bound === "true") return;
+  if (!fileInput || !trigger || !urlInput || !preview || trigger.dataset.bound === "true") return;
   trigger.dataset.bound = "true";
   const updatePreview = () => {
     const cursorUrl = safeCursorUrl(urlInput.value);
@@ -146,6 +216,15 @@ wireDashboard = async function () {
 const baseWirePublic = wirePublic;
 wirePublic = function () {
   baseWirePublic();
+  document.querySelectorAll(".public-card h1").forEach((node) => {
+    node.dataset.name = String(node.textContent || "").trim();
+    if (NAME_PARTICLE_VALUES.includes(lastProfileParticles) && lastProfileParticles !== "none") {
+      const particleLayer = document.createElement("span");
+      particleLayer.className = `name-particles is-${lastProfileParticles}`;
+      particleLayer.setAttribute("aria-hidden", "true");
+      node.appendChild(particleLayer);
+    }
+  });
   const audio = document.querySelector("[data-profile-audio]");
   if (!audio) return;
   audio.autoplay = true;
