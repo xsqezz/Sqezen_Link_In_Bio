@@ -118,6 +118,8 @@
     "To konto już istnieje. Zaloguj się.": "This account already exists. Sign in.",
     "Za dużo prób. Odczekaj chwilę.": "Too many attempts. Wait a moment.",
     "Nie udało się połączyć z serwerem.": "Could not connect to the server.",
+    "Ta nazwa użytkownika jest już zajęta.": "That username is already taken.",
+    "Sprawdź adres linku": "Check the link address",
     "Coś poszło nie tak. Spróbuj ponownie.": "Something went wrong. Please try again.",
     "zaloguj się": "sign in",
     "stwórz profil": "create profile",
@@ -158,7 +160,7 @@
     "Zapisywanie…": "Saving…",
     "Pracuję…": "Working…"
   }));
-  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Nie udało się", "Could not"]];
+  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["Nie udało się", "Could not"]];
   const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"]]);
   const translate = (root = document) => {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -175,6 +177,7 @@
     });
     root.querySelectorAll?.("input, textarea, select").forEach((field) => {
       ["placeholder", "aria-label"].forEach((name) => { const value = field.getAttribute(name); if (value && attrMap.has(value)) field.setAttribute(name, attrMap.get(value)); });
+      if (field.readOnly && textMap.has(field.value)) field.value = textMap.get(field.value);
     });
     document.documentElement.lang = "en";
   };
