@@ -11,7 +11,7 @@
 
 /* A single viewport prevents overlap. Cards keep their natural content
    height while the stage provides one stable animation area. */
-.custom-stage{position:relative;min-height:340px;overflow:hidden;isolation:isolate}
+.custom-stage{position:relative;min-height:520px;overflow:hidden;isolation:isolate}
 .custom-stage .custom-card{position:absolute;inset:0;display:none;width:100%;margin:0;align-content:start;grid-auto-rows:max-content;transform:none;transform-origin:center center;will-change:transform,opacity}
 .custom-stage .custom-card .field-label,.custom-stage .custom-card .field-grid,.custom-stage .custom-card .range-grid,.custom-stage .custom-card .color-grid,.custom-stage .custom-card .toggle-grid{align-content:start}
 .custom-stage .custom-card.is-active,.custom-stage .custom-card.is-leaving{display:grid;visibility:visible}
