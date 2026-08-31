@@ -198,6 +198,8 @@ dashboard = () => baseDashboardWithProfileAssets().replace('<form id="profile-fo
 const profileAssetTopPreview = () => profileAssetPreview().replace('<aside class="preview-column profile-assets-column">', '<section class="profile-assets-top">').replace('</aside>', '</section>');
 const baseDashboardWithTopProfileAssets = dashboard;
 dashboard = () => baseDashboardWithTopProfileAssets().replace('<form id="profile-form" class="dashboard-grid dashboard-grid-assets">', profileAssetTopPreview() + '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column profile-assets-column">[\s\S]*?<\/aside>/, '').replace('<h2>Twój klimat</h2><p>Ustaw profil dokładnie tak, jak chcesz go pokazywać.</p>', '<h2>General Customization</h2><p>Background, card, type and colors — all under your control.</p>');
+const baseDashboardWithAppearanceAssets = dashboard;
+dashboard = () => baseDashboardWithAppearanceAssets().replace(profileAssetTopPreview(), '').replace('<section data-tab-panel="appearance" hidden>', `<section data-tab-panel="appearance" hidden>${profileAssetTopPreview()}`);
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
