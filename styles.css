@@ -58,6 +58,9 @@
 .dynamic-embed-page .public-shade{background:radial-gradient(circle at 52% 42%,transparent 0,rgba(5,5,7,.2) 42%,rgba(5,5,7,.82) 100%)}
 .dynamic-embed-main{position:relative;z-index:1;min-height:100vh;width:min(1080px,calc(100% - 72px));margin:0 auto}
 .embed-profile-card,.embed-connections-card{position:absolute;background:rgba(var(--profile-card-rgb,17,17,22),.74);border:1px solid rgba(255,255,255,.15);box-shadow:0 24px 70px rgba(0,0,0,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.dynamic-embed-page [data-dynamic-tile]{translate:calc(var(--dynamic-x,0) * 1vw) calc(var(--dynamic-y,0) * 1vh);will-change:translate}
+.dynamic-embed-page.is-position-editing [data-dynamic-tile]{cursor:grab;outline:1px dashed rgba(143,157,255,.9);outline-offset:8px}
+.dynamic-embed-page.is-position-editing [data-dynamic-tile].is-dragging{cursor:grabbing;outline-color:#fff}
 .embed-profile-card{top:17%;left:0;width:266px;min-height:238px;padding:28px;border-radius:30px;text-align:left;color:var(--profile-text,var(--text));animation:fadeUp .5s ease both}
 .embed-profile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
 .embed-profile-avatar{display:block;width:72px;height:72px;object-fit:cover;background:var(--profile-accent);border:2px solid rgba(255,255,255,.8);border-radius:50%}
