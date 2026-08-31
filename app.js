@@ -31,7 +31,7 @@ const icons = {
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
 
-const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioCoverUrl: "", audioTitle: "", audioArtist: "", cursorUrl: "", cursorGlowColor: "#5865ee", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], defaultEmbed: "standard", dynamicEmbedPositions: { profile: { x: 0, y: 0 }, connections: { x: 0, y: 0 }, audio: { x: 0, y: 0 } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
+const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioCoverUrl: "", audioTitle: "", audioArtist: "", cursorUrl: "", cursorGlowColor: "#5865ee", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], defaultEmbed: "standard", dynamicEmbedPositions: { profile: { x: 50, y: 35, free: true }, connections: { x: 78, y: 55, free: true }, audio: { x: 25, y: 82, free: true } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
 
 function icon(name) { return icons[name] || icons.link; }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char])); }
@@ -48,7 +48,7 @@ function safeNumber(value, min, max, fallback) { const number = Number(value); r
 function choice(value, list, fallback) { return list.includes(value) ? value : fallback; }
 function bool(value, fallback) { return typeof value === "boolean" ? value : fallback; }
 function hexRgb(value) { const hex = safeColor(value).slice(1); return `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`; }
-function sanitizeDynamicEmbedPositions(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; const position = (candidate) => ({ x: safeNumber(candidate?.x, -35, 35, 0), y: safeNumber(candidate?.y, -30, 30, 0) }); return { profile: position(value.profile), connections: position(value.connections), audio: position(value.audio) }; }
+function sanitizeDynamicEmbedPositions(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; const defaults = { profile: { x: 50, y: 35 }, connections: { x: 78, y: 55 }, audio: { x: 25, y: 82 } }; const legacyScale = { profile: { x: 0.5, y: 0.5 }, connections: { x: 0.5, y: 0.5 }, audio: { x: 0.5, y: 0.4 } }; const position = (candidate, key) => { const fallback = defaults[key]; if (candidate?.free === true) return { x: safeNumber(candidate.x, 0, 100, fallback.x), y: safeNumber(candidate.y, 0, 100, fallback.y), free: true }; const scale = legacyScale[key]; return { x: safeNumber(fallback.x + safeNumber(candidate?.x, -35, 35, 0) * scale.x, 0, 100, fallback.x), y: safeNumber(fallback.y + safeNumber(candidate?.y, -30, 30, 0) * scale.y, 0, 100, fallback.y), free: true }; }; return { profile: position(value.profile, "profile"), connections: position(value.connections, "connections"), audio: position(value.audio, "audio") }; }
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), audioCoverUrl: safeMediaUrl(value.audioCoverUrl), audioTitle: String(value.audioTitle || "").trim().slice(0, 80), audioArtist: String(value.audioArtist || "").trim().slice(0, 60), cursorUrl: safeMediaUrl(value.cursorUrl), cursorGlowColor: themeColor(value.cursorGlowColor), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: migrateColor(value.buttonColor, "#ffffff", "#5865ee"), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
@@ -769,24 +769,30 @@ wirePublic = function () {
   if (!page || !main || !saveButton || page.dataset.editorBound === "true") return;
   page.dataset.editorBound = "true";
   const tiles = Array.from(main.querySelectorAll("[data-dynamic-tile]"));
-  const readPositions = () => sanitizeDynamicEmbedPositions(Object.fromEntries(tiles.map((tile) => [tile.dataset.dynamicTile, { x: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-x")) || 0, y: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-y")) || 0 }])));
+  const readPositions = () => sanitizeDynamicEmbedPositions(Object.fromEntries(tiles.map((tile) => [tile.dataset.dynamicTile, { x: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-x")) || 0, y: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-y")) || 0, free: true }])));
   const applyPosition = (tile, position) => { tile.style.setProperty("--dynamic-x", String(position.x)); tile.style.setProperty("--dynamic-y", String(position.y)); };
   const setStatus = (message, error = false) => { if (status) { status.textContent = message; status.classList.toggle("is-error", error); } };
+  const clampTilePosition = (tile, position) => {
+    const frame = main.getBoundingClientRect();
+    const rect = tile.getBoundingClientRect();
+    const halfWidth = Math.min(50, (rect.width / Math.max(frame.width, 1)) * 50);
+    const halfHeight = Math.min(50, (rect.height / Math.max(frame.height, 1)) * 50);
+    return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true };
+  };
+  const clampTiles = () => { const positions = readPositions(); tiles.forEach((tile) => applyPosition(tile, clampTilePosition(tile, positions[tile.dataset.dynamicTile] || { x: 50, y: 50 }))); };
   tiles.forEach((tile) => {
     const onPointerDown = (event) => {
       if (event.button !== 0) return;
       event.preventDefault();
       event.stopPropagation();
       const key = tile.dataset.dynamicTile;
-      const start = readPositions()[key] || { x: 0, y: 0 };
+      const start = readPositions()[key] || { x: 50, y: 50 };
       const frame = main.getBoundingClientRect();
       const startX = event.clientX;
       const startY = event.clientY;
       tile.classList.add("is-dragging");
       const onPointerMove = (moveEvent) => {
-        const x = Math.min(35, Math.max(-35, start.x + ((moveEvent.clientX - startX) / Math.max(frame.width, 1)) * 100));
-        const y = Math.min(30, Math.max(-30, start.y + ((moveEvent.clientY - startY) / Math.max(frame.height, 1)) * 100));
-        const position = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+        const position = clampTilePosition(tile, { x: start.x + ((moveEvent.clientX - startX) / Math.max(frame.width, 1)) * 100, y: start.y + ((moveEvent.clientY - startY) / Math.max(frame.height, 1)) * 100 });
         applyPosition(tile, position);
         setStatus("Unsaved layout");
       };
@@ -808,6 +814,8 @@ wirePublic = function () {
     };
     tile.addEventListener("pointerdown", onPointerDown);
   });
+  clampTiles();
+  window.addEventListener("resize", clampTiles);
   saveButton.addEventListener("click", async () => {
     const username = page.dataset.embedUsername;
     if (!username) return;
