@@ -84,5 +84,12 @@ html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enha
 .profile-audio-volume input{display:block;width:100%;height:3px;min-height:0;padding:0;accent-color:var(--blue-accent);cursor:pointer}
 .profile-audio-widget audio{display:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.cursor-input-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.cursor-input-row input[name="cursor_url"]{min-width:0}
+.cursor-input-row .button{min-height:40px;padding-inline:12px;white-space:nowrap}
+.cursor-file-input{display:none!important}
+.cursor-preview{display:none;width:34px;height:34px;align-items:center;justify-content:center;margin-top:8px;background-color:#0b0b0e;border:1px solid rgba(255,255,255,.16);border-radius:8px;background-position:center;background-repeat:no-repeat;background-size:contain}
+.cursor-preview.has-image{display:inline-flex}
+@media(max-width:560px){.cursor-input-row{grid-template-columns:1fr}.cursor-input-row .button{width:max-content}}
 @media(max-width:1000px){.dashboard-layout{gap:24px}.dashboard-grid{grid-template-columns:1fr}.preview-column{order:-1}.preview-sticky{position:static}.dashboard-preview{min-height:420px}}
 @media(max-width:760px){.dashboard-page{width:calc(100% - 32px)}.dashboard-topbar{min-height:72px}.dashboard-layout{padding-top:28px}.dashboard-intro h1{font-size:clamp(3rem,13vw,4.6rem)}.editor-panel,.preview-sticky{padding:19px 16px}.custom-carousel-nav{margin-top:17px}.empty-page{padding:110px 0 80px}}
