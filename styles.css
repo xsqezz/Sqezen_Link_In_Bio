@@ -80,3 +80,20 @@
 .embed-connection .platform-logo{width:22px;height:22px;filter:none}
 .embed-connection-empty{color:var(--dim)}
 @media(max-width:760px){.dynamic-embed-main{display:grid;width:min(calc(100% - 32px),420px);min-height:100vh;align-content:center;gap:18px;padding:30px 0}.embed-profile-card,.embed-connections-card{position:relative;top:auto;right:auto;left:auto;width:100%}.embed-profile-card{min-height:0}.embed-connections-card{padding:22px 28px}.dynamic-embed-page .profile-audio-widget{left:18px;bottom:18px}}
+.dashboard-dynamic-preview{display:grid;gap:11px;width:min(100%,260px);max-height:100%;align-content:center}
+.dashboard-dynamic-profile,.dashboard-dynamic-connections{color:var(--preview-text,var(--text));background:rgba(var(--preview-card-rgb,17,17,22),var(--preview-opacity,1));border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(var(--preview-blur,0px));-webkit-backdrop-filter:blur(var(--preview-blur,0px))}
+.dashboard-dynamic-profile{padding:19px 17px 16px;text-align:left}
+.dashboard-dynamic-profile .preview-card-top{align-items:flex-start}
+.dashboard-dynamic-profile .preview-avatar{width:min(100%,54px);height:min(100%,54px);margin:0}
+.dashboard-dynamic-profile .preview-handle{margin:12px 0 4px}
+.dashboard-dynamic-profile .preview-name{font-size:1.05rem}
+.dashboard-dynamic-profile .preview-bio{min-height:0;margin:8px 0 15px}
+.dashboard-dynamic-meta{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:20px;color:var(--dim);font-size:.5rem}
+.dashboard-dynamic-meta span:first-child{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+.dashboard-dynamic-meta i{display:inline-block;width:5px;height:5px;background:#8af27b;border-radius:50%;box-shadow:0 0 8px rgba(138,242,123,.8)}
+.dashboard-dynamic-connections{padding:16px 18px}
+.dashboard-dynamic-kicker{display:block;margin-bottom:15px;color:var(--dim);font-size:.48rem;font-weight:800;letter-spacing:.16em;text-align:center}
+.dashboard-dynamic-links{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dashboard-dynamic-link{display:grid;width:21px;height:21px;place-items:center;color:var(--preview-text,var(--text))}
+.dashboard-dynamic-link svg,.dashboard-dynamic-link .platform-logo{width:18px;height:18px}
+.dashboard-dynamic-link-empty{color:var(--dim)}

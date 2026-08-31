@@ -193,6 +193,18 @@ dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="butto
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
+  const form = document.querySelector("#profile-form");
+  const target = document.querySelector("#dashboard-preview");
+  const config = form ? readCustomization(form) : null;
+  if (config?.defaultEmbed === "dynamic" && target) {
+    const name = String(form.elements.display_name?.value || form.elements.username?.value || "Twoja nazwa").trim() || "Twoja nazwa";
+    const username = String(form.elements.username?.value || "username").trim().toLowerCase() || "username";
+    const bio = String(form.elements.bio?.value || "").trim();
+    const image = safeUrl(form.elements.avatar_url?.value);
+    const links = readLinks();
+    const connections = links.length ? links.slice(0, 5).map((link) => `<span class="dashboard-dynamic-link" title="${escapeHtml(String(link.title || "Link"))}">${icon(profileIcon(link))}</span>`).join("") : `<span class="dashboard-dynamic-link dashboard-dynamic-link-empty">${icon("globe")}</span>`;
+    target.innerHTML = `<div class="dashboard-dynamic-preview" style="--preview-card-rgb:${hexRgb(config.cardColor)};--preview-text:${config.textColor};--preview-button-rgb:${hexRgb(config.buttonColor)};--preview-opacity:${config.profileOpacity / 100};--preview-blur:${config.profileBlur}px;--preview-avatar:${Math.min(config.avatarSize, 72)}px"><section class="dashboard-dynamic-profile"><div class="preview-card-top">${image ? `<img class="preview-avatar" src="${escapeHtml(image)}" alt="">` : `<span class="preview-avatar avatar-fallback">${escapeHtml(name.slice(0, 1).toUpperCase())}</span>`}<span class="preview-menu">•••</span></div>${config.showHandle ? `<p class="preview-handle">@${escapeHtml(username)}</p>` : ""}<h3 class="preview-name preview-name-${config.usernameEffect}">${escapeHtml(name)}</h3>${bio ? `<p class="preview-bio">${escapeHtml(bio)}</p>` : ""}<div class="dashboard-dynamic-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(username)}</span></div></section><section class="dashboard-dynamic-connections"><span class="dashboard-dynamic-kicker">CONNECTIONS</span><div class="dashboard-dynamic-links">${connections}</div></section></div>`;
+  }
   const particles = String(document.querySelector("#profile-form")?.elements.name_particles?.value || "none");
   const selectedBadges = Array.from(document.querySelectorAll("#profile-form [data-badge-option].is-selected"))
     .map((option) => option.dataset.badgeOption)
@@ -305,7 +317,7 @@ wireDashboard = async function () {
   const embedDefaultLabel = document.querySelector("[data-embed-default-label]");
   if (embedTab && embedPanel && embedPreview && embedTab.dataset.bound !== "true") {
     embedTab.dataset.bound = "true";
-    let embedMode = sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : embedDefault?.value === "dynamic" ? "dynamic" : "standard";
+    let embedMode = embedDefault?.value === "dynamic" ? "dynamic" : sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : "standard";
     const getEmbedUrl = () => {
       const username = String(form.elements.username?.value || "").trim().toLowerCase();
       return username ? `${location.origin}/${encodeURIComponent(username)}${embedMode === "dynamic" ? "?embed=1" : ""}` : "";
@@ -349,6 +361,7 @@ wireDashboard = async function () {
       if (!embedDefault) return;
       embedDefault.value = embedMode;
       updateEmbed();
+      renderPreview();
       feedback(`${embedMode === "dynamic" ? "Dynamic embed" : "Zwykły embed"} ustawiony jako domyślny. Zapisz profil, aby opublikować zmianę.`);
     });
     form.addEventListener("input", updateEmbed);
