@@ -12,6 +12,7 @@
 .landing-reference-actions .button-primary:hover{background:#6d78f6;border-color:#6d78f6;transform:translateY(-2px)}
 .landing-reference-profile{position:relative;min-height:645px;padding:112px 46px 38px;background:#000;border:1px solid rgba(255,255,255,.28);border-radius:22px;animation:fadeUp .4s ease both}
 .landing-reference-dots{position:absolute;top:42px;right:42px;color:#d5dbe6;font-size:1.6rem;letter-spacing:4px;line-height:1}
+.landing-reference-avatar{display:grid;width:32px;height:32px;place-items:center;margin-bottom:16px;color:#fff;font-size:.82rem;font-weight:800;background:var(--blue-accent);border-radius:9px}
 .landing-reference-handle{margin:0;color:#9da5b3;font-size:1.2rem;letter-spacing:-.04em}
 .landing-reference-profile h2{margin:21px 0 0;color:#f5f6fb;font-size:2.5rem;font-weight:450;letter-spacing:-.08em;line-height:1}
 .landing-reference-profile-tagline{margin-top:18px;font-size:1.55rem}
