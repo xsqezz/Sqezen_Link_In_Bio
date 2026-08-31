@@ -685,7 +685,7 @@ wirePublic = function () {
       node.appendChild(particleLayer);
     }
     const badges = badgePills(lastProfileBadges);
-    if (badges) {
+    if (badges && node.closest(".public-card")) {
       const badgeRow = document.createElement("div");
       badgeRow.className = "profile-badges";
       badgeRow.innerHTML = badges;
