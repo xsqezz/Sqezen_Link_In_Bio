@@ -437,7 +437,7 @@ function cursorEffectsPanel() {
 const baseCursorEffectsPanelMarkup = cursorEffectsPanel;
 cursorEffectsPanel = () => baseCursorEffectsPanelMarkup()
   .replace("CURSOR STUDIO", "PARTICLE STUDIO")
-  .replace("Efekty kursora", "Cząsteczki kursora")
+  .replace("Efekty kursora", "Personalizacja kursora")
   .replace("Wybierz jeden z wielu efektów i porusz kursorem po panelu, aby zobaczyć go na żywo.", "Wybierz, co ma wylatywać z kursora podczas ruchu i kliknięcia.")
   .replace("Twój kursor, Twój klimat.", "Cząsteczki wylatujące z kursora.")
   .replace("Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.", "Śnieg jest biały, ogień pomarańczowy, serca różowe, liście zielone, monety żółte, a confetti wielokolorowe. Działa na publicznym profilu po zapisaniu.")
@@ -448,7 +448,7 @@ cursorEffectsPanel = () => baseCursorEffectsPanelMarkup()
 const baseDashboardWithCursorEffects = dashboard;
 dashboard = () => {
   let markup = baseDashboardWithCursorEffects();
-  const cursorTab = `<button class="sidebar-item" data-dashboard-tab="cursor-effects" type="button">${icon("sparkle")}<span>Cząsteczki kursora</span><kbd>05</kbd></button>`;
+  const cursorTab = `<button class="sidebar-item" data-dashboard-tab="cursor-effects" type="button">${icon("sparkle")}<span>Personalizacja kursora</span><kbd>05</kbd></button>`;
   markup = markup.replace("</nav>", `${cursorTab}</nav>`);
   markup = markup.replace('<section data-tab-panel="account" hidden>', `${cursorEffectsPanel()}<section data-tab-panel="account" hidden>`);
   markup = markup.replace(/<div class="cursor-effects-hero">[\s\S]*?(?=<div class="cursor-effect-grid")/, "");
@@ -492,14 +492,12 @@ dashboard = () => {
       workspaceTabButton("avatar", "Avatar", "dashboard", "02"),
       workspaceTabButton("links", "Linki", "link", "03", '<kbd id="links-count">0</kbd>'),
       workspaceTabButton("profile-card", "Karta profilu", "dashboard", "04"),
-      workspaceTabButton("name-effect", "Preferencje", "settings", "05"),
-      workspaceTabButton("layout-details", "Układ i detale", "settings", "06"),
-      workspaceTabButton("assets", "Materiały", "sparkle", "07"),
-      workspaceTabButton("standard-embed", "Zwykły embed", "link", "08"),
-      workspaceTabButton("dynamic-embed", "Dynamic embed", "link", "09"),
-      workspaceTabButton("cursor-effects", "Cząsteczki kursora", "sparkle", "10"),
-      workspaceTabButton("cursor-color", "Kolor efektów", "palette", "11"),
-      workspaceTabButton("account", "Konto", "settings", "12"),
+      workspaceTabButton("name-effect", "Efekty nazwy", "sparkle", "05"),
+      workspaceTabButton("assets", "Twoja strona", "sparkle", "06"),
+      workspaceTabButton("standard-embed", "Zwykły embed", "link", "07"),
+      workspaceTabButton("dynamic-embed", "Dynamic embed", "link", "08"),
+      workspaceTabButton("cursor-effects", "Personalizacja kursora", "sparkle", "09"),
+      workspaceTabButton("account", "Konto", "settings", "10"),
       '<button class="sidebar-item" data-dashboard-tab="profile" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
       '<button class="sidebar-item" data-dashboard-tab="appearance" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
       '<button class="sidebar-item" data-dashboard-tab="embed" type="button" hidden aria-hidden="true" tabindex="-1"></button>'
@@ -542,7 +540,6 @@ dashboard = () => {
     const layoutCard = findCard("Układ i detale");
     const profileCardPanel = profileCard ? document.createElement("section") : null;
     const nameEffectPanel = document.createElement("section");
-    const layoutPanel = layoutCard ? document.createElement("section") : null;
     let locationField = null;
     let assetsPanel = null;
     if (assetsTop) {
@@ -570,6 +567,11 @@ dashboard = () => {
       if (fieldGrid && !fieldGrid.children.length) fieldGrid.remove();
       profileCardPanel.append(profileCard);
       if (colorCard) profileCardPanel.append(colorCard);
+      if (layoutCard) {
+        profileCardPanel.append(layoutCard);
+        const layoutFields = Array.from(layoutCard.children).find((child) => child.classList.contains("field-grid"));
+        if (locationField && layoutFields) layoutFields.append(locationField);
+      }
 
       if (particleField || nameEffectField) {
         nameEffectPanel.dataset.tabPanel = "name-effect";
@@ -594,21 +596,12 @@ dashboard = () => {
       identityPanel = profilePanel;
     }
 
-    if (layoutPanel) {
-      layoutPanel.dataset.tabPanel = "layout-details";
-      layoutPanel.id = "dashboard-panel-layout-details";
-      layoutPanel.setAttribute("role", "tabpanel");
-      layoutPanel.hidden = true;
-      layoutPanel.append(layoutCard);
-      const layoutFields = Array.from(layoutCard.children).find((child) => child.classList.contains("field-grid"));
-      if (locationField && layoutFields) layoutFields.append(locationField);
-    }
     if (assetsPanel) {
       if (assetsTop && assetsPanel !== assetsTop) assetsPanel.append(assetsTop);
       hiddenFields.forEach((field) => assetsPanel.append(field));
     }
     if (assetsTop) assetsTop.remove();
-    const resetTarget = profileCardPanel || layoutPanel || assetsPanel;
+    const resetTarget = profileCardPanel || assetsPanel;
     if (resetButton && resetTarget) {
       const toolbar = document.createElement("div");
       toolbar.className = "workspace-panel-toolbar";
@@ -616,18 +609,9 @@ dashboard = () => {
       resetTarget.prepend(toolbar);
     }
 
-    const replacement = [profileCardPanel, nameEffectPanel, layoutPanel, assetsPanel].filter(Boolean);
+    const replacement = [profileCardPanel, nameEffectPanel, assetsPanel].filter(Boolean);
     if (profileCardPanel) appearancePanel.replaceWith(...replacement);
     else if (assetsPanel) appearancePanel.replaceWith(assetsPanel);
-  }
-
-  const cursorPanel = panel("cursor-effects");
-  const cursorColorRow = cursorPanel?.querySelector(".cursor-effect-color-row");
-  if (cursorPanel && cursorColorRow) {
-    const cursorColorPanel = workspacePanel("cursor-color", "11", "Kolor efektów kursora", "Ustaw kolor większości efektów i sprawdź ich stałe palety.");
-    cursorColorRow.remove();
-    cursorColorPanel.append(cursorColorRow);
-    editor.insertBefore(cursorColorPanel, cursorPanel);
   }
 
   return template.innerHTML;
@@ -1279,10 +1263,10 @@ wireDashboard = async function () {
   const showPanel = () => {
     document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item.dataset.dashboardTab === "cursor-effects"));
     document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
-    document.querySelector("#topbar-section").textContent = "Cząsteczki kursora";
-    document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / CURSOR STUDIO";
-    document.querySelector("#dashboard-title").textContent = "Zmień zwykły kursor w efekt.";
-    document.querySelector("#dashboard-subtitle").textContent = "Wybierz animację, która będzie reagować na ruch odwiedzających.";
+    document.querySelector("#topbar-section").textContent = "Personalizacja kursora";
+    document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / CURSOR PERSONALIZATION";
+    document.querySelector("#dashboard-title").textContent = "Spersonalizuj swój kursor.";
+    document.querySelector("#dashboard-subtitle").textContent = "Wybierz cząsteczki i ich kolor dla odwiedzających Twój profil.";
     document.querySelector("#dashboard-sidebar")?.classList.remove("is-open");
     sessionStorage.setItem("sqezen_dashboard_tab", "cursor-effects");
   };
@@ -1296,10 +1280,10 @@ wireDashboard = async function () {
       event.stopImmediatePropagation();
       document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === "cursor-effects"));
       document.querySelectorAll("[data-tab-panel]").forEach((tabPanel) => { tabPanel.hidden = tabPanel !== currentPanel; });
-      document.querySelector("#topbar-section").textContent = "Cząsteczki kursora";
-      document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / CURSOR STUDIO";
-      document.querySelector("#dashboard-title").textContent = "Zmień zwykły kursor w efekt.";
-      document.querySelector("#dashboard-subtitle").textContent = "Wybierz animację, która będzie reagować na ruch odwiedzających.";
+      document.querySelector("#topbar-section").textContent = "Personalizacja kursora";
+      document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / CURSOR PERSONALIZATION";
+      document.querySelector("#dashboard-title").textContent = "Spersonalizuj swój kursor.";
+      document.querySelector("#dashboard-subtitle").textContent = "Wybierz cząsteczki i ich kolor dla odwiedzających Twój profil.";
       document.querySelector("#dashboard-sidebar")?.classList.remove("is-open");
       sessionStorage.setItem("sqezen_dashboard_tab", "cursor-effects");
     }, true);
@@ -1455,17 +1439,15 @@ const DASHBOARD_WORKSPACE_TABS = Object.freeze({
   avatar: { panel: "avatar", label: "Avatar", eyebrow: "SQEZEN / AVATAR", title: "Ustaw swój avatar.", subtitle: "Wybierz bezpośredni adres zdjęcia profilowego." },
   links: { panel: "links", label: "Linki", eyebrow: "SQEZEN / LINKS", title: "Twoje odnośniki.", subtitle: "Dodawaj, testuj i układaj linki w kolejności, którą lubisz." },
   "profile-card": { panel: "profile-card", label: "Karta profilu", eyebrow: "SQEZEN / PROFILE CARD", title: "Dopasuj kartę profilu.", subtitle: "Ustaw rozmiar, przezroczystość i efekty powierzchni." },
-  "name-effect": { panel: "name-effect", label: "Preferencje", eyebrow: "SQEZEN / PREFERENCES", title: "Ustaw swoje preferencje.", subtitle: "Wybierz efekt nazwy i delikatne cząsteczki." },
-  "layout-details": { panel: "layout-details", label: "Układ i detale", eyebrow: "SQEZEN / LAYOUT", title: "Dopracuj szczegóły.", subtitle: "Wybierz układ, odstępy, font i styl przycisków." },
-  assets: { panel: "assets", label: "Materiały", eyebrow: "SQEZEN / ASSETS", title: "Dodaj materiały profilu.", subtitle: "Zarządzaj tłem, audio, avatarem i własnym kursorem." },
+  "name-effect": { panel: "name-effect", label: "Efekty nazwy", eyebrow: "SQEZEN / NAME EFFECTS", title: "Ożyw swoją nazwę.", subtitle: "Wybierz efekt nazwy i delikatne cząsteczki." },
+  assets: { panel: "assets", label: "Twoja strona", eyebrow: "SQEZEN / YOUR SITE", title: "Dopracuj swoją stronę.", subtitle: "Zarządzaj tłem, audio, avatarem i własnym kursorem." },
   "standard-embed": { panel: "embed", label: "Zwykły embed", eyebrow: "SQEZEN / STANDARD EMBED", title: "Osadź kartę profilu.", subtitle: "Skopiuj zwykły embed z pełną kartą Twojego profilu.", embedMode: "standard" },
   "dynamic-embed": { panel: "embed", label: "Dynamic embed", eyebrow: "SQEZEN / DYNAMIC EMBED", title: "Zbuduj dynamiczny embed.", subtitle: "Ustaw układ kafelków i osadź profil z dodatkowymi modułami.", embedMode: "dynamic" },
-  "cursor-effects": { panel: "cursor-effects", label: "Cząsteczki kursora", eyebrow: "SQEZEN / CURSOR STUDIO", title: "Zmień zwykły kursor w efekt.", subtitle: "Wybierz animację, która będzie reagować na ruch odwiedzających." },
-  "cursor-color": { panel: "cursor-color", label: "Kolor efektów", eyebrow: "SQEZEN / CURSOR COLOR", title: "Ustaw kolor efektów.", subtitle: "Dobierz kolor efektów, które nie mają własnej stałej palety." },
+  "cursor-effects": { panel: "cursor-effects", label: "Personalizacja kursora", eyebrow: "SQEZEN / CURSOR PERSONALIZATION", title: "Spersonalizuj swój kursor.", subtitle: "Wybierz cząsteczki i ich kolor dla odwiedzających Twój profil." },
   account: { panel: "account", label: "Konto", eyebrow: "SQEZEN / ACCOUNT", title: "Konto i adres.", subtitle: "Sprawdź e-mail i skopiuj publiczny adres profilu." },
   "badge-admin": { panel: "badge-admin", label: "Odznaki", eyebrow: "SQEZEN / BADGES", title: "Zarządzaj odznakami.", subtitle: "Przyznawaj i porządkuj odznaki profili." }
 });
-const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "standard-embed", "color-tone": "profile-card" });
+const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "standard-embed", "color-tone": "profile-card", "layout-details": "profile-card", "cursor-color": "cursor-effects" });
 const baseWireDashboardWithWorkspaceTabs = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboardWithWorkspaceTabs();
