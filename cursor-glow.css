@@ -7,7 +7,7 @@
 .cursor-glow.is-rainbow{width:190px;height:190px;filter:blur(22px);animation:cursor-hue-shift 3s linear infinite}
 .cursor-glow.is-magnetic{width:205px;height:205px;filter:blur(21px)}
 .cursor-effects{position:fixed;inset:0;z-index:10001;overflow:hidden;pointer-events:none}
-.cursor-particle{position:absolute;display:block;width:7px;height:7px;pointer-events:none;background:var(--cursor-glow,#5865ee);border-radius:50%;opacity:.8;transform:translate(-50%,-50%);animation:cursor-particle-drift var(--particle-duration,760ms) cubic-bezier(.18,.72,.32,1) forwards}
+.cursor-particle{position:absolute;display:block;width:7px;height:7px;pointer-events:none;background:var(--cursor-glow,#5865ee);border-radius:50%;opacity:.8;mix-blend-mode:screen;transform:translate(-50%,-50%);will-change:transform,opacity;animation:cursor-particle-drift var(--particle-duration,760ms) cubic-bezier(.18,.72,.32,1) forwards}
 .cursor-particle.is-trail{width:6px;height:6px;box-shadow:0 0 10px 2px currentColor}
 .cursor-particle.is-comet{width:24px;height:3px;border-radius:999px;background:linear-gradient(90deg,transparent,var(--cursor-glow,#5865ee));transform-origin:100% 50%;animation-name:cursor-comet-drift}
 .cursor-particle.is-sparkle{width:14px;height:14px;background:currentColor;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);box-shadow:none}
@@ -19,6 +19,24 @@
 .cursor-particle.is-pixel{width:8px;height:8px;border-radius:1px;box-shadow:9px -4px 0 -2px currentColor,-10px 4px 0 -2px currentColor}
 .cursor-particle.is-ripple{width:24px;height:24px;background:transparent;border:1px solid currentColor;box-shadow:0 0 0 1px rgba(88,101,238,.2);animation-name:cursor-ripple-expand}
 .cursor-particle.is-ripple:after{position:absolute;inset:5px;content:"";border:1px solid currentColor;border-radius:50%}
+.cursor-particle.is-glow{width:5px;height:5px;box-shadow:0 0 14px 4px currentColor}
+.cursor-particle.is-dust{width:3px;height:3px;opacity:.65;box-shadow:0 0 8px 3px currentColor}
+.cursor-particle.is-glitter{width:auto;height:auto;color:#fff;background:transparent;font-size:16px;line-height:1;text-shadow:0 0 10px currentColor}
+.cursor-particle.is-confetti{width:7px;height:14px;background:hsl(var(--particle-hue,220) 100% 68%);border-radius:2px;animation-name:cursor-confetti-drift}
+.cursor-particle.is-leaves{width:15px;height:8px;background:#8dff9b;border-radius:100% 0;box-shadow:0 0 8px rgba(141,255,155,.55);animation-name:cursor-leaf-drift}
+.cursor-particle.is-petals{width:13px;height:8px;background:#ff86b6;border-radius:100% 0;box-shadow:0 0 9px rgba(255,134,182,.6);animation-name:cursor-petal-drift}
+.cursor-particle.is-shards{width:13px;height:7px;background:linear-gradient(90deg,#fff,var(--cursor-glow,#5865ee));clip-path:polygon(0 50%,100% 0,72% 100%);animation-name:cursor-shard-drift}
+.cursor-particle.is-orbs{width:11px;height:11px;background:radial-gradient(circle at 35% 30%,#fff 0 12%,var(--cursor-glow,#5865ee) 35%,transparent 74%);box-shadow:0 0 12px 4px currentColor}
+.cursor-particle.is-smoke{width:19px;height:19px;background:rgba(205,214,236,.3);filter:blur(4px);box-shadow:0 0 15px 5px rgba(160,174,207,.18);animation-name:cursor-smoke-drift}
+.cursor-particle.is-magic,.cursor-particle.is-lightning,.cursor-particle.is-stars{width:auto;height:auto;background:transparent;font-size:17px;font-weight:800;line-height:1;text-shadow:0 0 12px currentColor}
+.cursor-particle.is-lightning{color:#ffe574}
+.cursor-particle.is-stars{color:#fff5a8}
+.cursor-particle.is-coins{width:13px;height:13px;background:radial-gradient(circle at 32% 28%,#fff2a6,#ffc34d 44%,#aa5e17 100%);border:1px solid #ffe28a;border-radius:50%;box-shadow:0 0 9px 2px rgba(255,195,77,.65);animation-name:cursor-coin-drift}
+.cursor-particle.is-crosshair{width:16px;height:16px;background:transparent;border:1px solid currentColor;box-shadow:0 0 8px 2px currentColor}
+.cursor-particle.is-crosshair:after{position:absolute;top:50%;left:50%;width:24px;height:1px;content:"";background:currentColor;box-shadow:0 -8px 0 -0.25px currentColor,0 8px 0 -0.25px currentColor;transform:translate(-50%,-50%)}
+.cursor-particle.is-spotlight{width:6px;height:6px;box-shadow:0 0 0 7px rgba(143,157,255,.12),0 0 17px 7px currentColor}
+.cursor-particle.is-rainbow{background:conic-gradient(#ff5f6d,#ffc371,#fff56b,#7ee8fa,#a78bfa,#ff5f6d);box-shadow:0 0 12px 3px currentColor}
+.cursor-particle.is-magnetic{width:6px;height:6px;box-shadow:12px 0 0 -1px currentColor,-12px 0 0 -1px color-mix(in srgb,currentColor 55%,transparent),0 0 10px 2px currentColor}
 .site-cursor{position:fixed;top:0;left:0;z-index:10002;width:5px;height:5px;pointer-events:none;opacity:0;color:var(--cursor-glow,var(--profile-accent,var(--accent,#5865ee)));border:0;border-radius:50%;background:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--cursor-glow,var(--profile-accent,var(--accent,#5865ee))) 18%,transparent),0 0 8px 1px #fff,0 0 22px 6px var(--cursor-glow,var(--profile-accent,var(--accent,#5865ee)));transform:translate3d(-50%,-50%,0) scale(var(--cursor-scale,1));will-change:transform;transition:opacity .12s ease,box-shadow .2s ease,width .2s ease,height .2s ease,border-color .2s ease}
 .site-cursor.is-none{box-shadow:0 0 0 2px color-mix(in srgb,var(--cursor-glow,#5865ee) 26%,transparent),0 0 8px 1px #fff}
 .site-cursor.is-ring{width:27px;height:27px;background:transparent;border:1px solid currentColor;box-shadow:0 0 0 5px color-mix(in srgb,var(--cursor-glow,#5865ee) 10%,transparent),0 0 18px 3px currentColor;animation:cursor-ring-pulse 1.8s ease-in-out infinite}
@@ -46,6 +64,8 @@
 .site-cursor.has-image.is-crosshair{border:1px solid color-mix(in srgb,var(--cursor-glow,#5865ee) 75%,transparent)}
 .site-cursor.has-image.is-crosshair:before{width:58px;height:1px}.site-cursor.has-image.is-crosshair:after{width:1px;height:58px}
 .site-cursor.has-image.is-neon,.site-cursor.has-image.is-rainbow{animation:cursor-neon-spin 2s linear infinite}
+html.cursor-particle-mode .site-cursor.particle-anchor:not(.has-image){width:7px;height:7px;background:#fff;border:0;border-radius:50%;clip-path:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--cursor-glow,#5865ee) 18%,transparent),0 0 8px 1px #fff,0 0 18px 5px var(--cursor-glow,#5865ee);animation:none}
+html.cursor-particle-mode .site-cursor.particle-anchor:not(.has-image)::before,html.cursor-particle-mode .site-cursor.particle-anchor:not(.has-image)::after{display:none;content:none}
 html.cursor-enhanced,html.cursor-enhanced *{cursor:none!important}
 @supports not (color:color-mix(in srgb,black,white)){.cursor-glow{background:radial-gradient(circle,var(--cursor-glow,var(--profile-accent,var(--accent,#5865ee))) 0%,rgba(88,101,238,.72) 17%,transparent 72%)}.site-cursor{box-shadow:0 0 0 3px rgba(88,101,238,.18),0 0 8px 1px #fff,0 0 22px 6px var(--cursor-glow,var(--profile-accent,var(--accent,#5865ee)))}.site-cursor.is-none{box-shadow:0 0 0 2px rgba(88,101,238,.26),0 0 8px 1px #fff}}
 @keyframes cursor-ring-pulse{0%,100%{opacity:.65}50%{opacity:1}}
@@ -55,9 +75,15 @@ html.cursor-enhanced,html.cursor-enhanced *{cursor:none!important}
 @keyframes cursor-hue-shift{to{filter:hue-rotate(360deg)}}
 @keyframes cursor-fire-flicker{from{filter:brightness(.9)}to{filter:brightness(1.25)}}
 @keyframes cursor-snow-spin{from{filter:brightness(.9)}to{filter:brightness(1.15)}}
-@keyframes cursor-particle-drift{0%{opacity:.88;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(calc(var(--particle-rotation,0deg) + 130deg)) scale(.12)}}
+@keyframes cursor-particle-drift{0%{opacity:.88;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,130deg))) scale(var(--particle-end-scale,.12))}}
 @keyframes cursor-comet-drift{0%{opacity:.82;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scaleX(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(var(--particle-rotation,0deg)) scaleX(.05)}}
 @keyframes cursor-fire-drift{0%{opacity:.95;transform:translate(-50%,-50%) scale(1) rotate(0)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) scale(.2) rotate(25deg)}}
 @keyframes cursor-ripple-expand{0%{opacity:.75;transform:translate(-50%,-50%) scale(.45)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.7)}}
+@keyframes cursor-confetti-drift{0%{opacity:.95;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,360deg))) scale(.45)}}
+@keyframes cursor-leaf-drift{0%{opacity:.95;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,300deg))) scale(.55)}}
+@keyframes cursor-petal-drift{0%{opacity:.95;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,240deg))) scale(.45)}}
+@keyframes cursor-shard-drift{0%{opacity:.95;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,190deg))) scale(.15)}}
+@keyframes cursor-smoke-drift{0%{opacity:.44;transform:translate(-50%,-50%) scale(.55)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) scale(1.55)}}
+@keyframes cursor-coin-drift{0%{opacity:.98;transform:translate(-50%,-50%) rotateY(0) rotate(var(--particle-rotation,0deg))}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotateY(540deg) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,180deg)))}}
 @media(prefers-reduced-motion:reduce){.cursor-glow,.site-cursor,.cursor-particle{animation-duration:1ms!important;transition:none!important}}
 @media(pointer:coarse){.cursor-glow,.cursor-effects,.site-cursor{display:none}}
