@@ -182,7 +182,7 @@
       setEffectClass(glow, cursorEffect);
       setEffectClass(effects, cursorEffect);
       setEffectClass(cursor, cursorEffect);
-      const useCustomCursor = supportsFinePointer() && (isDashboard || Boolean(cursorUrl) || cursorEffect !== "none");
+      const useCustomCursor = supportsFinePointer() && !isDashboard && (Boolean(cursorUrl) || cursorEffect !== "none");
       document.documentElement.classList.toggle("has-custom-cursor", useCustomCursor);
       document.documentElement.classList.toggle("cursor-enhanced", useCustomCursor);
       document.documentElement.classList.toggle("cursor-particle-mode", useCustomCursor);
