@@ -78,7 +78,7 @@ async function cacheDiscordAsset(value, kind, meta) {
   return cached;
 }
 const PROFILE_ASSET_OPTIONS = Object.freeze({
-  background: { title: "Tło", description: "Wybierz obraz lub wideo, które pojawi się w tle profilu.", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg", maxSize: 12000000, test: /^(image\/(?:png|jpeg|gif|webp)|video\/(?:mp4|webm|ogg))$/i, extensions: /\.(?:png|jpe?g|gif|webp|mp4|webm|ogg)$/i },
+  background: { title: "Tło", description: "Wybierz obraz lub wideo, które pojawi się w tle profilu. Dla ostrego tła użyj minimum 1280×720.", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg", maxSize: 12000000, test: /^(image\/(?:png|jpeg|gif|webp)|video\/(?:mp4|webm|ogg))$/i, extensions: /\.(?:png|jpe?g|gif|webp|mp4|webm|ogg)$/i },
   audio: { title: "Audio", description: "Wybierz plik MP3 z komputera albo wklej bezpośredni adres audio.", accept: "audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,audio/webm", maxSize: 12000000, test: /^audio\/(?:mpeg|mp3|wav|ogg|aac|webm)$/i, extensions: /\.(?:mp3|wav|ogg|aac|webm)$/i },
   avatar: { title: "Profile Avatar", description: "Dodaj obraz avatara widoczny na karcie profilu.", accept: "image/png,image/jpeg,image/gif,image/webp", maxSize: 6000000, test: /^image\/(?:png|jpeg|gif|webp)$/i, extensions: /\.(?:png|jpe?g|gif|webp)$/i },
   cursor: { title: "Custom Cursor", description: "Dodaj obraz kursora. Dla najlepszego efektu użyj małego pliku PNG.", accept: "image/png,image/jpeg,image/gif,image/webp", maxSize: 256000, test: /^image\/(?:png|jpeg|gif|webp)$/i, extensions: /\.(?:png|jpe?g|gif|webp)$/i }
@@ -762,15 +762,32 @@ function bindProfileAssetPreview() {
     }
     const setMessage = (text, error = false) => { message.textContent = text; message.classList.toggle("is-error", error); };
     if (currentValue && isExpiredDiscordUrl(currentValue)) setMessage("Ten link z Discorda wygasł. Wybierz plik z komputera albo wklej nowy, stały URL.", true);
+    const readVideoDimensions = (file) => {
+      const isVideo = kind === "background" && (/^video\//i.test(file.type || "") || meta.extensions.test(file.name || ""));
+      if (!isVideo || typeof URL.createObjectURL !== "function") return Promise.resolve(null);
+      return new Promise((resolve) => {
+        const video = document.createElement("video");
+        const objectUrl = URL.createObjectURL(file);
+        const finish = (dimensions) => { URL.revokeObjectURL(objectUrl); resolve(dimensions); };
+        video.preload = "metadata";
+        video.addEventListener("loadedmetadata", () => finish({ width: video.videoWidth, height: video.videoHeight }), { once: true });
+        video.addEventListener("error", () => finish(null), { once: true });
+        video.src = objectUrl;
+      });
+    };
     let onKeydown;
     const close = () => { if (onKeydown) document.removeEventListener("keydown", onKeydown); modal.remove(); document.body.classList.remove("asset-picker-open"); };
     fileButton.addEventListener("click", () => fileInput.click());
-    fileInput.addEventListener("change", () => {
+    fileInput.addEventListener("change", async () => {
       const file = fileInput.files?.[0];
       if (!file) return;
       const validType = meta.test.test(file.type || "") || meta.extensions.test(file.name || "");
       if (!validType) { pendingValue = ""; setMessage("Ten typ pliku nie pasuje do wybranego assetu.", true); return; }
       if (file.size > meta.maxSize) { pendingValue = ""; setMessage(`Plik jest za duży. Maksymalny rozmiar to ${Math.round(meta.maxSize / 1000000)} MB.`, true); return; }
+      const dimensions = await readVideoDimensions(file);
+      const qualityMessage = dimensions && Math.min(dimensions.width, dimensions.height) < 720
+        ? `Nagranie ma ${dimensions.width}×${dimensions.height} px. Na pełnym tle może wyglądać pikselowo — użyj pliku co najmniej 1280×720.`
+        : "";
       const reader = new FileReader();
       reader.onload = () => {
         const value = assetValue(kind, String(reader.result || ""));
@@ -778,7 +795,7 @@ function bindProfileAssetPreview() {
         pendingValue = value;
         urlInput.value = "";
         current.textContent = `${file.name} — plik gotowy do ustawienia.`;
-        setMessage("");
+        setMessage(qualityMessage);
       };
       reader.onerror = () => { pendingValue = ""; setMessage("Nie udało się odczytać tego pliku.", true); };
       reader.readAsDataURL(file);
