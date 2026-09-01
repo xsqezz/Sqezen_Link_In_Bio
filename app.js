@@ -966,6 +966,7 @@ wirePublic = function () {
   };
   const updateState = () => {
     const playing = !audio.paused && !audio.ended;
+    widget.classList.toggle("is-playing", playing);
     playButton?.classList.toggle("is-playing", playing);
     playButton?.setAttribute("aria-label", playing ? "Wstrzymaj audio" : "Odtwórz audio");
     if (iconNode) iconNode.innerHTML = icon(playing ? "pause" : "play");
