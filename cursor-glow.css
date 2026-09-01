@@ -85,5 +85,5 @@ html.cursor-enhanced,html.cursor-enhanced *{cursor:none!important}
 @keyframes cursor-shard-drift{0%{opacity:.95;transform:translate(-50%,-50%) rotate(var(--particle-rotation,0deg)) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,190deg))) scale(.15)}}
 @keyframes cursor-smoke-drift{0%{opacity:.44;transform:translate(-50%,-50%) scale(.55)}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) scale(1.55)}}
 @keyframes cursor-coin-drift{0%{opacity:.98;transform:translate(-50%,-50%) rotateY(0) rotate(var(--particle-rotation,0deg))}100%{opacity:0;transform:translate(calc(-50% + var(--particle-x,0px)),calc(-50% + var(--particle-y,0px))) rotateY(540deg) rotate(calc(var(--particle-rotation,0deg) + var(--particle-spin,180deg)))}}
-@media(prefers-reduced-motion:reduce){.cursor-glow,.site-cursor,.cursor-particle{animation-duration:1ms!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.cursor-glow,.site-cursor{animation-duration:1ms!important;transition:none!important}.cursor-particle{animation-duration:420ms!important;transition:none!important}}
 @media(pointer:coarse){.cursor-glow,.cursor-effects,.site-cursor{display:none}}
