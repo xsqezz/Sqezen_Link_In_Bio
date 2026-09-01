@@ -460,6 +460,186 @@ dashboard = () => {
 };
 const baseDashboardWithoutIntroDecoration = dashboard;
 dashboard = () => baseDashboardWithoutIntroDecoration().replace(/<span class="intro-orb">[\s\S]*?<\/span>/, "");
+function workspaceTabButton(tab, label, iconName, index, extra = "") {
+  return `<button class="sidebar-item${tab === "identity" ? " is-active" : ""}" data-dashboard-tab="${tab}" role="tab" type="button" aria-selected="${tab === "identity"}" aria-controls="dashboard-panel-${tab}">${icon(iconName)}<span>${label}</span>${extra || `<kbd>${index}</kbd>`}</button>`;
+}
+function workspacePanel(tab, index, title, description) {
+  const section = document.createElement("section");
+  section.dataset.tabPanel = tab;
+  section.id = `dashboard-panel-${tab}`;
+  section.setAttribute("role", "tabpanel");
+  section.hidden = true;
+  section.innerHTML = `<div class="panel-heading"><div><span class="panel-index">${index}</span><h2>${title}</h2><p>${description}</p></div></div>`;
+  return section;
+}
+const baseDashboardWithWorkspaceSections = dashboard;
+dashboard = () => {
+  const markup = baseDashboardWithWorkspaceSections();
+  if (typeof document === "undefined") return markup;
+  const template = document.createElement("template");
+  template.innerHTML = markup;
+  const root = template.content;
+  const form = root.querySelector("#profile-form");
+  const editor = form?.querySelector(".editor-panel");
+  if (!form || !editor) return markup;
+
+  const nav = root.querySelector(".dashboard-nav-list");
+  if (nav) {
+    nav.setAttribute("role", "tablist");
+    nav.setAttribute("aria-label", "Panel profilu");
+    nav.innerHTML = [
+      workspaceTabButton("identity", "Tożsamość", "dashboard", "01"),
+      workspaceTabButton("avatar", "Avatar", "dashboard", "02"),
+      workspaceTabButton("links", "Linki", "link", "03", '<kbd id="links-count">0</kbd>'),
+      workspaceTabButton("profile-card", "Karta profilu", "dashboard", "04"),
+      workspaceTabButton("name-effect", "Efekt nazwy", "sparkle", "05"),
+      workspaceTabButton("color-tone", "Kolor i ton", "palette", "06"),
+      workspaceTabButton("layout-details", "Układ i detale", "settings", "07"),
+      workspaceTabButton("assets", "Materiały", "sparkle", "08"),
+      workspaceTabButton("standard-embed", "Zwykły embed", "link", "09"),
+      workspaceTabButton("dynamic-embed", "Dynamic embed", "link", "10"),
+      workspaceTabButton("cursor-effects", "Cząsteczki kursora", "sparkle", "11"),
+      workspaceTabButton("cursor-color", "Kolor efektów", "palette", "12"),
+      workspaceTabButton("account", "Konto", "settings", "13"),
+      '<button class="sidebar-item" data-dashboard-tab="profile" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
+      '<button class="sidebar-item" data-dashboard-tab="appearance" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
+      '<button class="sidebar-item" data-dashboard-tab="embed" type="button" hidden aria-hidden="true" tabindex="-1"></button>'
+    ].join("");
+  }
+
+  const panel = (name) => editor.querySelector(`[data-tab-panel="${name}"]`);
+  const profilePanel = panel("profile");
+  let identityPanel = profilePanel;
+  let avatarPanel = null;
+  if (profilePanel) {
+    const divider = profilePanel.querySelector(".panel-divider");
+    const avatarHeading = divider?.nextElementSibling;
+    const avatarField = avatarHeading?.nextElementSibling;
+    profilePanel.dataset.tabPanel = "identity";
+    profilePanel.id = "dashboard-panel-identity";
+    profilePanel.setAttribute("role", "tabpanel");
+    if (divider && avatarHeading && avatarField) {
+      avatarPanel = document.createElement("section");
+      avatarPanel.dataset.tabPanel = "avatar";
+      avatarPanel.id = "dashboard-panel-avatar";
+      avatarPanel.setAttribute("role", "tabpanel");
+      avatarPanel.hidden = true;
+      divider.remove();
+      avatarPanel.append(avatarHeading, avatarField);
+      const linksPanel = panel("links");
+      editor.insertBefore(avatarPanel, linksPanel || profilePanel.nextSibling);
+    }
+  }
+
+  const appearancePanel = panel("appearance");
+  if (appearancePanel) {
+    const hiddenFields = Array.from(editor.children).filter((child) => child.matches("input[type=hidden]"));
+    const assetsTop = Array.from(appearancePanel.children).find((child) => child.classList.contains("profile-assets-top"));
+    const cards = Array.from(appearancePanel.children).filter((child) => child.classList.contains("custom-card"));
+    const findCard = (heading) => cards.find((card) => card.querySelector("h3")?.textContent.trim() === heading);
+    const resetButton = appearancePanel.querySelector("#reset-customization");
+    const profileCard = findCard("Karta profilu") || cards[0];
+    const colorCard = findCard("Kolor i ton");
+    const layoutCard = findCard("Układ i detale");
+    const profileCardPanel = profileCard ? document.createElement("section") : null;
+    const nameEffectPanel = document.createElement("section");
+    const colorPanel = colorCard ? document.createElement("section") : null;
+    const layoutPanel = layoutCard ? document.createElement("section") : null;
+    let locationField = null;
+    let assetsPanel = null;
+    if (assetsTop) {
+      assetsPanel = assetsTop;
+      assetsPanel.dataset.tabPanel = "assets";
+      assetsPanel.id = "dashboard-panel-assets";
+      assetsPanel.setAttribute("role", "tabpanel");
+      assetsPanel.hidden = true;
+    } else if (hiddenFields.length) {
+      assetsPanel = workspacePanel("assets", "08", "Materiały", "Pliki używane przez Twój profil.");
+    }
+
+    if (profileCardPanel) {
+      profileCardPanel.dataset.tabPanel = "profile-card";
+      profileCardPanel.id = "dashboard-panel-profile-card";
+      profileCardPanel.setAttribute("role", "tabpanel");
+      profileCardPanel.hidden = true;
+      const fieldGrid = Array.from(profileCard.children).find((child) => child.classList.contains("field-grid"));
+      const particleField = fieldGrid?.querySelector(".particle-field");
+      const nameEffectField = fieldGrid?.querySelector(".name-effect-field");
+      locationField = fieldGrid?.querySelector('[name="location"]')?.closest(".field-label") || null;
+      if (particleField) particleField.remove();
+      if (nameEffectField) nameEffectField.remove();
+      if (locationField) locationField.remove();
+      if (fieldGrid && !fieldGrid.children.length) fieldGrid.remove();
+      profileCardPanel.append(profileCard);
+
+      if (particleField || nameEffectField) {
+        nameEffectPanel.dataset.tabPanel = "name-effect";
+        nameEffectPanel.id = "dashboard-panel-name-effect";
+        nameEffectPanel.setAttribute("role", "tabpanel");
+        nameEffectPanel.hidden = true;
+        const nameCard = document.createElement("div");
+        nameCard.className = "custom-card name-effect-card";
+        nameCard.innerHTML = `<div class="custom-card-title"><span>${icon("sparkle")}</span><div><h3>Efekt nazwy i cząsteczki</h3><p>Animacja nazwy oraz delikatne punkty światła.</p></div></div>`;
+        const nameFields = document.createElement("div");
+        nameFields.className = "field-grid";
+        if (particleField) nameFields.append(particleField);
+        if (nameEffectField) nameFields.append(nameEffectField);
+        nameCard.append(nameFields);
+        nameEffectPanel.append(nameCard);
+      }
+    } else {
+      appearancePanel.dataset.tabPanel = "profile-card";
+      appearancePanel.id = "dashboard-panel-profile-card";
+      appearancePanel.setAttribute("role", "tabpanel");
+      appearancePanel.hidden = true;
+      identityPanel = profilePanel;
+    }
+
+    if (colorPanel) {
+      colorPanel.dataset.tabPanel = "color-tone";
+      colorPanel.id = "dashboard-panel-color-tone";
+      colorPanel.setAttribute("role", "tabpanel");
+      colorPanel.hidden = true;
+      colorPanel.append(colorCard);
+    }
+    if (layoutPanel) {
+      layoutPanel.dataset.tabPanel = "layout-details";
+      layoutPanel.id = "dashboard-panel-layout-details";
+      layoutPanel.setAttribute("role", "tabpanel");
+      layoutPanel.hidden = true;
+      layoutPanel.append(layoutCard);
+      const layoutFields = Array.from(layoutCard.children).find((child) => child.classList.contains("field-grid"));
+      if (locationField && layoutFields) layoutFields.append(locationField);
+    }
+    if (assetsPanel) {
+      if (assetsTop && assetsPanel !== assetsTop) assetsPanel.append(assetsTop);
+      hiddenFields.forEach((field) => assetsPanel.append(field));
+    }
+    if (assetsTop) assetsTop.remove();
+    const resetTarget = profileCardPanel || colorPanel || layoutPanel || assetsPanel;
+    if (resetButton && resetTarget) {
+      const toolbar = document.createElement("div");
+      toolbar.className = "workspace-panel-toolbar";
+      toolbar.append(resetButton);
+      resetTarget.prepend(toolbar);
+    }
+
+    const replacement = [profileCardPanel, nameEffectPanel, colorPanel, layoutPanel, assetsPanel].filter(Boolean);
+    if (profileCardPanel) appearancePanel.replaceWith(...replacement);
+    else if (assetsPanel) appearancePanel.replaceWith(assetsPanel);
+  }
+
+  const cursorPanel = panel("cursor-effects");
+  const cursorColorRow = cursorPanel?.querySelector(".cursor-effect-color-row");
+  if (cursorPanel && cursorColorRow) {
+    const cursorColorPanel = workspacePanel("cursor-color", "12", "Kolor efektów kursora", "Ustaw kolor większości efektów i sprawdź ich stałe palety.");
+    cursorColorRow.remove();
+    cursorColorPanel.append(cursorColorRow);
+    editor.insertBefore(cursorColorPanel, cursorPanel);
+  }
+
+  return template.innerHTML;
+};
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
@@ -1277,6 +1457,103 @@ wireDashboard = async function () {
     event.stopImmediatePropagation();
     schedule(0);
   }, true);
+};
+const DASHBOARD_WORKSPACE_TABS = Object.freeze({
+  identity: { panel: "identity", label: "Tożsamość", eyebrow: "SQEZEN / IDENTITY", title: "Zbuduj swój profil.", subtitle: "Ustaw informacje, które zobaczą osoby odwiedzające Twój adres." },
+  avatar: { panel: "avatar", label: "Avatar", eyebrow: "SQEZEN / AVATAR", title: "Ustaw swój avatar.", subtitle: "Wybierz bezpośredni adres zdjęcia profilowego." },
+  links: { panel: "links", label: "Linki", eyebrow: "SQEZEN / LINKS", title: "Twoje odnośniki.", subtitle: "Dodawaj, testuj i układaj linki w kolejności, którą lubisz." },
+  "profile-card": { panel: "profile-card", label: "Karta profilu", eyebrow: "SQEZEN / PROFILE CARD", title: "Dopasuj kartę profilu.", subtitle: "Ustaw rozmiar, przezroczystość i efekty powierzchni." },
+  "name-effect": { panel: "name-effect", label: "Efekt nazwy", eyebrow: "SQEZEN / NAME EFFECT", title: "Ożyw swoją nazwę.", subtitle: "Połącz animację nazwy z delikatnymi cząsteczkami." },
+  "color-tone": { panel: "color-tone", label: "Kolor i ton", eyebrow: "SQEZEN / COLOR", title: "Zbuduj swoją paletę.", subtitle: "Dobierz kolory akcentu, tekstu, karty i przycisków." },
+  "layout-details": { panel: "layout-details", label: "Układ i detale", eyebrow: "SQEZEN / LAYOUT", title: "Dopracuj szczegóły.", subtitle: "Wybierz układ, odstępy, font i styl przycisków." },
+  assets: { panel: "assets", label: "Materiały", eyebrow: "SQEZEN / ASSETS", title: "Dodaj materiały profilu.", subtitle: "Zarządzaj tłem, audio, avatarem i własnym kursorem." },
+  "standard-embed": { panel: "embed", label: "Zwykły embed", eyebrow: "SQEZEN / STANDARD EMBED", title: "Osadź kartę profilu.", subtitle: "Skopiuj zwykły embed z pełną kartą Twojego profilu.", embedMode: "standard" },
+  "dynamic-embed": { panel: "embed", label: "Dynamic embed", eyebrow: "SQEZEN / DYNAMIC EMBED", title: "Zbuduj dynamiczny embed.", subtitle: "Ustaw układ kafelków i osadź profil z dodatkowymi modułami.", embedMode: "dynamic" },
+  "cursor-effects": { panel: "cursor-effects", label: "Cząsteczki kursora", eyebrow: "SQEZEN / CURSOR STUDIO", title: "Zmień zwykły kursor w efekt.", subtitle: "Wybierz animację, która będzie reagować na ruch odwiedzających." },
+  "cursor-color": { panel: "cursor-color", label: "Kolor efektów", eyebrow: "SQEZEN / CURSOR COLOR", title: "Ustaw kolor efektów.", subtitle: "Dobierz kolor efektów, które nie mają własnej stałej palety." },
+  account: { panel: "account", label: "Konto", eyebrow: "SQEZEN / ACCOUNT", title: "Konto i adres.", subtitle: "Sprawdź e-mail i skopiuj publiczny adres profilu." },
+  "badge-admin": { panel: "badge-admin", label: "Odznaki", eyebrow: "SQEZEN / BADGES", title: "Zarządzaj odznakami.", subtitle: "Przyznawaj i porządkuj odznaki profili." }
+});
+const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "standard-embed" });
+const baseWireDashboardWithWorkspaceTabs = wireDashboard;
+wireDashboard = async function () {
+  await baseWireDashboardWithWorkspaceTabs();
+  const form = document.querySelector("#profile-form");
+  const nav = document.querySelector(".dashboard-nav-list");
+  const sidebar = document.querySelector("#dashboard-sidebar");
+  const editor = form?.querySelector(".editor-panel");
+  if (!form || !nav || !editor || form.dataset.workspaceTabsBound === "true") return;
+  form.dataset.workspaceTabsBound = "true";
+
+  const normalizeTab = (value) => DASHBOARD_TAB_ALIASES[value] || value;
+  const panels = Array.from(editor.querySelectorAll("[data-tab-panel]"));
+  const embedPanel = panels.find((currentPanel) => currentPanel.dataset.tabPanel === "embed");
+  const embedModes = Array.from(document.querySelectorAll("[data-embed-mode]"));
+  let changingEmbedMode = false;
+  panels.forEach((currentPanel) => {
+    currentPanel.setAttribute("role", "tabpanel");
+    if (!currentPanel.id) currentPanel.id = `dashboard-panel-${currentPanel.dataset.tabPanel}`;
+  });
+
+  const setEmbedMode = (mode) => {
+    const button = embedModes.find((currentButton) => currentButton.dataset.embedMode === mode);
+    if (!button || button.classList.contains("is-active")) return;
+    changingEmbedMode = true;
+    button.click();
+    changingEmbedMode = false;
+  };
+  const syncEmbedPanel = (selected) => {
+    const selectedMode = DASHBOARD_WORKSPACE_TABS[selected]?.embedMode;
+    if (selectedMode) setEmbedMode(selectedMode);
+    embedModes.forEach((modeButton) => {
+      modeButton.hidden = Boolean(selectedMode && modeButton.dataset.embedMode !== selectedMode);
+    });
+    const positionRow = embedPanel?.querySelector(".embed-position-row");
+    if (positionRow) positionRow.hidden = selectedMode !== "dynamic";
+  };
+  const setTab = (requested) => {
+    const selected = normalizeTab(requested);
+    const tab = DASHBOARD_WORKSPACE_TABS[selected] ? selected : "identity";
+    const target = panels.find((currentPanel) => currentPanel.dataset.tabPanel === DASHBOARD_WORKSPACE_TABS[tab].panel);
+    if (!target) return;
+    syncEmbedPanel(tab);
+    panels.forEach((currentPanel) => { currentPanel.hidden = currentPanel !== target; });
+    nav.querySelectorAll("[data-dashboard-tab]").forEach((button) => {
+      const buttonTab = normalizeTab(button.dataset.dashboardTab);
+      const active = buttonTab === tab;
+      button.classList.toggle("is-active", active);
+      if (button.hasAttribute("role")) button.setAttribute("aria-selected", String(active));
+      if (DASHBOARD_WORKSPACE_TABS[buttonTab]) button.setAttribute("aria-controls", `dashboard-panel-${DASHBOARD_WORKSPACE_TABS[buttonTab].panel}`);
+    });
+    const copy = DASHBOARD_WORKSPACE_TABS[tab];
+    const topbar = document.querySelector("#topbar-section");
+    const eyebrow = document.querySelector("#dashboard-eyebrow");
+    const title = document.querySelector("#dashboard-title");
+    const subtitle = document.querySelector("#dashboard-subtitle");
+    if (topbar) topbar.textContent = copy.label;
+    if (eyebrow) eyebrow.textContent = copy.eyebrow;
+    if (title) title.textContent = copy.title;
+    if (subtitle) subtitle.textContent = copy.subtitle;
+    sidebar?.classList.remove("is-open");
+    sessionStorage.setItem("sqezen_dashboard_tab", tab);
+  };
+
+  nav.querySelectorAll("[data-dashboard-tab]").forEach((button) => {
+    const tab = normalizeTab(button.dataset.dashboardTab);
+    if (DASHBOARD_WORKSPACE_TABS[tab]) {
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-controls", `dashboard-panel-${DASHBOARD_WORKSPACE_TABS[tab].panel}`);
+      button.setAttribute("aria-selected", "false");
+    }
+    button.addEventListener("click", () => setTab(tab));
+  });
+  embedModes.forEach((modeButton) => {
+    modeButton.addEventListener("click", () => {
+      if (changingEmbedMode) return;
+      setTab(modeButton.dataset.embedMode === "dynamic" ? "dynamic-embed" : "standard-embed");
+    });
+  });
+  setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "identity");
 };
 const baseWirePublic = wirePublic;
 wirePublic = function () {
