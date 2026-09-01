@@ -79,7 +79,7 @@ async function cacheDiscordAsset(value, kind, meta) {
 }
 const PROFILE_ASSET_OPTIONS = Object.freeze({
   background: { title: "Tło", description: "Wybierz obraz lub wideo, które pojawi się w tle profilu. Dla ostrego tła użyj minimum 1280×720.", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg", maxSize: 12000000, test: /^(image\/(?:png|jpeg|gif|webp)|video\/(?:mp4|webm|ogg))$/i, extensions: /\.(?:png|jpe?g|gif|webp|mp4|webm|ogg)$/i },
-  audio: { title: "Audio", description: "Wybierz plik MP3 z komputera albo wklej bezpośredni adres audio.", accept: "audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,audio/webm", maxSize: 12000000, test: /^audio\/(?:mpeg|mp3|wav|ogg|aac|webm)$/i, extensions: /\.(?:mp3|wav|ogg|aac|webm)$/i },
+  audio: { title: "Audio", description: "Wybierz plik MP3 z komputera albo wklej bezpośredni adres audio. Przy audio możesz dodać zsynchronizowany tekst LRC.", accept: "audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,audio/webm", maxSize: 12000000, test: /^audio\/(?:mpeg|mp3|wav|ogg|aac|webm)$/i, extensions: /\.(?:mp3|wav|ogg|aac|webm)$/i },
   avatar: { title: "Profile Avatar", description: "Dodaj obraz avatara widoczny na karcie profilu.", accept: "image/png,image/jpeg,image/gif,image/webp", maxSize: 6000000, test: /^image\/(?:png|jpeg|gif|webp)$/i, extensions: /\.(?:png|jpe?g|gif|webp)$/i },
   cursor: { title: "Custom Cursor", description: "Dodaj obraz kursora. Dla najlepszego efektu użyj małego pliku PNG.", accept: "image/png,image/jpeg,image/gif,image/webp", maxSize: 256000, test: /^image\/(?:png|jpeg|gif|webp)$/i, extensions: /\.(?:png|jpe?g|gif|webp)$/i }
 });
@@ -1017,7 +1017,7 @@ function clampDynamicEmbedTiles(main) {
   });
 }
 function dynamicEmbedEditorToolbar() {
-  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag profile, Connections, music player or Live lyrics.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
+  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
 }
 const baseWirePublicWithEmbedEditor = wirePublic;
 wirePublic = function () {
@@ -1118,11 +1118,14 @@ function dynamicLyricsEntries(value) {
   });
   return entries.sort((left, right) => left.time - right.time || left.order - right.order).slice(0, 240);
 }
-function dynamicLyricsWidget(lyrics, position = { x: 76, y: 27 }) {
+function dynamicLyricsWidget(lyrics, position = { x: 76, y: 27 }, showEmptyState = false) {
   const entries = dynamicLyricsEntries(lyrics);
-  if (!entries.length) return "";
   const x = safeNumber(position?.x, 0, 100, 76);
   const y = safeNumber(position?.y, 0, 100, 27);
+  if (!entries.length) {
+    if (!showEmptyState) return "";
+    return `<section class="dynamic-lyrics-widget dynamic-lyrics-empty" data-dynamic-tile="lyrics" data-lyrics-empty aria-label="Live lyrics" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-lyrics-heading"><span class="dynamic-lyrics-label">LIVE LYRICS</span><span class="dynamic-lyrics-state">SETUP</span></div><div class="dynamic-lyrics-empty-body"><strong>ADD YOUR LYRICS</strong><p>Paste timestamped lines in the Audio settings to sync them with this player.</p><code>[00:12.50] Your line here</code></div><div class="dynamic-lyrics-footer"><span>READY FOR SYNC</span><span>OPEN AUDIO SETTINGS</span></div></section>`;
+  }
   const lines = entries.map((entry, index) => `<span class="dynamic-lyrics-line${index === 0 ? " is-next" : ""}" data-lyrics-time="${entry.time}">${escapeHtml(entry.text)}</span>`).join("");
   const visualizer = Array.from({ length: 6 }, () => "<i></i>").join("");
   return `<section class="dynamic-lyrics-widget" data-dynamic-tile="lyrics" data-lyrics-widget aria-label="Live lyrics" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-lyrics-heading"><span class="dynamic-lyrics-label">LIVE LYRICS</span><span class="dynamic-lyrics-state" data-lyrics-state>READY</span></div><div class="dynamic-lyrics-visualizer" aria-hidden="true">${visualizer}</div><div class="dynamic-lyrics-viewport" data-lyrics-viewport><div class="dynamic-lyrics-lines">${lines}</div></div><div class="dynamic-lyrics-footer"><span>SYNCED TO AUDIO</span><time data-lyrics-time-label>0:00</time></div></section>`;
@@ -1163,7 +1166,7 @@ async function dynamicEmbedProfile(username) {
   const positions = config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions();
   const badgesMarkup = dynamicBadgeWidget(config.badges, positions.badges);
   const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl, positions.audio, { title: config.audioTitle, artist: config.audioArtist }, display) : "";
-  const lyricsMarkup = config.audioUrl ? dynamicLyricsWidget(config.audioLyrics, positions.lyrics) : "";
+  const lyricsMarkup = config.audioUrl ? dynamicLyricsWidget(config.audioLyrics, positions.lyrics, new URLSearchParams(location.search).get("edit") === "1") : "";
   return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section>${badgesMarkup}${audioMarkup}${lyricsMarkup}</main></div>`;
 }
 const baseDynamicEmbedProfileForEditor = dynamicEmbedProfile;

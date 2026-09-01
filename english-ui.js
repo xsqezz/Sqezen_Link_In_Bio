@@ -46,6 +46,7 @@
     "Tło, muzyka i dodatkowe detale.": "Background, audio and extra details.",
     "Tło obrazu / wideo": "Image / video background",
     "Audio profilu": "Profile audio",
+    "Wybierz plik MP3 z komputera albo wklej bezpośredni adres audio. Przy audio możesz dodać zsynchronizowany tekst LRC.": "Choose an MP3 from your computer or paste a direct audio URL. You can add synced LRC lyrics to audio.",
     "Informacje o utworze": "Track info",
     "Tekst na żywo": "Live lyrics",
     "Wklej wersy w formacie LRC, aby kafelek synchronizował je z audio.": "Paste LRC lyrics so the tile syncs them with the audio.",
