@@ -79,7 +79,7 @@ async function cacheDiscordAsset(value, kind, meta) {
 }
 const PROFILE_ASSET_OPTIONS = Object.freeze({
   background: { title: "Tło", description: "Wybierz obraz lub wideo, które pojawi się w tle profilu. Dla ostrego tła użyj minimum 1280×720.", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/ogg", maxSize: 12000000, test: /^(image\/(?:png|jpeg|gif|webp)|video\/(?:mp4|webm|ogg))$/i, extensions: /\.(?:png|jpe?g|gif|webp|mp4|webm|ogg)$/i },
-  audio: { title: "Audio", description: "Wybierz plik MP3 z komputera albo wklej bezpośredni adres audio. Przy audio możesz dodać zsynchronizowany tekst LRC.", accept: "audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,audio/webm", maxSize: 12000000, test: /^audio\/(?:mpeg|mp3|wav|ogg|aac|webm)$/i, extensions: /\.(?:mp3|wav|ogg|aac|webm)$/i },
+  audio: { title: "Audio", description: "Wybierz plik MP3 z komputera albo wklej bezpośredni adres audio. Dynamic embed sam wyszuka lyrics po metadanych utworu.", accept: "audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,audio/webm", maxSize: 12000000, test: /^audio\/(?:mpeg|mp3|wav|ogg|aac|webm)$/i, extensions: /\.(?:mp3|wav|ogg|aac|webm)$/i },
   avatar: { title: "Profile Avatar", description: "Dodaj obraz avatara widoczny na karcie profilu.", accept: "image/png,image/jpeg,image/gif,image/webp", maxSize: 6000000, test: /^image\/(?:png|jpeg|gif|webp)$/i, extensions: /\.(?:png|jpe?g|gif|webp)$/i },
   cursor: { title: "Custom Cursor", description: "Dodaj obraz kursora. Dla najlepszego efektu użyj małego pliku PNG.", accept: "image/png,image/jpeg,image/gif,image/webp", maxSize: 256000, test: /^image\/(?:png|jpeg|gif|webp)$/i, extensions: /\.(?:png|jpe?g|gif|webp)$/i }
 });
@@ -756,7 +756,7 @@ function bindProfileAssetPreview() {
     if (kind === "audio") {
       const metadata = document.createElement("div");
       metadata.className = "asset-picker-audio-meta";
-      metadata.innerHTML = `<span class="asset-picker-meta-title">Informacje o utworze</span><div class="asset-picker-audio-fields"><label>Tytuł utworu<input data-asset-audio-title type="text" maxlength="80" placeholder="Nazwa utworu" value="${escapeHtml(String(form.elements.audio_title?.value || ""))}"></label><label>Wykonawca<input data-asset-audio-artist type="text" maxlength="60" placeholder="Nazwa wykonawcy" value="${escapeHtml(String(form.elements.audio_artist?.value || ""))}"></label></div><label class="asset-picker-lyrics-field">Tekst na żywo<textarea data-asset-audio-lyrics maxlength="12000" rows="7" placeholder="[00:12.50] Pierwszy wers&#10;[00:16.00] Kolejny wers">${escapeHtml(String(form.elements.audio_lyrics?.value || ""))}</textarea><small>Wklej wersy w formacie LRC, aby kafelek synchronizował je z audio.</small></label>`;
+      metadata.innerHTML = `<span class="asset-picker-meta-title">Informacje o utworze</span><div class="asset-picker-audio-fields"><label>Tytuł utworu<input data-asset-audio-title type="text" maxlength="80" placeholder="Nazwa utworu" value="${escapeHtml(String(form.elements.audio_title?.value || ""))}"></label><label>Wykonawca<input data-asset-audio-artist type="text" maxlength="60" placeholder="Nazwa wykonawcy" value="${escapeHtml(String(form.elements.audio_artist?.value || ""))}"></label></div><label class="asset-picker-lyrics-field">Własny tekst na żywo (opcjonalnie)<textarea data-asset-audio-lyrics maxlength="12000" rows="7" placeholder="[00:12.50] Pierwszy wers&#10;[00:16.00] Kolejny wers">${escapeHtml(String(form.elements.audio_lyrics?.value || ""))}</textarea><small>Dynamic embed najpierw wyszukuje lyrics po tytule, wykonawcy lub nazwie pliku. Wklej LRC tylko jako własny fallback.</small></label>`;
       modal.querySelector(".asset-picker-url")?.after(metadata);
       audioTitleInput = metadata.querySelector("[data-asset-audio-title]");
       audioArtistInput = metadata.querySelector("[data-asset-audio-artist]");
@@ -790,6 +790,10 @@ function bindProfileAssetPreview() {
       const qualityMessage = dimensions && Math.min(dimensions.width, dimensions.height) < 720
         ? `Nagranie ma ${dimensions.width}×${dimensions.height} px. Na pełnym tle może wyglądać pikselowo — użyj pliku co najmniej 1280×720.`
         : "";
+      if (kind === "audio" && audioTitleInput && !audioTitleInput.value.trim()) {
+        const inferredTitle = dynamicAudioFilenameTitle(file.name);
+        if (inferredTitle) audioTitleInput.value = inferredTitle.slice(0, 80);
+      }
       const reader = new FileReader();
       reader.onload = () => {
         const value = assetValue(kind, String(reader.result || ""));
@@ -876,6 +880,7 @@ wireDashboard = async function () {
 const baseWirePublic = wirePublic;
 wirePublic = function () {
   baseWirePublic();
+  wireAdaptiveBackgroundMedia();
   document.querySelectorAll(".public-card h1,.embed-profile-card h1").forEach((node) => {
     node.dataset.name = String(node.textContent || "").trim();
     if (NAME_PARTICLE_VALUES.includes(lastProfileParticles) && lastProfileParticles !== "none") {
@@ -959,11 +964,80 @@ wirePublic = function () {
   ["loadedmetadata", "durationchange", "timeupdate", "progress", "seeking", "seeked", "play", "pause", "ended"].forEach((eventName) => audio.addEventListener(eventName, updateState));
   updateState();
 };
-const baseWirePublicWithLiveLyrics = wirePublic;
-wirePublic = function () {
-  baseWirePublicWithLiveLyrics();
-  const widget = document.querySelector("[data-lyrics-widget]");
-  const audio = document.querySelector("[data-profile-audio]");
+const DYNAMIC_LYRICS_API = "https://lrclib.net/api";
+function dynamicLyricsLineMarkup(entries) {
+  return entries.map((entry, index) => `<span class="dynamic-lyrics-line${index === 0 ? " is-next" : ""}" data-lyrics-time="${entry.time}">${escapeHtml(entry.text)}</span>`).join("");
+}
+function dynamicLyricsCandidate(payload, duration = 0) {
+  const items = Array.isArray(payload) ? payload : payload && typeof payload === "object" ? [payload] : [];
+  const candidates = items.filter((item) => item && typeof item.syncedLyrics === "string" && dynamicLyricsEntries(item.syncedLyrics).length);
+  if (!candidates.length) return null;
+  if (!Number.isFinite(duration) || duration <= 0) return candidates[0];
+  return candidates.reduce((best, candidate) => {
+    const bestDuration = Number(best.duration);
+    const candidateDuration = Number(candidate.duration);
+    const bestDistance = Number.isFinite(bestDuration) && bestDuration > 0 ? Math.abs(bestDuration - duration) : Number.POSITIVE_INFINITY;
+    const candidateDistance = Number.isFinite(candidateDuration) && candidateDuration > 0 ? Math.abs(candidateDuration - duration) : Number.POSITIVE_INFINITY;
+    return candidateDistance < bestDistance ? candidate : best;
+  });
+}
+async function dynamicLyricsProviderRequest(endpoint, params, signal) {
+  const response = await fetch(`${DYNAMIC_LYRICS_API}/${endpoint}?${params.toString()}`, { headers: { Accept: "application/json" }, cache: "force-cache", signal });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`Lyrics provider returned ${response.status}`);
+  return response.json();
+}
+async function lookupDynamicLyrics(widget, audio) {
+  const title = String(widget.dataset.lyricsTrackTitle || "").trim();
+  const artist = String(widget.dataset.lyricsTrackArtist || "").trim();
+  if (!title || title.toLowerCase() === "now playing") return null;
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const timeout = controller ? window.setTimeout(() => controller.abort(), 7000) : null;
+  try {
+    const duration = Number(audio.duration);
+    if (artist) {
+      const exact = await dynamicLyricsProviderRequest("get", new URLSearchParams({ track_name: title, artist_name: artist }), controller?.signal);
+      const exactMatch = dynamicLyricsCandidate(exact, duration);
+      if (exactMatch) return exactMatch.syncedLyrics;
+    }
+    const search = await dynamicLyricsProviderRequest("search", new URLSearchParams({ q: [title, artist].filter(Boolean).join(" ") }), controller?.signal);
+    return dynamicLyricsCandidate(search, duration)?.syncedLyrics || "";
+  } finally {
+    if (timeout) window.clearTimeout(timeout);
+  }
+}
+function showDynamicLyricsMessage(widget, state, heading, description) {
+  const stateLabel = widget.querySelector("[data-lyrics-state]");
+  const viewport = widget.querySelector("[data-lyrics-viewport]");
+  if (stateLabel) stateLabel.textContent = state;
+  if (viewport) viewport.innerHTML = `<div class="dynamic-lyrics-auto-message" data-lyrics-message><strong>${escapeHtml(heading)}</strong><p>${escapeHtml(description)}</p></div>`;
+  widget.dataset.lyricsAuto = "false";
+}
+function applyDynamicLyrics(widget, audio, syncedLyrics) {
+  const entries = dynamicLyricsEntries(syncedLyrics);
+  const viewport = widget.querySelector("[data-lyrics-viewport]");
+  if (!entries.length || !viewport) return false;
+  viewport.innerHTML = `<div class="dynamic-lyrics-lines">${dynamicLyricsLineMarkup(entries)}</div>`;
+  widget.dataset.lyricsAuto = "false";
+  const stateLabel = widget.querySelector("[data-lyrics-state]");
+  if (stateLabel) stateLabel.textContent = "READY";
+  bindDynamicLyricsWidget(widget, audio);
+  return true;
+}
+async function loadDynamicLyrics(widget, audio) {
+  try {
+    const syncedLyrics = await lookupDynamicLyrics(widget, audio);
+    if (!widget.isConnected) return;
+    if (syncedLyrics && applyDynamicLyrics(widget, audio, syncedLyrics)) return;
+    const title = String(widget.dataset.lyricsTrackTitle || "").trim();
+    showDynamicLyricsMessage(widget, "NOT FOUND", "NO SYNCED LYRICS", title ? `No synced lyrics found for ${title}.` : "This audio has no searchable track metadata.");
+  } catch (error) {
+    if (!widget.isConnected) return;
+    console.warn("Automatic lyrics lookup failed", error);
+    showDynamicLyricsMessage(widget, "UNAVAILABLE", "LYRICS UNAVAILABLE", "The lyrics provider could not be reached right now.");
+  }
+}
+function bindDynamicLyricsWidget(widget, audio) {
   const lines = Array.from(widget?.querySelectorAll(".dynamic-lyrics-line") || []);
   if (!widget || !audio || !lines.length || widget.dataset.lyricsBound === "true") return;
   widget.dataset.lyricsBound = "true";
@@ -998,6 +1072,18 @@ wirePublic = function () {
   };
   ["loadedmetadata", "durationchange", "timeupdate", "seeking", "seeked", "play", "pause", "ended"].forEach((eventName) => audio.addEventListener(eventName, syncLyrics));
   syncLyrics();
+}
+const baseWirePublicWithLiveLyrics = wirePublic;
+wirePublic = function () {
+  baseWirePublicWithLiveLyrics();
+  const widget = document.querySelector("[data-lyrics-widget]");
+  const audio = document.querySelector("[data-profile-audio]");
+  if (!widget || !audio) return;
+  if (widget.dataset.lyricsAuto === "true" && widget.dataset.lyricsLookupBound !== "true") {
+    widget.dataset.lyricsLookupBound = "true";
+    loadDynamicLyrics(widget, audio);
+  }
+  bindDynamicLyricsWidget(widget, audio);
 };
 function clampDynamicEmbedTilePosition(tile, main, position = {}) {
   const frame = main?.getBoundingClientRect();
@@ -1102,6 +1188,25 @@ wirePublic = function () {
   });
   setStatus("Drag any element to arrange it");
 };
+function wireAdaptiveBackgroundMedia() {
+  document.querySelectorAll(".public-media").forEach((media) => {
+    if (media.tagName !== "VIDEO" || media.dataset.backgroundQualityBound === "true") return;
+    media.dataset.backgroundQualityBound = "true";
+    const adapt = () => {
+      const width = Number(media.videoWidth);
+      const height = Number(media.videoHeight);
+      if (!width || !height) return;
+      const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      const coverScale = Math.max(viewportWidth / width, viewportHeight / height);
+      media.classList.toggle("is-low-resolution", coverScale > 1.35);
+    };
+    media.addEventListener("loadedmetadata", adapt);
+    media.addEventListener("loadeddata", adapt);
+    window.addEventListener("resize", adapt, { passive: true });
+    adapt();
+  });
+}
 function dynamicLyricsEntries(value) {
   const entries = [];
   String(value || "").split(/\r?\n/).slice(0, 300).forEach((line, order) => {
@@ -1118,23 +1223,30 @@ function dynamicLyricsEntries(value) {
   });
   return entries.sort((left, right) => left.time - right.time || left.order - right.order).slice(0, 240);
 }
-function dynamicLyricsWidget(lyrics, position = { x: 76, y: 27 }, showEmptyState = false) {
+function dynamicLyricsWidget(lyrics, position = { x: 76, y: 27 }, showEmptyState = false, track = {}) {
   const entries = dynamicLyricsEntries(lyrics);
   const x = safeNumber(position?.x, 0, 100, 76);
   const y = safeNumber(position?.y, 0, 100, 27);
-  if (!entries.length) {
-    if (!showEmptyState) return "";
-    return `<section class="dynamic-lyrics-widget dynamic-lyrics-empty" data-dynamic-tile="lyrics" data-lyrics-empty aria-label="Live lyrics" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-lyrics-heading"><span class="dynamic-lyrics-label">LIVE LYRICS</span><span class="dynamic-lyrics-state">SETUP</span></div><div class="dynamic-lyrics-empty-body"><strong>ADD YOUR LYRICS</strong><p>Paste timestamped lines in the Audio settings to sync them with this player.</p><code>[00:12.50] Your line here</code></div><div class="dynamic-lyrics-footer"><span>READY FOR SYNC</span><span>OPEN AUDIO SETTINGS</span></div></section>`;
-  }
-  const lines = entries.map((entry, index) => `<span class="dynamic-lyrics-line${index === 0 ? " is-next" : ""}" data-lyrics-time="${entry.time}">${escapeHtml(entry.text)}</span>`).join("");
-  const visualizer = Array.from({ length: 6 }, () => "<i></i>").join("");
-  return `<section class="dynamic-lyrics-widget" data-dynamic-tile="lyrics" data-lyrics-widget aria-label="Live lyrics" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-lyrics-heading"><span class="dynamic-lyrics-label">LIVE LYRICS</span><span class="dynamic-lyrics-state" data-lyrics-state>READY</span></div><div class="dynamic-lyrics-visualizer" aria-hidden="true">${visualizer}</div><div class="dynamic-lyrics-viewport" data-lyrics-viewport><div class="dynamic-lyrics-lines">${lines}</div></div><div class="dynamic-lyrics-footer"><span>SYNCED TO AUDIO</span><time data-lyrics-time-label>0:00</time></div></section>`;
+  const trackTitle = String(track.title || "").trim().slice(0, 120);
+  const trackArtist = String(track.artist || "").trim().slice(0, 80);
+  const automatic = !entries.length;
+  const description = showEmptyState ? "We will look up synced lyrics from the track metadata automatically." : "Looking up synced lyrics from the track metadata.";
+  const content = entries.length
+    ? `<div class="dynamic-lyrics-lines">${dynamicLyricsLineMarkup(entries)}</div>`
+    : `<div class="dynamic-lyrics-auto-message" data-lyrics-message><strong>LOOKING FOR LYRICS</strong><p>${description}</p>${trackTitle ? `<code>${escapeHtml(trackTitle)}${trackArtist ? ` · ${escapeHtml(trackArtist)}` : ""}</code>` : ""}</div>`;
+  return `<section class="dynamic-lyrics-widget" data-dynamic-tile="lyrics" data-lyrics-widget data-lyrics-auto="${automatic}" data-lyrics-track-title="${escapeHtml(trackTitle)}" data-lyrics-track-artist="${escapeHtml(trackArtist)}" aria-label="Live lyrics" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-lyrics-heading"><span class="dynamic-lyrics-label">LIVE LYRICS</span><span class="dynamic-lyrics-state" data-lyrics-state>${automatic ? "LOOKING UP" : "READY"}</span></div><div class="dynamic-lyrics-visualizer" aria-hidden="true">${Array.from({ length: 6 }, () => "<i></i>").join("")}</div><div class="dynamic-lyrics-viewport" data-lyrics-viewport>${content}</div><div class="dynamic-lyrics-footer"><span>${automatic ? "AUTO SYNC" : "SYNCED TO AUDIO"}</span><time data-lyrics-time-label>0:00</time></div></section>`;
 }
-function dynamicAudioTrackMeta(audioUrl, metadata = {}, fallbackArtist = "sqezen") {
-  const encodedFilename = String(audioUrl || "").split(/[?#]/)[0].split("/").pop() || "";
+function dynamicAudioFilenameTitle(value) {
+  const source = String(value || "");
+  if (!source || /^data:/i.test(source)) return "";
+  const encodedFilename = source.split(/[?#]/)[0].split("/").pop() || "";
   let rawFilename = encodedFilename;
   try { rawFilename = decodeURIComponent(encodedFilename); } catch {}
-  rawFilename = rawFilename.replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim();
+  return rawFilename.replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim();
+}
+function dynamicAudioTrackMeta(audioUrl, metadata = {}, fallbackArtist = "sqezen") {
+  const source = String(audioUrl || "");
+  const rawFilename = dynamicAudioFilenameTitle(source);
   return { title: String(metadata.title || "").trim() || rawFilename || "Now playing", artist: String(metadata.artist || "").trim() || fallbackArtist || "sqezen" };
 }
 function dynamicBadgeWidget(badges = [], position = { x: 75, y: 82 }) {
@@ -1165,8 +1277,9 @@ async function dynamicEmbedProfile(username) {
   const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
   const positions = config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions();
   const badgesMarkup = dynamicBadgeWidget(config.badges, positions.badges);
-  const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl, positions.audio, { title: config.audioTitle, artist: config.audioArtist }, display) : "";
-  const lyricsMarkup = config.audioUrl ? dynamicLyricsWidget(config.audioLyrics, positions.lyrics, new URLSearchParams(location.search).get("edit") === "1") : "";
+  const audioTrack = dynamicAudioTrackMeta(config.audioUrl, { title: config.audioTitle, artist: config.audioArtist }, display);
+  const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl, positions.audio, audioTrack, display) : "";
+  const lyricsMarkup = config.audioUrl ? dynamicLyricsWidget(config.audioLyrics, positions.lyrics, new URLSearchParams(location.search).get("edit") === "1", { title: audioTrack.title, artist: config.audioArtist }) : "";
   return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section>${badgesMarkup}${audioMarkup}${lyricsMarkup}</main></div>`;
 }
 const baseDynamicEmbedProfileForEditor = dynamicEmbedProfile;
