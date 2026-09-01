@@ -31,7 +31,7 @@ const icons = {
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
 
-const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioTitle: "", audioArtist: "", audioLyrics: "", cursorUrl: "", cursorGlowColor: "#5865ee", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", badges: [], defaultEmbed: "standard", dynamicEmbedPositions: { profile: { x: 50, y: 35, free: true }, connections: { x: 78, y: 55, free: true }, badges: { x: 75, y: 82, free: true }, audio: { x: 25, y: 82, free: true }, lyrics: { x: 76, y: 27, free: true } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
+const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioTitle: "", audioArtist: "", audioLyrics: "", cursorUrl: "", cursorGlowColor: "#5865ee", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", defaultEmbed: "standard", dynamicEmbedPositions: { profile: { x: 50, y: 35, free: true }, connections: { x: 78, y: 55, free: true }, badges: { x: 75, y: 82, free: true }, audio: { x: 25, y: 82, free: true }, lyrics: { x: 76, y: 27, free: true } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#5865ee", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
 
 function icon(name) { return icons[name] || icons.link; }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char])); }
@@ -109,17 +109,49 @@ const BADGE_DEFINITIONS = [
 const BADGE_VALUES = BADGE_DEFINITIONS.map((badge) => badge.id);
 const BADGE_MAX = 8;
 let lastProfileBadges = [];
+let dashboardAssignedBadges = [];
+let dashboardCurrentUserId = "";
+
+function sanitizeAssignedBadgeIds(raw = []) {
+  const values = Array.isArray(raw) ? raw : [];
+  return values.map((item) => typeof item === "string" ? item : item?.badge_id)
+    .map(String)
+    .filter((badge) => BADGE_VALUES.includes(badge))
+    .filter((badge, index, list) => list.indexOf(badge) === index)
+    .slice(0, BADGE_MAX);
+}
+
+async function loadProfileBadges(profileId, options = {}) {
+  if (!profileId || !supabaseClient) return [];
+  const { data, error } = await supabaseClient.from("profile_badges").select("badge_id").eq("profile_id", profileId).order("awarded_at", { ascending: true });
+  if (error) {
+    console.error("Assigned badges could not be loaded", error);
+    if (options.strict) throw error;
+    return [];
+  }
+  return sanitizeAssignedBadgeIds(data);
+}
+
+async function checkBadgeAdmin() {
+  if (!supabaseClient) return false;
+  const { data, error } = await supabaseClient.rpc("is_badge_admin");
+  if (error) {
+    console.warn("Badge admin check failed", error);
+    return false;
+  }
+  return data === true;
+}
+
 const baseNameSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => {
   const value = baseNameSanitizeCustomization(raw);
   const usernameEffect = String(raw?.usernameEffect || "");
   const normalizedUsernameEffect = usernameEffect === "glitch" ? "fuzzy" : usernameEffect;
   const nameParticles = String(raw?.nameParticles || "");
-  const badges = Array.isArray(raw?.badges) ? raw.badges.filter((badge) => BADGE_VALUES.includes(String(badge))).map(String).filter((badge, index, list) => list.indexOf(badge) === index).slice(0, BADGE_MAX) : [];
   lastProfileParticles = NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none";
-  lastProfileBadges = badges;
+  lastProfileBadges = [];
   const defaultEmbed = String(raw?.defaultEmbed || "");
-  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, badges, defaultEmbed: choice(defaultEmbed, ["standard", "dynamic"], "standard"), dynamicEmbedPositions: sanitizeDynamicEmbedPositions(raw?.dynamicEmbedPositions) };
+  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, defaultEmbed: choice(defaultEmbed, ["standard", "dynamic"], "standard"), dynamicEmbedPositions: sanitizeDynamicEmbedPositions(raw?.dynamicEmbedPositions) };
 };
 const baseReadCustomization = readCustomization;
 readCustomization = (form) => {
@@ -131,12 +163,6 @@ const baseSetCustomization = setCustomization;
 setCustomization = (form, raw) => {
   const config = baseSetCustomization(form, raw);
   if (form?.elements.name_particles) form.elements.name_particles.value = config.nameParticles || "none";
-  form?.querySelectorAll("[data-badge-option]").forEach((option) => {
-    const selected = config.badges?.includes(option.dataset.badgeOption);
-    option.classList.toggle("is-selected", selected);
-    const action = option.querySelector("[data-badge-action]");
-    if (action) action.textContent = selected ? "Selected" : "Select";
-  });
   return config;
 };
 const baseSetEmbedCustomization = setCustomization;
@@ -145,8 +171,6 @@ setCustomization = (form, raw) => {
   if (form?.elements.default_embed) form.elements.default_embed.value = config.defaultEmbed || "standard";
   return config;
 };
-const baseReadBadgesCustomization = readCustomization;
-readCustomization = (form) => ({ ...baseReadBadgesCustomization(form), badges: Array.from(form?.querySelectorAll("[data-badge-option].is-selected") || []).map((option) => option.dataset.badgeOption).filter((badge) => BADGE_VALUES.includes(badge)).slice(0, BADGE_MAX) });
 const baseReadEmbedCustomization = readCustomization;
 readCustomization = (form) => ({ ...baseReadEmbedCustomization(form), defaultEmbed: choice(String(form?.elements.default_embed?.value || "standard"), ["standard", "dynamic"], "standard") });
 const baseReadDynamicEmbedCustomization = readCustomization;
@@ -183,7 +207,116 @@ const BADGE_GLYPHS = {
 function badgeIcon(badge) { return `<span class="badge-symbol badge-${escapeHtml(badge.id)}" aria-hidden="true">${BADGE_GLYPHS[badge.id] || escapeHtml(badge.symbol)}</span>`; }
 function badgePills(badges = []) { return badges.map((id) => BADGE_DEFINITIONS.find((badge) => badge.id === id)).filter(Boolean).map((badge) => `<span class="profile-badge" title="${escapeHtml(badge.name)}" aria-label="${escapeHtml(badge.name)}">${badgeIcon(badge)}</span>`).join(""); }
 function dynamicBadgeItems(badges = []) { return badges.map((id) => BADGE_DEFINITIONS.find((badge) => badge.id === id)).filter(Boolean).map((badge) => `<span class="embed-badge" title="${escapeHtml(badge.name)}" aria-label="${escapeHtml(badge.name)}">${badgeIcon(badge)}</span>`).join(""); }
-function badgeCards() { return BADGE_DEFINITIONS.map((badge) => `<button class="badge-card" data-badge-option="${escapeHtml(badge.id)}" type="button"><span class="badge-card-symbol">${badgeIcon(badge)}</span><span class="badge-card-copy"><strong>${escapeHtml(badge.name)}</strong><small>${escapeHtml(badge.description)}</small></span><span class="badge-card-action" data-badge-action>Select</span></button>`).join(""); }
+function badgeAdminPanel() {
+  return `<section data-tab-panel="badge-admin" data-badge-admin-panel hidden><div class="panel-heading"><div><span class="panel-index">ADMIN / BADGES</span><h2>Manage profile badges</h2><p>Find a profile by username and grant or revoke badges.</p></div><span class="badge-admin-role">ADMIN</span></div><div class="badge-admin-search"><label class="field-label">Username<input data-badge-admin-username type="text" inputmode="text" autocomplete="off" maxlength="24" pattern="[a-z0-9_]{3,24}" placeholder="e.g. sqezen"></label><button class="button button-small button-primary" data-badge-admin-search type="button">Search profile</button></div><p class="badge-admin-status" data-badge-admin-status role="status" aria-live="polite">Search for a username to manage its badges.</p><div class="badge-admin-result" data-badge-admin-result hidden></div></section>`;
+}
+function badgeAdminProfileMarkup(profile, badges) {
+  const display = String(profile?.display_name || profile?.username || "Profile").trim() || "Profile";
+  const username = String(profile?.username || "").trim().toLowerCase();
+  return `<div class="badge-admin-profile-head"><div><span class="badge-admin-kicker">PROFILE</span><strong>${escapeHtml(display)}</strong><small>@${escapeHtml(username)}</small></div><span class="badge-admin-count">${badges.length} / ${BADGE_MAX}</span></div><div class="badge-admin-grid">${BADGE_DEFINITIONS.map((badge) => { const awarded = badges.includes(badge.id); return `<article class="badge-admin-item${awarded ? " is-awarded" : ""}" data-badge-admin-item="${escapeHtml(badge.id)}"><span class="badge-admin-symbol">${badgeIcon(badge)}</span><div class="badge-admin-copy"><strong>${escapeHtml(badge.name)}</strong><small>${escapeHtml(badge.description)}</small></div><button class="button button-small ${awarded ? "button-dark" : "button-primary"} badge-admin-action" data-badge-admin-id="${escapeHtml(badge.id)}" data-badge-admin-awarded="${awarded}" type="button">${awarded ? "Revoke" : "Grant"}</button></article>`; }).join("")}</div>`;
+}
+function badgeAdminErrorText(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  if (message.includes("not authorized") || message.includes("permission") || message.includes("badge admin")) return "Only the badge administrator can use this panel.";
+  if (message.includes("profile not found")) return "No profile was found for that username.";
+  if (message.includes("invalid badge")) return "That badge is not available.";
+  if (message.includes("badge limit")) return `A profile can have up to ${BADGE_MAX} badges.`;
+  return "Could not update badges. Try again in a moment.";
+}
+async function wireBadgeAdmin(form, currentUserId) {
+  if (!form || form.dataset.badgeAdminBound === "true" || !(await checkBadgeAdmin())) return;
+  const nav = document.querySelector(".dashboard-nav-list");
+  const editorPanel = form.querySelector(".editor-panel");
+  if (!nav || !editorPanel) return;
+  form.dataset.badgeAdminBound = "true";
+  nav.insertAdjacentHTML("beforeend", `<button class="sidebar-item" data-dashboard-tab="badge-admin" type="button">${icon("sparkle")}<span>Badge admin</span><kbd>ADM</kbd></button>`);
+  const footer = editorPanel.querySelector(".editor-footer");
+  if (footer) footer.insertAdjacentHTML("beforebegin", badgeAdminPanel());
+  else editorPanel.insertAdjacentHTML("beforeend", badgeAdminPanel());
+  const tab = nav.querySelector('[data-dashboard-tab="badge-admin"]');
+  const panel = form.querySelector('[data-tab-panel="badge-admin"]');
+  const input = panel?.querySelector("[data-badge-admin-username]");
+  const searchButton = panel?.querySelector("[data-badge-admin-search]");
+  const status = panel?.querySelector("[data-badge-admin-status]");
+  const result = panel?.querySelector("[data-badge-admin-result]");
+  if (!tab || !panel || !input || !searchButton || !status || !result) return;
+  let selectedProfile = null;
+  let selectedBadges = [];
+  const setStatus = (message, error = false) => { status.textContent = message; status.classList.toggle("is-error", error); };
+  const showPanel = () => {
+    document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item === tab));
+    document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
+    document.querySelector("#topbar-section").textContent = "Badge admin";
+    document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / BADGE ADMIN";
+    document.querySelector("#dashboard-title").textContent = "Assign recognition.";
+    document.querySelector("#dashboard-subtitle").textContent = "Grant badges to profiles by their username.";
+    document.querySelector("#dashboard-sidebar")?.classList.remove("is-open");
+    sessionStorage.setItem("sqezen_dashboard_tab", "badge-admin");
+  };
+  const renderProfile = (profile, badges) => {
+    selectedProfile = profile;
+    selectedBadges = sanitizeAssignedBadgeIds(badges);
+    result.innerHTML = badgeAdminProfileMarkup(profile, selectedBadges);
+    result.hidden = false;
+  };
+  const searchProfile = async () => {
+    const username = String(input.value || "").trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+      result.hidden = true;
+      return setStatus("Use 3–24 lowercase characters, numbers or _.", true);
+    }
+    busy(searchButton, true, "Searching...");
+    setStatus("Searching for the profile...");
+    try {
+      const { data, error } = await supabaseClient.rpc("find_badge_profile", { target_username: username });
+      if (error) throw error;
+      const profile = Array.isArray(data) ? data[0] : data;
+      if (!profile?.id) {
+        result.hidden = true;
+        return setStatus("No profile was found for that username.", true);
+      }
+      const badges = await loadProfileBadges(profile.id, { strict: true });
+      renderProfile(profile, badges);
+      setStatus(`Managing @${profile.username}.`);
+    } catch (error) {
+      console.error("Badge profile search failed", error);
+      result.hidden = true;
+      setStatus(badgeAdminErrorText(error), true);
+    } finally {
+      busy(searchButton, false);
+    }
+  };
+  searchButton.addEventListener("click", searchProfile);
+  input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); searchProfile(); } });
+  result.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-badge-admin-id]");
+    if (!button || !selectedProfile?.username) return;
+    const badgeId = String(button.dataset.badgeAdminId || "");
+    const shouldAward = button.dataset.badgeAdminAwarded !== "true";
+    if (!BADGE_VALUES.includes(badgeId)) return setStatus("That badge is not available.", true);
+    busy(button, true, shouldAward ? "Granting..." : "Revoking...");
+    setStatus(`${shouldAward ? "Granting" : "Revoking"} ${badgeId}...`);
+    try {
+      const { error } = await supabaseClient.rpc("set_profile_badge", { target_username: selectedProfile.username, target_badge_id: badgeId, grant_badge: shouldAward });
+      if (error) throw error;
+      const badges = await loadProfileBadges(selectedProfile.id, { strict: true });
+      renderProfile(selectedProfile, badges);
+      if (selectedProfile.id === currentUserId) {
+        dashboardAssignedBadges = badges;
+        renderPreview();
+      }
+      setStatus(`${shouldAward ? "Granted" : "Revoked"} ${badgeId} for @${selectedProfile.username}.`);
+    } catch (error) {
+      console.error("Badge assignment failed", error);
+      setStatus(badgeAdminErrorText(error), true);
+    } finally {
+      const refreshedButton = Array.from(result.querySelectorAll("[data-badge-admin-id]")).find((item) => item.dataset.badgeAdminId === badgeId);
+      if (refreshedButton) busy(refreshedButton, false);
+    }
+  });
+  tab.addEventListener("click", showPanel);
+  if (sessionStorage.getItem("sqezen_dashboard_tab") === "badge-admin") showPanel();
+}
 
 function landing() { return layout(`<main class="landing-main"><section class="landing-hero"><div class="hero-copy"><p class="eyebrow"><i class="eyebrow-dot"></i> YOUR SPACE ONLINE</p><h1>Twój internet.<br><em>W jednym miejscu.</em></h1><p class="hero-lead">Minimalistyczny profil bio dla ludzi, którzy budują, tworzą i są gdzieś pomiędzy. Jeden adres. Twoje zasady.</p><div class="hero-actions">${button("/register", "Zacznij za darmo", true)}${button("/login", "Zaloguj się")}</div><div class="trust-row"><span>${icon("check")} Bez reklam</span><span>${icon("lock")} Prywatne konto</span><span>${icon("link")} Jeden link</span></div></div><div class="landing-showcase"><div class="showcase-chrome"><span><i></i><i></i><i></i></span><small>sqezen.lol / profile</small><b>${icon("arrowUp")}</b></div><div class="showcase-profile"><div class="showcase-top"><span class="showcase-avatar">s</span><span class="showcase-menu">•••</span></div><p class="showcase-handle">@sqezen</p><h2>sqezen</h2><p class="showcase-bio">developer <b>·</b> gamer <b>·</b> digital chaos</p><div class="showcase-links"><div>${icon("github")}<span>GitHub</span><b>↗</b></div><div>${icon("discord")}<span>Discord</span><b>↗</b></div><div>${icon("youtube")}<span>YouTube</span><b>↗</b></div></div><div class="showcase-footer"><span>online now</span><span>sqezen.lol/sqezen</span></div></div></div></section><section class="landing-stats"><div><strong>01</strong><span>Stwórz swój profil</span></div><div><strong>∞</strong><span>Możliwości personalizacji</span></div><div><strong>24/7</strong><span>Twój adres jest online</span></div></section><section class="landing-manifesto"><div><p class="eyebrow">DLACZEGO SQEZEN</p><h2>Ma wyglądać jak Ty,<br><em>nie jak kolejny link-in-bio.</em></h2></div><div class="manifesto-copy"><p>Profil, który jest szybki, spokojny i gotowy do udostępnienia. Zbierasz linki, ustawiasz klimat i dostajesz własny adres pod sqezen.lol.</p><div class="manifesto-list"><div><span>01</span><strong>Wyraźny profil</strong><small>Nick, opis i linki bez zbędnego hałasu.</small></div><div><span>02</span><strong>Pełna kontrola</strong><small>Kolory, karta, tło, font i układ w jednym panelu.</small></div><div><span>03</span><strong>Gotowe do wysłania</strong><small>Jeden adres dla znajomych, społeczności i bio.</small></div></div></div></section><section class="landing-cta"><div><p class="eyebrow">MAKE IT YOURS</p><h2>Masz już miejsce<br>dla swoich linków.</h2></div>${button("/register", "Zarezerwuj nazwę", true)}</section></main>`, "site-page landing-page"); }
 
@@ -205,7 +338,7 @@ function renderPreview() { const form = document.querySelector("#profile-form");
 
 async function wireAuth() { const loginForm = document.querySelector("#login-form"); if (loginForm) loginForm.addEventListener("submit", async (event) => { event.preventDefault(); const submit = loginForm.querySelector("button[type=submit]"); const values = new FormData(loginForm); feedback("Logowanie…"); busy(submit, true, "Logowanie…"); const { error } = await supabaseClient.auth.signInWithPassword({ email: values.get("email"), password: values.get("password") }); busy(submit, false); if (error) return feedback(errorText(error), true); navigate("/dashboard"); }); const registerForm = document.querySelector("#register-form"); if (registerForm) registerForm.addEventListener("submit", async (event) => { event.preventDefault(); const submit = registerForm.querySelector("button[type=submit]"); const values = new FormData(registerForm); const email = String(values.get("email") || "").trim().toLowerCase(); feedback("Tworzenie konta…"); busy(submit, true, "Tworzenie konta…"); const { data, error } = await supabaseClient.auth.signUp({ email, password: values.get("password") }); busy(submit, false); if (error) return feedback(errorText(error), true); if (data.session) navigate("/dashboard"); else { sessionStorage.setItem("sqezen_email", email); navigate("/register/code"); } }); const codeForm = document.querySelector("#code-form"); const email = sessionStorage.getItem("sqezen_email"); if (codeForm) { const intro = codeForm.closest(".auth-card")?.querySelector(".form-intro"); if (intro && email) intro.textContent = `Wysłaliśmy kod na ${email}. Wpisz go poniżej.`; const input = codeForm.elements.token; input?.addEventListener("input", () => { input.value = input.value.replace(/\D/g, "").slice(0, 8); }); codeForm.addEventListener("submit", async (event) => { event.preventDefault(); if (!email) return feedback("Wróć do rejestracji i wpisz e-mail.", true); const submit = codeForm.querySelector("button[type=submit]"); const token = String(new FormData(codeForm).get("token") || ""); if (!/^\d{8}$/.test(token)) return feedback("Wpisz dokładnie 8 cyfr z wiadomości.", true); feedback("Sprawdzanie kodu…"); busy(submit, true, "Sprawdzanie…"); const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: "signup" }); busy(submit, false); if (error) return feedback(errorText(error), true); sessionStorage.removeItem("sqezen_email"); navigate("/dashboard"); }); } const resend = document.querySelector("#resend-code"); if (resend) resend.addEventListener("click", async () => { if (!email) return feedback("Wróć do rejestracji i wpisz e-mail.", true); resend.disabled = true; feedback("Wysyłanie nowego kodu…"); const { error } = await supabaseClient.auth.resend({ type: "signup", email }); if (error) { resend.disabled = false; return feedback(errorText(error), true); } feedback("Nowy kod wysłany. Sprawdź skrzynkę i Spam."); let seconds = 30; resend.textContent = `Wyślij ponownie za ${seconds}s`; state.resendTimer = setInterval(() => { seconds -= 1; if (seconds <= 0) { clearInterval(state.resendTimer); state.resendTimer = null; resend.disabled = false; resend.textContent = "Wyślij kod ponownie"; } else resend.textContent = `Wyślij ponownie za ${seconds}s`; }, 1000); }); }
 
-async function wireDashboard() { const form = document.querySelector("#profile-form"); if (!form) return; const session = await supabaseClient.auth.getSession(); const current = session.data?.session; if (!current) return navigate(`/login?redirect=${encodeURIComponent("/dashboard")}`); const linksList = document.querySelector("#links-list"); const profileLink = document.querySelector("#view-profile"); const { data: profileData } = await supabaseClient.from("profiles").select("*").eq("id", current.user.id).maybeSingle(); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", current.user.id).order("position", { ascending: true }); const setValue = (name, value) => { if (form.elements[name]) form.elements[name].value = value || ""; }; setValue("username", profileData?.username); setValue("display_name", profileData?.display_name); setValue("bio", profileData?.bio); setValue("avatar_url", profileData?.avatar_url); form.elements.background_color.value = safeColor(profileData?.background_color); setCustomization(form, profileData?.customization); linksList.innerHTML = (links?.length ? links : [{}]).map(linkItem).join(""); document.querySelector("#account-email").textContent = current.user.email || "zalogowane konto"; document.querySelector("#account-email-field").value = current.user.email || "";
+async function wireDashboard() { const form = document.querySelector("#profile-form"); if (!form) return; const session = await supabaseClient.auth.getSession(); const current = session.data?.session; if (!current) return navigate(`/login?redirect=${encodeURIComponent("/dashboard")}`); dashboardCurrentUserId = current.user.id; const linksList = document.querySelector("#links-list"); const profileLink = document.querySelector("#view-profile"); const { data: profileData } = await supabaseClient.from("profiles").select("*").eq("id", current.user.id).maybeSingle(); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", current.user.id).order("position", { ascending: true }); const setValue = (name, value) => { if (form.elements[name]) form.elements[name].value = value || ""; }; setValue("username", profileData?.username); setValue("display_name", profileData?.display_name); setValue("bio", profileData?.bio); setValue("avatar_url", profileData?.avatar_url); form.elements.background_color.value = safeColor(profileData?.background_color); setCustomization(form, profileData?.customization); dashboardAssignedBadges = await loadProfileBadges(current.user.id); linksList.innerHTML = (links?.length ? links : [{}]).map(linkItem).join(""); document.querySelector("#account-email").textContent = current.user.email || "zalogowane konto"; document.querySelector("#account-email-field").value = current.user.email || "";
   const meta = () => { const username = String(form.elements.username?.value || "").trim().toLowerCase(); const display = String(form.elements.display_name?.value || username || "Twoje konto").trim(); const active = readLinks().filter((link) => safeUrl(link.url)).length; document.querySelector("#account-name").textContent = display; document.querySelector("#account-avatar").textContent = display.slice(0, 1).toUpperCase(); document.querySelector("#links-count").textContent = active; document.querySelector("#bio-count").textContent = `${String(form.elements.bio?.value || "").length} / 160`; document.querySelector("#color-value").textContent = String(form.elements.background_color.value).toUpperCase(); document.querySelectorAll("[data-output-for]").forEach((out) => { const field = form.elements[out.dataset.outputFor]; if (field) out.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; }); document.querySelectorAll("[data-color-label]").forEach((out) => { const field = form.elements[out.dataset.colorLabel]; if (field) out.textContent = String(field.value).toUpperCase(); }); const address = username ? `${location.origin}/${username}` : "Ustaw nazwę użytkownika"; document.querySelector("#profile-address-field").value = address; if (username) { profileLink.href = `/${encodeURIComponent(username)}`; profileLink.classList.remove("is-disabled"); } else { profileLink.href = "/"; profileLink.classList.add("is-disabled"); } }; const tabs = { profile: ["Profil", "SQEZEN / PROFILE", "Zbuduj swój profil.", "Ustaw informacje, które zobaczą osoby odwiedzające Twój adres."], links: ["Linki", "SQEZEN / LINKS", "Twoje odnośniki.", "Dodawaj, testuj i układaj linki w kolejności, którą lubisz."], appearance: ["Wygląd", "SQEZEN / CUSTOMIZE", "Twój klimat.", "Tło, karta, typografia i kolory — wszystko pod Twoją kontrolą."], account: ["Konto", "SQEZEN / ACCOUNT", "Konto i adres.", "Sprawdź e-mail i skopiuj publiczny adres profilu."] }; const setTab = (tab) => { const selected = tabs[tab] ? tab : "profile"; document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item.dataset.dashboardTab === selected)); document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel.dataset.tabPanel !== selected; }); const [label, eyebrow, title, subtitle] = tabs[selected]; document.querySelector("#topbar-section").textContent = label; document.querySelector("#dashboard-eyebrow").textContent = eyebrow; document.querySelector("#dashboard-title").textContent = title; document.querySelector("#dashboard-subtitle").textContent = subtitle; sessionStorage.setItem("sqezen_dashboard_tab", selected); }; document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.addEventListener("click", () => { setTab(item.dataset.dashboardTab); document.querySelector("#dashboard-sidebar")?.classList.remove("is-open"); })); setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "profile"); meta(); renderPreview();
   form.addEventListener("input", (event) => { if (event.target.matches("[data-link-url]")) { const item = event.target.closest("[data-link-item]"); const detected = profileIcon({ url: event.target.value, icon: "website" }); if (detected !== "globe") item.querySelector("[data-link-icon]").value = detected; } meta(); renderPreview(); }); form.addEventListener("change", () => { meta(); renderPreview(); }); document.querySelector("#add-link").addEventListener("click", () => { linksList.insertAdjacentHTML("beforeend", linkItem({}, document.querySelectorAll("[data-link-item]").length)); updateLinkNumbers(); renderPreview(); linksList.lastElementChild?.querySelector("[data-link-title]")?.focus(); }); linksList.addEventListener("click", (event) => { const button = event.target.closest("[data-link-action]"); if (!button) return; const item = button.closest("[data-link-item]"); const action = button.dataset.linkAction; if (action === "remove") { item.remove(); if (!document.querySelector("[data-link-item]")) linksList.insertAdjacentHTML("beforeend", linkItem({}, 0)); } if (action === "duplicate") { const copy = { title: item.querySelector("[data-link-title]").value, url: item.querySelector("[data-link-url]").value, icon: item.querySelector("[data-link-icon]").value }; item.insertAdjacentHTML("afterend", linkItem(copy, 0)); } if (action === "up" && item.previousElementSibling) item.previousElementSibling.before(item); if (action === "down" && item.nextElementSibling) item.nextElementSibling.after(item); updateLinkNumbers(); meta(); renderPreview(); }); document.querySelectorAll("[data-color-preset]").forEach((item) => item.addEventListener("click", () => { form.elements.background_color.value = item.dataset.colorPreset; meta(); renderPreview(); })); document.querySelector("#reset-customization").addEventListener("click", () => { setCustomization(form, DEFAULT_CUSTOMIZATION); meta(); renderPreview(); feedback("Przywrócono ustawienia domyślne."); }); document.querySelector("#copy-profile-address").addEventListener("click", async () => { const value = document.querySelector("#profile-address-field").value; if (!value.startsWith("http")) return feedback("Najpierw ustaw nazwę użytkownika.", true); try { await navigator.clipboard.writeText(value); feedback("Adres skopiowany."); } catch { feedback("Nie udało się skopiować adresu.", true); } }); document.querySelector("#mobile-menu").addEventListener("click", () => document.querySelector("#dashboard-sidebar")?.classList.toggle("is-open")); document.querySelector("#logout-button").addEventListener("click", async () => { await supabaseClient.auth.signOut(); navigate("/"); }); form.addEventListener("submit", async (event) => { event.preventDefault(); const submit = form.querySelector("button[type=submit]"); const values = new FormData(form); const username = String(values.get("username") || "").trim().toLowerCase(); const display = String(values.get("display_name") || "").trim(); const linksValue = readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) })); if (!/^[a-z0-9_]{3,24}$/.test(username)) { setTab("profile"); return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true); } if (!display) { setTab("profile"); return feedback("Wpisz nazwę wyświetlaną.", true); } for (const link of linksValue) if (!safeUrl(link.url)) { setTab("links"); return feedback(`Sprawdź adres linku „${link.title || "bez nazwy"}”.`, true); } let customization = readCustomization(form); let avatarUrl = safeImageUrl(values.get("avatar_url")); busy(submit, true, "Zapisywanie…"); feedback("Przygotowuję materiały…");   try { if (avatarUrl && isDiscordUrl(avatarUrl)) { avatarUrl = await cacheDiscordAsset(avatarUrl, "avatar", PROFILE_ASSET_OPTIONS.avatar); const avatarInput = form.querySelector('[name="avatar_url"]'); if (avatarInput) avatarInput.value = avatarUrl; } } catch (error) { busy(submit, false); return feedback(String(error?.message || "Nie udało się zapisać trwałej kopii pliku. Wybierz plik z komputera."), true); } feedback("Zapisuję wszystkie zmiany…"); let save = await supabaseClient.from("profiles").upsert({ id: current.user.id, username, display_name: display, bio: String(values.get("bio") || "").trim(), avatar_url: avatarUrl, background_color: safeColor(values.get("background_color")), customization }); if (save.error) { busy(submit, false); return feedback(errorText(save.error), true); } const deleted = await supabaseClient.from("links").delete().eq("profile_id", current.user.id); if (deleted.error) { busy(submit, false); return feedback("Profil zapisany, ale nie udało się odświeżyć linków.", true); } if (linksValue.length) { const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({ profile_id: current.user.id, title: link.title || "Link", url: link.url, icon: link.icon, position: index }))); if (inserted.error) { busy(submit, false); return feedback("Profil zapisany, ale linki mają problem z zapisem.", true); } } linksValue.forEach((link, index) => { const input = document.querySelectorAll("[data-link-url]")[index]; if (input) input.value = link.url; }); busy(submit, false); meta(); document.querySelector("#top-status").innerHTML = `<i></i> zapisano przed chwilą`; feedback("Wszystkie zmiany zostały zapisane."); }); }
 function updateLinkNumbers() { document.querySelectorAll("[data-link-item]").forEach((item, index) => { item.querySelector(".link-number").textContent = String(index + 1).padStart(2, "0"); item.querySelector(".link-item-name").textContent = `Link ${index + 1}`; }); }
@@ -224,8 +357,6 @@ const baseDashboardWithEmbed = dashboard;
 dashboard = () => baseDashboardWithEmbed().replace('<button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button>', '<button class="sidebar-item" data-dashboard-tab="embed" type="button">${icon("link")}<span>Embed</span><kbd>04</kbd></button><button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button>').replace('<section data-tab-panel="account" hidden>', `<section data-tab-panel="embed" hidden><div class="panel-heading"><div><span class="panel-index">EMBED</span><h2>Dynamic embed</h2><p>Osadź aktualny profil na stronie, portfolio albo w swoim panelu.</p></div><button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button></div><div class="embed-code-card"><label class="field-label">Adres embedu<textarea id="embed-code" rows="3" readonly></textarea><small>Ten adres zawsze pobiera najnowsze dane Twojego profilu.</small></label><div class="embed-preview-shell"><iframe id="embed-preview" title="Podgląd dynamicznego embedu" loading="lazy"></iframe></div></div></section><section data-tab-panel="account" hidden>`);
 const baseDashboardWithEmbedNav = dashboard;
 dashboard = () => baseDashboardWithEmbedNav().replace('<button class="sidebar-item" data-dashboard-tab="account" type="button">', `<button class="sidebar-item" data-dashboard-tab="embed" type="button">${icon("link")}<span>Embed</span><kbd>04</kbd></button><button class="sidebar-item" data-dashboard-tab="account" type="button">`);
-const baseDashboardWithBadges = dashboard;
-dashboard = () => baseDashboardWithBadges().replace('<button class="sidebar-item" data-dashboard-tab="embed" type="button">', `<button class="sidebar-item" data-dashboard-tab="badges" type="button">${icon("sparkle")}<span>Badges</span><kbd>05</kbd></button><button class="sidebar-item" data-dashboard-tab="embed" type="button">`).replace('<section data-tab-panel="embed" hidden>', `<section data-tab-panel="badges" hidden><div class="panel-heading"><div><span class="panel-index">BADGES</span><h2>Twój zestaw odznak</h2><p>Wybierz odznaki, które mają pojawić się przy Twoim nicku.</p></div><span class="badge-count" data-badge-count>0 / ${BADGE_MAX}</span></div><div class="badges-note">Możesz wybrać maksymalnie ${BADGE_MAX} odznak. Zmiany opublikują się po zapisaniu profilu.</div><div class="badge-grid">${badgeCards()}</div></section><section data-tab-panel="embed" hidden>`);
 const baseDashboardWithFuzzyEffect = dashboard;
 dashboard = () => baseDashboardWithFuzzyEffect().replace('data-name-effect-option="glitch"', 'data-name-effect-option="fuzzy"').replace('is-glitch">sqezen</span><small>Glitch', 'is-fuzzy">sqezen</span><small>Fuzzy').replace('<option value="glitch">Glitch</option>', '<option value="fuzzy">Fuzzy</option>');
 const baseDashboardWithEmbedBuilder = dashboard;
@@ -278,15 +409,12 @@ renderPreview = function () {
     const image = safeImageUrl(form.elements.avatar_url?.value);
     const links = readLinks();
     const connections = links.length ? links.slice(0, 5).map((link) => `<span class="dashboard-dynamic-link" title="${escapeHtml(String(link.title || "Link"))}">${icon(profileIcon(link))}</span>`).join("") : `<span class="dashboard-dynamic-link dashboard-dynamic-link-empty">${icon("globe")}</span>`;
-    const badgeItems = dynamicBadgeItems(config.badges);
+    const badgeItems = dynamicBadgeItems(dashboardAssignedBadges);
     const badges = badgeItems ? `<section class="dashboard-dynamic-badges"><span class="dashboard-dynamic-kicker">BADGES</span><div class="dashboard-dynamic-badge-list">${badgeItems}</div></section>` : "";
     target.innerHTML = `<div class="dashboard-dynamic-preview" style="--preview-card-rgb:${hexRgb(config.cardColor)};--preview-text:${config.textColor};--preview-button-rgb:${hexRgb(config.buttonColor)};--preview-opacity:${config.profileOpacity / 100};--preview-blur:${config.profileBlur}px;--preview-avatar:${Math.min(config.avatarSize, 72)}px"><section class="dashboard-dynamic-profile"><div class="preview-card-top">${image ? `<img class="preview-avatar" src="${escapeHtml(image)}" alt="">` : `<span class="preview-avatar avatar-fallback">${escapeHtml(name.slice(0, 1).toUpperCase())}</span>`}<span class="preview-menu">•••</span></div>${config.showHandle ? `<p class="preview-handle">@${escapeHtml(username)}</p>` : ""}<h3 class="preview-name preview-name-${config.usernameEffect}">${escapeHtml(name)}</h3>${bio ? `<p class="preview-bio">${escapeHtml(bio)}</p>` : ""}<div class="dashboard-dynamic-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(username)}</span></div></section><section class="dashboard-dynamic-connections"><span class="dashboard-dynamic-kicker">CONNECTIONS</span><div class="dashboard-dynamic-links">${connections}</div></section>${badges}</div>`;
   }
   const particles = String(document.querySelector("#profile-form")?.elements.name_particles?.value || "none");
-  const selectedBadges = Array.from(document.querySelectorAll("#profile-form [data-badge-option].is-selected"))
-    .map((option) => option.dataset.badgeOption)
-    .filter((badge) => BADGE_VALUES.includes(badge))
-    .slice(0, BADGE_MAX);
+  const selectedBadges = dashboardAssignedBadges;
   document.querySelectorAll(".preview-name").forEach((node) => {
     node.dataset.name = String(node.textContent || "").trim();
     node.querySelector(".name-particles")?.remove();
@@ -354,38 +482,6 @@ wireDashboard = async function () {
     form.addEventListener("change", syncParticlePicker);
     document.querySelector("#reset-customization")?.addEventListener("click", () => setTimeout(syncParticlePicker));
     syncParticlePicker();
-  }
-  const badgeTab = document.querySelector('[data-dashboard-tab="badges"]');
-  const badgePanel = document.querySelector('[data-tab-panel="badges"]');
-  const badgeOptions = Array.from(document.querySelectorAll("[data-badge-option]"));
-  const badgeCount = document.querySelector("[data-badge-count]");
-  if (badgeTab && badgePanel && badgeOptions.length && badgeTab.dataset.bound !== "true") {
-    badgeTab.dataset.bound = "true";
-    const syncBadgePicker = () => {
-      const selected = badgeOptions.filter((option) => option.classList.contains("is-selected")).length;
-      badgeOptions.forEach((option) => { const active = option.classList.contains("is-selected"); const action = option.querySelector("[data-badge-action]"); option.setAttribute("aria-pressed", String(active)); if (action) action.textContent = active ? "Selected" : "Select"; });
-      if (badgeCount) badgeCount.textContent = `${selected} / ${BADGE_MAX}`;
-    };
-    badgeOptions.forEach((option) => option.addEventListener("click", () => {
-      const active = option.classList.contains("is-selected");
-      if (!active && badgeOptions.filter((item) => item.classList.contains("is-selected")).length >= BADGE_MAX) return feedback(`Możesz wybrać maksymalnie ${BADGE_MAX} odznak.`, true);
-      option.classList.toggle("is-selected", !active);
-      syncBadgePicker();
-      renderPreview();
-    }));
-    const showBadges = () => {
-      document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item === badgeTab));
-      document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel !== badgePanel; });
-      document.querySelector("#topbar-section").textContent = "Badges";
-      document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / BADGES";
-      document.querySelector("#dashboard-title").textContent = "Pokaż, kim jesteś.";
-      document.querySelector("#dashboard-subtitle").textContent = "Wybierz odznaki, które wyróżnią Twój profil.";
-      sessionStorage.setItem("sqezen_dashboard_tab", "badges");
-      syncBadgePicker();
-    };
-    badgeTab.addEventListener("click", showBadges);
-    syncBadgePicker();
-    if (sessionStorage.getItem("sqezen_dashboard_tab") === "badges") showBadges();
   }
   const embedTab = document.querySelector('[data-dashboard-tab="embed"]');
   const embedPanel = document.querySelector('[data-tab-panel="embed"]');
@@ -455,7 +551,7 @@ wireDashboard = async function () {
     document.addEventListener("click", (event) => {
       const item = event.target.closest?.("[data-dashboard-tab]");
       const tab = item?.dataset.dashboardTab;
-      if (!item || !["badges", "embed"].includes(tab)) return;
+      if (!item || tab !== "embed") return;
       const currentForm = document.querySelector("#profile-form");
       const panel = document.querySelector(`[data-tab-panel="${tab}"]`);
       if (!currentForm || !panel) return;
@@ -463,30 +559,24 @@ wireDashboard = async function () {
       event.stopImmediatePropagation();
       document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === tab));
       document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
-      const copy = tab === "badges" ? ["Badges", "SQEZEN / BADGES", "Pokaż, kim jesteś.", "Wybierz odznaki, które wyróżnią Twój profil."] : ["Embed Builder", "SQEZEN / EMBED BUILDER", "Pokaż swój profil.", "Wybierz wariant embedu i ustaw jego układ."];
+      const copy = ["Embed Builder", "SQEZEN / EMBED BUILDER", "Pokaż swój profil.", "Wybierz wariant embedu i ustaw jego układ."];
       document.querySelector("#topbar-section").textContent = copy[0];
       document.querySelector("#dashboard-eyebrow").textContent = copy[1];
       document.querySelector("#dashboard-title").textContent = copy[2];
       document.querySelector("#dashboard-subtitle").textContent = copy[3];
       sessionStorage.setItem("sqezen_dashboard_tab", tab);
       document.querySelector("#dashboard-sidebar")?.classList.remove("is-open");
-      if (tab === "badges") {
-        const count = currentForm.querySelectorAll("[data-badge-option].is-selected").length;
-        const badgeCount = document.querySelector("[data-badge-count]");
-        if (badgeCount) badgeCount.textContent = `${count} / ${BADGE_MAX}`;
-      } else {
-        const username = String(currentForm.elements.username?.value || "").trim().toLowerCase();
-        const embedMode = sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : document.querySelector("[data-embed-mode].is-active")?.dataset.embedMode || "standard";
-        const embedUrl = username ? `${location.origin}/${encodeURIComponent(username)}${embedMode === "dynamic" ? "?embed=1" : ""}` : "";
-        const height = embedMode === "dynamic" ? 480 : 720;
-        document.querySelectorAll("[data-embed-mode]").forEach((modeButton) => {
-          const active = modeButton.dataset.embedMode === embedMode;
-          modeButton.classList.toggle("is-active", active);
-          modeButton.setAttribute("aria-pressed", String(active));
-        });
-        const currentEmbedPreview = document.querySelector("#embed-preview");
-        if (currentEmbedPreview) { currentEmbedPreview.src = embedUrl || "about:blank"; currentEmbedPreview.style.height = `${height}px`; }
-      }
+      const username = String(currentForm.elements.username?.value || "").trim().toLowerCase();
+      const embedMode = sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : document.querySelector("[data-embed-mode].is-active")?.dataset.embedMode || "standard";
+      const embedUrl = username ? `${location.origin}/${encodeURIComponent(username)}${embedMode === "dynamic" ? "?embed=1" : ""}` : "";
+      const height = embedMode === "dynamic" ? 480 : 720;
+      document.querySelectorAll("[data-embed-mode]").forEach((modeButton) => {
+        const active = modeButton.dataset.embedMode === embedMode;
+        modeButton.classList.toggle("is-active", active);
+        modeButton.setAttribute("aria-pressed", String(active));
+      });
+      const currentEmbedPreview = document.querySelector("#embed-preview");
+      if (currentEmbedPreview) { currentEmbedPreview.src = embedUrl || "about:blank"; currentEmbedPreview.style.height = `${height}px`; }
     }, true);
   }
   const fileInput = document.querySelector("#cursor-file-input");
@@ -899,6 +989,11 @@ wireDashboard = async function () {
   bindProfileAssetPreview();
   window.setTimeout(bindProfileAssetPreview, 350);
 };
+const baseWireDashboardWithBadgeAdmin = wireDashboard;
+wireDashboard = async function () {
+  await baseWireDashboardWithBadgeAdmin();
+  await wireBadgeAdmin(document.querySelector("#profile-form"), dashboardCurrentUserId);
+};
 const baseWirePublic = wirePublic;
 wirePublic = function () {
   baseWirePublic();
@@ -1291,6 +1386,8 @@ async function dynamicEmbedProfile(username) {
   if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`);
   const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true });
   const config = sanitizeCustomization(data.customization);
+  const assignedBadges = await loadProfileBadges(data.id);
+  lastProfileBadges = assignedBadges;
   const display = String(data.display_name || data.username || username).trim();
   const media = config.backgroundMediaUrl;
   const mediaMarkup = media ? (isVideoMedia(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : "";
@@ -1299,7 +1396,7 @@ async function dynamicEmbedProfile(username) {
   const connections = (links || []).map((link) => { const href = safeUrl(link.url); if (!href) return ""; const title = String(link.title || "Link").trim() || "Link"; return `<a class="embed-connection" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${icon(profileIcon(link))}</a>`; }).filter(Boolean).slice(0, 5).join("") || `<span class="embed-connection embed-connection-empty">${icon("globe")}</span>`;
   const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
   const positions = config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions();
-  const badgesMarkup = dynamicBadgeWidget(config.badges, positions.badges);
+  const badgesMarkup = dynamicBadgeWidget(assignedBadges, positions.badges);
   const audioTrack = dynamicAudioTrackMeta(config.audioUrl, { title: config.audioTitle, artist: config.audioArtist }, display);
   const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl, positions.audio, audioTrack, display) : "";
   const lyricsMarkup = config.audioUrl ? dynamicLyricsWidget(config.audioLyrics, positions.lyrics, new URLSearchParams(location.search).get("edit") === "1", { title: audioTrack.title, artist: config.audioArtist }) : "";
@@ -1334,8 +1431,9 @@ const basePublicProfileWithCursorGlow = publicProfile;
 publicProfile = async function (username) {
   const markup = await basePublicProfileWithCursorGlow(username);
   if (!markup.includes('class="public-page ') || markup.includes("data-cursor-glow=")) return markup;
-  const { data } = await supabaseClient.from("profiles").select("customization").eq("username", username).maybeSingle();
+  const { data } = await supabaseClient.from("profiles").select("id,customization").eq("username", username).maybeSingle();
   const glowColor = sanitizeCustomization(data?.customization).cursorGlowColor;
+  lastProfileBadges = await loadProfileBadges(data?.id);
   return markup.replace(' style="', ` data-cursor-glow="${escapeHtml(glowColor)}" style="`);
 };
 const basePublicProfileWithLocalVideo = publicProfile;
