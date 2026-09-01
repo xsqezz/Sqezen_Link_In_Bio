@@ -174,6 +174,7 @@
     "Kolor efektów": "Effect colors",
     "Zwykły embed": "Standard embed",
     "Dynamic embed": "Dynamic embed",
+    "Kreator embedu": "Embed builder",
     "Odznaki": "Badges",
     "Wróć": "Back",
     "Otwórz profil": "Open profile",

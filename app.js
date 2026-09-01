@@ -264,7 +264,7 @@ async function wireBadgeAdmin(form, currentUserId) {
   const editorPanel = form.querySelector(".editor-panel");
   if (!nav || !editorPanel) return;
   form.dataset.badgeAdminBound = "true";
-  nav.insertAdjacentHTML("beforeend", `<button class="sidebar-item" data-dashboard-tab="badge-admin" type="button">${icon("sparkle")}<span>Badge admin</span><kbd>ADM</kbd></button>`);
+  nav.insertAdjacentHTML("beforeend", `<button class="sidebar-item" data-dashboard-tab="badge-admin" type="button">${icon("sparkle")}<span>Badge admin</span></button>`);
   const footer = editorPanel.querySelector(".editor-footer");
   if (footer) footer.insertAdjacentHTML("beforebegin", badgeAdminPanel());
   else editorPanel.insertAdjacentHTML("beforeend", badgeAdminPanel());
@@ -448,7 +448,7 @@ cursorEffectsPanel = () => baseCursorEffectsPanelMarkup()
 const baseDashboardWithCursorEffects = dashboard;
 dashboard = () => {
   let markup = baseDashboardWithCursorEffects();
-  const cursorTab = `<button class="sidebar-item" data-dashboard-tab="cursor-effects" type="button">${icon("sparkle")}<span>Personalizacja kursora</span><kbd>05</kbd></button>`;
+  const cursorTab = `<button class="sidebar-item" data-dashboard-tab="cursor-effects" type="button">${icon("sparkle")}<span>Personalizacja kursora</span></button>`;
   markup = markup.replace("</nav>", `${cursorTab}</nav>`);
   markup = markup.replace('<section data-tab-panel="account" hidden>', `${cursorEffectsPanel()}<section data-tab-panel="account" hidden>`);
   markup = markup.replace(/<div class="cursor-effects-hero">[\s\S]*?(?=<div class="cursor-effect-grid")/, "");
@@ -460,8 +460,9 @@ dashboard = () => {
 };
 const baseDashboardWithoutIntroDecoration = dashboard;
 dashboard = () => baseDashboardWithoutIntroDecoration().replace(/<span class="intro-orb">[\s\S]*?<\/span>/, "");
-function workspaceTabButton(tab, label, iconName, index, extra = "") {
-  return `<button class="sidebar-item${tab === "identity" ? " is-active" : ""}" data-dashboard-tab="${tab}" role="tab" type="button" aria-selected="${tab === "identity"}" aria-controls="dashboard-panel-${tab}">${icon(iconName)}<span>${label}</span>${extra || `<kbd>${index}</kbd>`}</button>`;
+function workspaceTabButton(tab, label, iconName) {
+  const linkCount = tab === "links" ? '<span id="links-count" hidden aria-hidden="true"></span>' : "";
+  return `<button class="sidebar-item${tab === "identity" ? " is-active" : ""}" data-dashboard-tab="${tab}" role="tab" type="button" aria-selected="${tab === "identity"}" aria-controls="dashboard-panel-${tab}">${icon(iconName)}<span>${label}</span>${linkCount}</button>`;
 }
 function workspacePanel(tab, index, title, description) {
   const section = document.createElement("section");
@@ -488,16 +489,15 @@ dashboard = () => {
     nav.setAttribute("role", "tablist");
     nav.setAttribute("aria-label", "Panel profilu");
     nav.innerHTML = [
-      workspaceTabButton("identity", "Nazwa użytkownika i bio", "dashboard", "01"),
-      workspaceTabButton("avatar", "Avatar", "dashboard", "02"),
-      workspaceTabButton("links", "Linki", "link", "03", '<kbd id="links-count">0</kbd>'),
-      workspaceTabButton("profile-card", "Karta profilu", "dashboard", "04"),
-      workspaceTabButton("name-effect", "Efekty nazwy", "sparkle", "05"),
-      workspaceTabButton("assets", "Twoja strona", "sparkle", "06"),
-      workspaceTabButton("standard-embed", "Zwykły embed", "link", "07"),
-      workspaceTabButton("dynamic-embed", "Dynamic embed", "link", "08"),
-      workspaceTabButton("cursor-effects", "Personalizacja kursora", "sparkle", "09"),
-      workspaceTabButton("account", "Konto", "settings", "10"),
+      workspaceTabButton("identity", "Nazwa użytkownika i bio", "dashboard"),
+      workspaceTabButton("avatar", "Avatar", "dashboard"),
+      workspaceTabButton("links", "Linki", "link"),
+      workspaceTabButton("profile-card", "Karta profilu", "dashboard"),
+      workspaceTabButton("name-effect", "Efekty nazwy", "sparkle"),
+      workspaceTabButton("assets", "Twoja strona", "sparkle"),
+      workspaceTabButton("embed-builder", "Kreator embedu", "link"),
+      workspaceTabButton("cursor-effects", "Personalizacja kursora", "sparkle"),
+      workspaceTabButton("account", "Konto", "settings"),
       '<button class="sidebar-item" data-dashboard-tab="profile" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
       '<button class="sidebar-item" data-dashboard-tab="appearance" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
       '<button class="sidebar-item" data-dashboard-tab="embed" type="button" hidden aria-hidden="true" tabindex="-1"></button>'
@@ -734,7 +734,7 @@ wireDashboard = async function () {
     document.querySelector("#reset-customization")?.addEventListener("click", () => setTimeout(syncParticlePicker));
     syncParticlePicker();
   }
-  const embedTab = document.querySelector('[data-dashboard-tab="embed"]');
+  const embedTab = document.querySelector('[data-dashboard-tab="embed-builder"]') || document.querySelector('[data-dashboard-tab="embed"]');
   const embedPanel = document.querySelector('[data-tab-panel="embed"]');
   const embedPreview = document.querySelector("#embed-preview");
   const embedModes = Array.from(document.querySelectorAll("[data-embed-mode]"));
@@ -1441,13 +1441,12 @@ const DASHBOARD_WORKSPACE_TABS = Object.freeze({
   "profile-card": { panel: "profile-card", label: "Karta profilu", eyebrow: "SQEZEN / PROFILE CARD", title: "Dopasuj kartę profilu.", subtitle: "Ustaw rozmiar, przezroczystość i efekty powierzchni." },
   "name-effect": { panel: "name-effect", label: "Efekty nazwy", eyebrow: "SQEZEN / NAME EFFECTS", title: "Ożyw swoją nazwę.", subtitle: "Wybierz efekt nazwy i delikatne cząsteczki." },
   assets: { panel: "assets", label: "Twoja strona", eyebrow: "SQEZEN / YOUR SITE", title: "Dopracuj swoją stronę.", subtitle: "Zarządzaj tłem, audio, avatarem i własnym kursorem." },
-  "standard-embed": { panel: "embed", label: "Zwykły embed", eyebrow: "SQEZEN / STANDARD EMBED", title: "Osadź kartę profilu.", subtitle: "Skopiuj zwykły embed z pełną kartą Twojego profilu.", embedMode: "standard" },
-  "dynamic-embed": { panel: "embed", label: "Dynamic embed", eyebrow: "SQEZEN / DYNAMIC EMBED", title: "Zbuduj dynamiczny embed.", subtitle: "Ustaw układ kafelków i osadź profil z dodatkowymi modułami.", embedMode: "dynamic" },
+  "embed-builder": { panel: "embed", label: "Kreator embedu", eyebrow: "SQEZEN / EMBED BUILDER", title: "Zbuduj swój embed.", subtitle: "Wybierz zwykły albo dynamiczny wariant i ustaw jego wygląd." },
   "cursor-effects": { panel: "cursor-effects", label: "Personalizacja kursora", eyebrow: "SQEZEN / CURSOR PERSONALIZATION", title: "Spersonalizuj swój kursor.", subtitle: "Wybierz cząsteczki i ich kolor dla odwiedzających Twój profil." },
   account: { panel: "account", label: "Konto", eyebrow: "SQEZEN / ACCOUNT", title: "Konto i adres.", subtitle: "Sprawdź e-mail i skopiuj publiczny adres profilu." },
   "badge-admin": { panel: "badge-admin", label: "Odznaki", eyebrow: "SQEZEN / BADGES", title: "Zarządzaj odznakami.", subtitle: "Przyznawaj i porządkuj odznaki profili." }
 });
-const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "standard-embed", "color-tone": "profile-card", "layout-details": "profile-card", "cursor-color": "cursor-effects" });
+const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "embed-builder", "standard-embed": "embed-builder", "dynamic-embed": "embed-builder", "color-tone": "profile-card", "layout-details": "profile-card", "cursor-color": "cursor-effects" });
 const baseWireDashboardWithWorkspaceTabs = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboardWithWorkspaceTabs();
@@ -1479,10 +1478,11 @@ wireDashboard = async function () {
     const selectedMode = DASHBOARD_WORKSPACE_TABS[selected]?.embedMode;
     if (selectedMode) setEmbedMode(selectedMode);
     embedModes.forEach((modeButton) => {
-      modeButton.hidden = Boolean(selectedMode && modeButton.dataset.embedMode !== selectedMode);
+      modeButton.hidden = false;
     });
     const positionRow = embedPanel?.querySelector(".embed-position-row");
-    if (positionRow) positionRow.hidden = selectedMode !== "dynamic";
+    const activeMode = embedModes.find((modeButton) => modeButton.classList.contains("is-active"))?.dataset.embedMode;
+    if (positionRow) positionRow.hidden = activeMode !== "dynamic";
   };
   const setTab = (requested) => {
     const selected = normalizeTab(requested);
@@ -1523,7 +1523,7 @@ wireDashboard = async function () {
   embedModes.forEach((modeButton) => {
     modeButton.addEventListener("click", () => {
       if (changingEmbedMode) return;
-      setTab(modeButton.dataset.embedMode === "dynamic" ? "dynamic-embed" : "standard-embed");
+      setTab("embed-builder");
     });
   });
   setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "identity");
