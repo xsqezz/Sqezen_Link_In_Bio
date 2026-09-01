@@ -414,8 +414,6 @@ const baseDashboardWithTopProfileAssets = dashboard;
 dashboard = () => baseDashboardWithTopProfileAssets().replace('<form id="profile-form" class="dashboard-grid dashboard-grid-assets">', profileAssetTopPreview() + '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column profile-assets-column">[\s\S]*?<\/aside>/, '').replace('<h2>Twój klimat</h2><p>Ustaw profil dokładnie tak, jak chcesz go pokazywać.</p>', '<h2>General Customization</h2><p>Background, card, type and colors — all under your control.</p>');
 const baseDashboardWithAppearanceAssets = dashboard;
 dashboard = () => baseDashboardWithAppearanceAssets().replace(profileAssetTopPreview(), '').replace('<section data-tab-panel="appearance" hidden>', `<section data-tab-panel="appearance" hidden>${profileAssetTopPreview()}`);
-const baseDashboardWithCursorGlowColor = dashboard;
-dashboard = () => baseDashboardWithCursorGlowColor().replace('<label class="color-control">Gradient 1<input name="gradient_primary" type="color" value="#151521"><b data-color-label="gradient_primary">#151521</b></label>', '<label class="color-control">Kolor glow kursora<input name="cursor_glow_color" type="color" value="#5865ee"><b data-color-label="cursor_glow_color">#5865EE</b></label><label class="color-control">Gradient 1<input name="gradient_primary" type="color" value="#151521"><b data-color-label="gradient_primary">#151521</b></label>');
 const baseDashboardWithLogo = dashboard;
 dashboard = () => baseDashboardWithLogo().replace('<span class="brand-mark">s</span><span>sqezen</span>', brandMarkup());
 const baseDashboardWithoutMaterialsCard = dashboard;
@@ -440,10 +438,11 @@ cursorEffectsPanel = () => baseCursorEffectsPanelMarkup()
   .replace("Efekty kursora", "Cząsteczki kursora")
   .replace("Wybierz jeden z wielu efektów i porusz kursorem po panelu, aby zobaczyć go na żywo.", "Wybierz, co ma wylatywać z kursora podczas ruchu i kliknięcia.")
   .replace("Twój kursor, Twój klimat.", "Cząsteczki wylatujące z kursora.")
-  .replace("Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.", "Każdy preset emituje własne kształty i kolory. Działa na publicznym profilu po zapisaniu.")
+  .replace("Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.", "Każdy preset emituje własne kształty w wybranym kolorze. Działa na publicznym profilu po zapisaniu.")
   .replace("Wybierz efekt kursora", "Wybierz efekt cząsteczek")
   .replace("Efekt kursora", "Efekt cząsteczek")
-  .replace("Najedź na karty, przyciski i podgląd, żeby przetestować reakcje.", "Poruszaj kursorem i klikaj, aby zobaczyć wyrzucane cząsteczki.");
+  .replace("Najedź na karty, przyciski i podgląd, żeby przetestować reakcje.", "Poruszaj kursorem i klikaj, aby zobaczyć wyrzucane cząsteczki.")
+  .replace('<select class="cursor-effect-value"', '<div class="cursor-effect-color-row"><label class="color-control cursor-effect-color-control">Kolor efektów kursora<input name="cursor_glow_color" type="color" value="#5865ee" aria-label="Kolor efektów kursora"><b data-color-label="cursor_glow_color">#5865EE</b></label><div class="cursor-effect-color-copy"><strong>Jeden kolor dla wszystkich presetów</strong><small>Każda cząsteczka zachowa wybrany kolor.</small></div></div><select class="cursor-effect-value"');
 const baseDashboardWithCursorEffects = dashboard;
 dashboard = () => {
   let markup = baseDashboardWithCursorEffects();
@@ -1055,6 +1054,7 @@ wireDashboard = async function () {
   const form = document.querySelector("#profile-form");
   const panel = document.querySelector('[data-tab-panel="cursor-effects"]');
   const select = form?.elements.cursor_effect;
+  const colorInput = form?.elements.cursor_glow_color;
   const options = Array.from(document.querySelectorAll("[data-cursor-effect-option]"));
   if (!form || !panel || !select || !options.length) return;
   const syncOptions = () => options.forEach((option) => {
@@ -1062,6 +1062,7 @@ wireDashboard = async function () {
     option.classList.toggle("is-active", active);
     option.setAttribute("aria-pressed", String(active));
   });
+  const syncColor = () => panel.style.setProperty("--cursor-effect-color", String(colorInput?.value || "#5865ee"));
   const showPanel = () => {
     document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item.dataset.dashboardTab === "cursor-effects"));
     document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
@@ -1098,8 +1099,11 @@ wireDashboard = async function () {
       select.dispatchEvent(new Event("change", { bubbles: true }));
     }));
     form.addEventListener("change", syncOptions);
+    form.addEventListener("input", syncColor);
+    form.addEventListener("change", syncColor);
   }
   syncOptions();
+  syncColor();
   if (sessionStorage.getItem("sqezen_dashboard_tab") === "cursor-effects") showPanel();
 };
 const baseWirePublic = wirePublic;

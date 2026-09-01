@@ -3,6 +3,10 @@
   const PARTICLE_GLYPHS = { hearts: "♥", leaves: "❧", petals: "✿", magic: "✧", lightning: "ϟ", stars: "✦", glitter: "✧" };
   const cleanCursorUrl = (value) => String(value || "").replace(/["\\\n\r]/g, "").trim();
   const cleanColor = (value) => /^#[0-9a-f]{6}$/i.test(String(value || "").trim()) ? String(value).trim().toLowerCase() : "";
+  const colorRgb = (value) => {
+    const color = cleanColor(value) || "#5865ee";
+    return [0, 2, 4].map((offset) => Number.parseInt(color.slice(offset + 1, offset + 3), 16)).join(",");
+  };
   const cleanCursorEffect = (value) => CURSOR_EFFECTS.has(String(value || "").trim()) ? String(value).trim() : "none";
   const supportsFinePointer = () => window.matchMedia?.("(hover: hover) and (pointer: fine)").matches !== false;
 
@@ -159,6 +163,7 @@
       appliedEffect = cursorEffect;
       appliedDashboard = isDashboard;
       document.documentElement.style.setProperty("--cursor-glow", glowColor);
+      document.documentElement.style.setProperty("--cursor-glow-rgb", colorRgb(glowColor));
       document.documentElement.dataset.cursorEffect = cursorEffect;
       effects.style.color = glowColor;
       setEffectClass(glow, cursorEffect);
