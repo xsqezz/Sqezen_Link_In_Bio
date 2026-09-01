@@ -162,6 +162,10 @@ button.profile-asset-preview{cursor:pointer}
 .dynamic-lyrics-widget.is-playing .dynamic-lyrics-line.is-active{animation:dynamic-lyrics-line-in .65s ease both}
 .dynamic-lyrics-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;color:var(--dim);font-size:.49rem;font-weight:800;letter-spacing:.14em}
 .dynamic-lyrics-footer time{font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.dynamic-lyrics-empty-body{display:grid;min-height:172px;align-content:center;gap:10px;padding:0 2px}
+.dynamic-lyrics-empty-body strong{font-size:.9rem;letter-spacing:.08em}
+.dynamic-lyrics-empty-body p{max-width:245px;margin:0;color:var(--dim);font-size:.67rem;line-height:1.55}
+.dynamic-lyrics-empty-body code{width:max-content;max-width:100%;padding:7px 9px;overflow:hidden;color:var(--profile-accent,#5865ee);font:600 .62rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px}
 @keyframes dynamic-lyrics-aura{to{transform:rotate(360deg)}}
 @keyframes dynamic-lyrics-pulse{0%,100%{transform:scale(.8);opacity:.55}50%{transform:scale(1.15);opacity:1}}
 @keyframes dynamic-lyrics-bars{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
