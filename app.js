@@ -92,26 +92,38 @@ function sanitizeDynamicEmbedPositions(raw = {}) { const value = raw && typeof r
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), audioTitle: String(value.audioTitle || "").trim().slice(0, 80), audioArtist: String(value.audioArtist || "").trim().slice(0, 60), audioLyrics: String(value.audioLyrics || "").trim().slice(0, 12000), cursorUrl: safeMediaUrl(value.cursorUrl), cursorGlowColor: themeColor(value.cursorGlowColor), cursorEffect: choice(value.cursorEffect, CURSOR_EFFECT_VALUES, "none"), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: migrateColor(value.buttonColor, "#ffffff", "#5865ee"), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
-const CURSOR_EFFECT_VALUES = ["none", "glow", "ring", "neon", "comet", "trail", "sparkle", "orbit", "bubbles", "fire", "snow", "hearts", "pixel", "crosshair", "spotlight", "ripple", "rainbow", "magnetic"];
+const CURSOR_EFFECT_VALUES = ["none", "glow", "ring", "neon", "comet", "trail", "sparkle", "orbit", "bubbles", "fire", "snow", "hearts", "pixel", "crosshair", "spotlight", "ripple", "rainbow", "magnetic", "dust", "glitter", "confetti", "leaves", "petals", "shards", "orbs", "smoke", "magic", "coins", "lightning", "stars"];
 const CURSOR_EFFECT_DEFINITIONS = [
-  { id: "none", name: "Minimal", description: "Czysty punkt", sample: "minimal" },
-  { id: "glow", name: "Aura", description: "Miękka poświata", sample: "glow" },
-  { id: "ring", name: "Ring", description: "Pulsujący okrąg", sample: "ring" },
-  { id: "neon", name: "Neon", description: "Kolorowy obrys", sample: "neon" },
-  { id: "comet", name: "Comet", description: "Smuga za kursorem", sample: "comet" },
-  { id: "trail", name: "Trail", description: "Ślad punktów", sample: "trail" },
-  { id: "sparkle", name: "Sparkle", description: "Iskry przy ruchu", sample: "sparkle" },
-  { id: "orbit", name: "Orbit", description: "Krążące pierścienie", sample: "orbit" },
-  { id: "bubbles", name: "Bubbles", description: "Bańki przy ruchu", sample: "bubbles" },
-  { id: "fire", name: "Embers", description: "Żarzące iskry", sample: "fire" },
-  { id: "snow", name: "Snow", description: "Lekkie płatki", sample: "snow" },
-  { id: "hearts", name: "Hearts", description: "Unoszące się serca", sample: "hearts" },
-  { id: "pixel", name: "Pixel", description: "Pikselowy ślad", sample: "pixel" },
-  { id: "crosshair", name: "Crosshair", description: "Celownik", sample: "crosshair" },
-  { id: "spotlight", name: "Spotlight", description: "Duży reflektor", sample: "spotlight" },
-  { id: "ripple", name: "Ripple", description: "Fale po kliknięciu", sample: "ripple" },
-  { id: "rainbow", name: "Rainbow", description: "Tęczowa aura", sample: "rainbow" },
-  { id: "magnetic", name: "Magnetic", description: "Reaguje na przyciski", sample: "magnetic" }
+  { id: "none", name: "Minimal", description: "Bez cząsteczek", sample: "minimal" },
+  { id: "glow", name: "Aura pyłu", description: "Miękki pył światła", sample: "glow" },
+  { id: "ring", name: "Energy rings", description: "Kręgi energii", sample: "ring" },
+  { id: "neon", name: "Neon shards", description: "Neonowe odłamki", sample: "neon" },
+  { id: "comet", name: "Comets", description: "Smugi lecące za kursorem", sample: "comet" },
+  { id: "trail", name: "Droplets", description: "Krople śladu", sample: "trail" },
+  { id: "sparkle", name: "Iskry", description: "Jasne iskry przy ruchu", sample: "sparkle" },
+  { id: "orbit", name: "Orbity", description: "Krążące cząsteczki", sample: "orbit" },
+  { id: "bubbles", name: "Bańki", description: "Bańki wypuszczane w górę", sample: "bubbles" },
+  { id: "fire", name: "Ogień", description: "Żar i iskry", sample: "fire" },
+  { id: "snow", name: "Śnieg", description: "Płatki śniegu", sample: "snow" },
+  { id: "hearts", name: "Serca", description: "Serca wylatujące z kursora", sample: "hearts" },
+  { id: "pixel", name: "Piksele", description: "Pikselowe kostki", sample: "pixel" },
+  { id: "crosshair", name: "Target", description: "Celowniki i punkty", sample: "crosshair" },
+  { id: "spotlight", name: "Dust beam", description: "Pył w świetle", sample: "spotlight" },
+  { id: "ripple", name: "Fale", description: "Fale przy kliknięciu", sample: "ripple" },
+  { id: "rainbow", name: "Rainbow confetti", description: "Tęczowe confetti", sample: "rainbow" },
+  { id: "magnetic", name: "Magnes", description: "Cząsteczki przyciągane", sample: "magnetic" },
+  { id: "dust", name: "Dust", description: "Drobny pył", sample: "dust" },
+  { id: "glitter", name: "Glitter", description: "Mieniący brokat", sample: "glitter" },
+  { id: "confetti", name: "Confetti", description: "Kolorowe prostokąty", sample: "confetti" },
+  { id: "leaves", name: "Leaves", description: "Latające listki", sample: "leaves" },
+  { id: "petals", name: "Petals", description: "Płatki kwiatu", sample: "petals" },
+  { id: "shards", name: "Shards", description: "Geometryczne odłamki", sample: "shards" },
+  { id: "orbs", name: "Orbs", description: "Świecące kule", sample: "orbs" },
+  { id: "smoke", name: "Smoke", description: "Dymne obłoki", sample: "smoke" },
+  { id: "magic", name: "Magic runes", description: "Magiczne runy", sample: "magic" },
+  { id: "coins", name: "Coins", description: "Wirujące monety", sample: "coins" },
+  { id: "lightning", name: "Lightning", description: "Błyskawiczne zygzaki", sample: "lightning" },
+  { id: "stars", name: "Stars", description: "Gwiazdy i krzyżyki", sample: "stars" }
 ];
 const NAME_EFFECT_VALUES = ["none", "fuzzy", "typewrite", "rainbow", "shuffle", "gradient", "soft-glow", "outline"];
 const NAME_PARTICLE_VALUES = ["none", "blue", "green", "pink", "red", "white", "yellow"];
@@ -422,10 +434,20 @@ function cursorEffectsPanel() {
   const selectOptions = CURSOR_EFFECT_DEFINITIONS.map((effect) => `<option value="${effect.id}">${escapeHtml(effect.name)}</option>`).join("");
   return `<section data-tab-panel="cursor-effects" hidden><div class="panel-heading"><div><span class="panel-index">CURSOR STUDIO</span><h2>Efekty kursora</h2><p>Wybierz jeden z wielu efektów i porusz kursorem po panelu, aby zobaczyć go na żywo.</p></div><span class="cursor-effects-count">${CURSOR_EFFECT_DEFINITIONS.length} EFFECTS</span></div><div class="cursor-effects-hero"><div class="cursor-effects-hero-orb"><span></span></div><div><strong>Twój kursor, Twój klimat.</strong><p>Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.</p></div><button class="button button-small button-dark" data-dashboard-tab="appearance" type="button">Otwórz Wygląd</button></div><div class="cursor-effect-grid" role="group" aria-label="Wybierz efekt kursora">${options}</div><select class="cursor-effect-value" name="cursor_effect" aria-label="Efekt kursora">${selectOptions}</select><p class="cursor-effects-note">${icon("check")} Najedź na karty, przyciski i podgląd, żeby przetestować reakcje. Zapisz profil, aby opublikować wybrany efekt.</p></section>`;
 }
+const baseCursorEffectsPanelMarkup = cursorEffectsPanel;
+cursorEffectsPanel = () => baseCursorEffectsPanelMarkup()
+  .replace("CURSOR STUDIO", "PARTICLE STUDIO")
+  .replace("Efekty kursora", "Cząsteczki kursora")
+  .replace("Wybierz jeden z wielu efektów i porusz kursorem po panelu, aby zobaczyć go na żywo.", "Wybierz, co ma wylatywać z kursora podczas ruchu i kliknięcia.")
+  .replace("Twój kursor, Twój klimat.", "Cząsteczki wylatujące z kursora.")
+  .replace("Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.", "Każdy preset emituje własne kształty i kolory. Działa na publicznym profilu po zapisaniu.")
+  .replace("Wybierz efekt kursora", "Wybierz efekt cząsteczek")
+  .replace("Efekt kursora", "Efekt cząsteczek")
+  .replace("Najedź na karty, przyciski i podgląd, żeby przetestować reakcje.", "Poruszaj kursorem i klikaj, aby zobaczyć wyrzucane cząsteczki.");
 const baseDashboardWithCursorEffects = dashboard;
 dashboard = () => {
   let markup = baseDashboardWithCursorEffects();
-  const cursorTab = `<button class="sidebar-item" data-dashboard-tab="cursor-effects" type="button">${icon("sparkle")}<span>Efekty kursora</span><kbd>05</kbd></button>`;
+  const cursorTab = `<button class="sidebar-item" data-dashboard-tab="cursor-effects" type="button">${icon("sparkle")}<span>Cząsteczki kursora</span><kbd>05</kbd></button>`;
   markup = markup.replace("</nav>", `${cursorTab}</nav>`);
   return markup.replace('<section data-tab-panel="account" hidden>', `${cursorEffectsPanel()}<section data-tab-panel="account" hidden>`);
 };
@@ -1043,7 +1065,7 @@ wireDashboard = async function () {
   const showPanel = () => {
     document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item.dataset.dashboardTab === "cursor-effects"));
     document.querySelectorAll("[data-tab-panel]").forEach((currentPanel) => { currentPanel.hidden = currentPanel !== panel; });
-    document.querySelector("#topbar-section").textContent = "Efekty kursora";
+    document.querySelector("#topbar-section").textContent = "Cząsteczki kursora";
     document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / CURSOR STUDIO";
     document.querySelector("#dashboard-title").textContent = "Zmień zwykły kursor w efekt.";
     document.querySelector("#dashboard-subtitle").textContent = "Wybierz animację, która będzie reagować na ruch odwiedzających.";
@@ -1060,7 +1082,7 @@ wireDashboard = async function () {
       event.stopImmediatePropagation();
       document.querySelectorAll("[data-dashboard-tab]").forEach((button) => button.classList.toggle("is-active", button.dataset.dashboardTab === "cursor-effects"));
       document.querySelectorAll("[data-tab-panel]").forEach((tabPanel) => { tabPanel.hidden = tabPanel !== currentPanel; });
-      document.querySelector("#topbar-section").textContent = "Efekty kursora";
+      document.querySelector("#topbar-section").textContent = "Cząsteczki kursora";
       document.querySelector("#dashboard-eyebrow").textContent = "SQEZEN / CURSOR STUDIO";
       document.querySelector("#dashboard-title").textContent = "Zmień zwykły kursor w efekt.";
       document.querySelector("#dashboard-subtitle").textContent = "Wybierz animację, która będzie reagować na ruch odwiedzających.";
