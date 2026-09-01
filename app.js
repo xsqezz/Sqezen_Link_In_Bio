@@ -46,6 +46,7 @@ function safeMediaUrl(value) { const raw = String(value || "").trim(); if (/^dat
 function safeImageUrl(value) { const raw = String(value || "").trim(); if (/^data:image\/(?:png|jpeg|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(raw) && raw.length <= 9000000) return raw.replace(/\s+/g, ""); return safeMediaUrl(raw); }
 function safeCursorUrl(value) { const raw = String(value || "").trim(); if (/^data:/i.test(raw)) return /^data:image\/(?:png|jpeg|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(raw) && raw.length <= 350000 ? raw.replace(/\s+/g, "") : ""; return safeMediaUrl(raw); }
 function isVideoMedia(value) { return /^data:video\//i.test(String(value || "")) || /\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(String(value || "")); }
+function isExpiredDiscordUrl(value) { try { const url = new URL(String(value || "").trim()); if (!/^(?:cdn|media)\.discord(?:app)?\.com$/i.test(url.hostname)) return false; const expires = url.searchParams.get("ex"); return /^[0-9a-f]+$/i.test(expires || "") && Number.parseInt(expires, 16) * 1000 <= Date.now(); } catch { return false; } }
 function safeNumber(value, min, max, fallback) { const number = Number(value); return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback; }
 function choice(value, list, fallback) { return list.includes(value) ? value : fallback; }
 function bool(value, fallback) { return typeof value === "boolean" ? value : fallback; }
@@ -202,7 +203,7 @@ dashboard = () => baseDashboardWithoutLiveEmbedPreview().replace('<div class="em
 const baseDashboardWithFlatSidebar = dashboard;
 dashboard = () => baseDashboardWithFlatSidebar().replace(/<div class="sidebar-brand">[\s\S]*?<\/div>/, '').replace('</nav><div class="sidebar-rule"></div><span class="sidebar-label">ACCOUNT</span>', '').replace('</button><div class="sidebar-account">', '</button></nav><div class="sidebar-account">');
 function profileAssetPreview() {
-  return `<aside class="preview-column profile-assets-column"><div class="profile-assets-section-heading"><span class="panel-index">PROFILE ASSETS</span><h2>Assets Uploader</h2><p>Podgląd elementów ustawionych na Twoim profilu.</p></div><div class="profile-assets-panel"><div class="profile-assets-grid"><article class="profile-asset-card" data-profile-asset-card="background"><h3>Background</h3><div class="profile-asset-preview" data-asset-preview="background"><span class="profile-asset-empty">Brak tła</span></div><span class="profile-asset-type" data-asset-type="background" hidden></span><button class="profile-asset-clear" data-asset-clear="background" type="button" aria-label="Usuń tło" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="audio"><h3>Audio</h3><button class="profile-asset-preview profile-asset-audio-action" data-asset-preview="audio" data-asset-open="audio" type="button"><span class="profile-asset-empty-icon">${icon("volume")}</span><span>Kliknij, aby otworzyć ustawienia audio</span></button><span class="profile-asset-type" data-asset-type="audio" hidden></span><button class="profile-asset-clear" data-asset-clear="audio" type="button" aria-label="Usuń audio" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="avatar"><h3>Profile Avatar</h3><div class="profile-asset-preview" data-asset-preview="avatar"><span class="profile-asset-avatar-fallback">S</span></div><span class="profile-asset-type" data-asset-type="avatar" hidden></span><button class="profile-asset-clear" data-asset-clear="avatar" type="button" aria-label="Usuń avatar" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="cursor"><h3>Custom Cursor</h3><div class="profile-asset-preview" data-asset-preview="cursor"><span class="profile-asset-empty">Brak custom cursora</span></div><span class="profile-asset-type" data-asset-type="cursor" hidden></span><button class="profile-asset-clear" data-asset-clear="cursor" type="button" aria-label="Usuń custom cursora" hidden>×</button></article></div></div></aside>`;
+  return `<aside class="preview-column profile-assets-column"><div class="profile-assets-section-heading"><span class="panel-index">PROFILE ASSETS</span><h2>Assets Uploader</h2><p>Podgląd elementów ustawionych na Twoim profilu.</p></div><div class="profile-assets-panel"><div class="profile-assets-grid"><article class="profile-asset-card" data-profile-asset-card="background"><h3>Background</h3><div class="profile-asset-preview" data-asset-preview="background"><span class="profile-asset-empty">Brak tła</span></div><small class="profile-asset-status" data-asset-status="background" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="background" hidden></span><button class="profile-asset-clear" data-asset-clear="background" type="button" aria-label="Usuń tło" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="audio"><h3>Audio</h3><button class="profile-asset-preview profile-asset-audio-action" data-asset-preview="audio" data-asset-open="audio" type="button"><span class="profile-asset-empty-icon">${icon("volume")}</span><span>Kliknij, aby otworzyć ustawienia audio</span></button><small class="profile-asset-status" data-asset-status="audio" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="audio" hidden></span><button class="profile-asset-clear" data-asset-clear="audio" type="button" aria-label="Usuń audio" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="avatar"><h3>Profile Avatar</h3><div class="profile-asset-preview" data-asset-preview="avatar"><span class="profile-asset-avatar-fallback">S</span></div><small class="profile-asset-status" data-asset-status="avatar" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="avatar" hidden></span><button class="profile-asset-clear" data-asset-clear="avatar" type="button" aria-label="Usuń avatar" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="cursor"><h3>Custom Cursor</h3><div class="profile-asset-preview" data-asset-preview="cursor"><span class="profile-asset-empty">Brak custom cursora</span></div><small class="profile-asset-status" data-asset-status="cursor" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="cursor" hidden></span><button class="profile-asset-clear" data-asset-clear="cursor" type="button" aria-label="Usuń custom cursora" hidden>×</button></article></div></div></aside>`;
 }
 const baseDashboardWithProfileAssets = dashboard;
 dashboard = () => baseDashboardWithProfileAssets().replace('<form id="profile-form" class="dashboard-grid">', '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column">[\s\S]*?<\/aside>/, profileAssetPreview());
@@ -663,6 +664,17 @@ function bindProfileAssetPreview() {
     return value && value.length <= 5 ? `.${value}` : "FILE";
   };
   const readField = (name) => { const field = form.elements.namedItem(name); return String(field?.value || "").trim(); };
+  const setAssetStatus = (card, status, message = "") => { if (!card) return; const node = card.querySelector("[data-asset-status]"); card.dataset.assetStatus = status || ""; if (node) node.textContent = message; };
+  const watchAssetLoad = (kind, card, element, url) => {
+    if (!element) return;
+    const markReady = () => setAssetStatus(card, "ready");
+    const markBroken = () => setAssetStatus(card, "error", isExpiredDiscordUrl(url) ? "Link z Discorda wygasł — wybierz plik ponownie." : "Nie udało się wczytać assetu — sprawdź adres.");
+    element.addEventListener("load", markReady, { once: true });
+    element.addEventListener("loadeddata", markReady, { once: true });
+    element.addEventListener("error", markBroken, { once: true });
+    if ((element.tagName === "IMG" && element.complete) || (element.tagName === "VIDEO" && element.readyState >= 2)) markReady();
+    window.setTimeout(() => { if (element.isConnected && element.tagName === "IMG" && element.complete && element.naturalWidth === 0) markBroken(); }, 1400);
+  };
   const syncAsset = (kind, value) => {
     const url = assetValue(kind, value);
     assetPanels.forEach((panel) => {
@@ -670,6 +682,7 @@ function bindProfileAssetPreview() {
       const type = panel.querySelector(`[data-asset-type="${kind}"]`);
       const clear = panel.querySelector(`[data-asset-clear="${kind}"]`);
       if (!preview || !type || !clear) return;
+      setAssetStatus(panel.querySelector(`[data-profile-asset-card="${kind}"]`), "", "");
       type.textContent = url ? extension(url) : "";
       type.hidden = !url;
       clear.hidden = !url;
@@ -677,6 +690,8 @@ function bindProfileAssetPreview() {
       if (kind === "audio") preview.innerHTML = url ? `<span class="profile-asset-set-icon">${icon("volume")}</span><span>Audio ustawione</span>` : `<span class="profile-asset-empty-icon">${icon("volume")}</span><span>Kliknij, aby wybrać audio</span>`;
       if (kind === "avatar") { const name = String(form.elements.display_name?.value || form.elements.username?.value || "S").trim() || "S"; preview.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : `<span class="profile-asset-avatar-fallback">${escapeHtml(name.slice(0, 1).toUpperCase())}</span>`; }
       if (kind === "cursor") preview.innerHTML = url ? `<img class="profile-asset-cursor-image" src="${escapeHtml(url)}" alt="">` : `<span class="profile-asset-empty">Brak custom cursora</span>`;
+      if (url && kind !== "audio") watchAssetLoad(kind, panel.querySelector(`[data-profile-asset-card="${kind}"]`), preview.querySelector("img,video"), url);
+      if (url && isExpiredDiscordUrl(url)) setAssetStatus(panel.querySelector(`[data-profile-asset-card="${kind}"]`), "error", "Link z Discorda wygasł — wybierz plik ponownie.");
     });
   };
   const syncAssets = () => {
@@ -696,7 +711,7 @@ function bindProfileAssetPreview() {
     const modal = document.createElement("div");
     modal.className = "asset-picker-backdrop";
     modal.dataset.assetPicker = kind;
-    modal.innerHTML = `<div class="asset-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-picker-title"><div class="asset-picker-head"><div><span class="asset-picker-kicker">PROFILE ASSETS</span><h2 id="asset-picker-title">${escapeHtml(meta.title)}</h2><p>${escapeHtml(meta.description)}</p></div><button class="asset-picker-close" type="button" data-asset-picker-close aria-label="Zamknij">×</button></div><div class="asset-picker-choice"><div><strong>Wybierz z komputera</strong><small>Plik zostanie zapisany w profilu i od razu pojawi się w podglądzie.</small></div><button class="button button-small button-dark asset-picker-file-button" type="button" data-asset-file-button>Wybierz z komputera</button><input data-asset-file type="file" accept="${meta.accept}" hidden></div><div class="asset-picker-divider"><span>albo</span></div><label class="asset-picker-url"><span>Wklej adres URL</span><input data-asset-url type="url" inputmode="url" placeholder="https://..." value="${currentIsLocal ? "" : escapeHtml(currentValue)}"><small>Adres musi prowadzić bezpośrednio do pliku.</small></label><p class="asset-picker-current" data-asset-picker-current>${currentValue ? (currentIsLocal ? "Obecnie ustawiono plik z komputera." : "Obecnie ustawiono adres URL.") : "Nie wybrano jeszcze tego assetu."}</p><p class="asset-picker-message" data-asset-picker-message role="status" aria-live="polite"></p><div class="asset-picker-foot"><button class="button button-small button-dark" type="button" data-asset-picker-close>Anuluj</button><button class="button button-small button-primary" type="button" data-asset-picker-apply>Ustaw asset</button></div></div>`;
+    modal.innerHTML = `<div class="asset-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-picker-title"><div class="asset-picker-head"><div><span class="asset-picker-kicker">PROFILE ASSETS</span><h2 id="asset-picker-title">${escapeHtml(meta.title)}</h2><p>${escapeHtml(meta.description)}</p></div><button class="asset-picker-close" type="button" data-asset-picker-close aria-label="Zamknij">×</button></div><div class="asset-picker-choice"><div><strong>Wybierz z komputera</strong><small>Plik zostanie zapisany w profilu i od razu pojawi się w podglądzie.</small></div><button class="button button-small button-dark asset-picker-file-button" type="button" data-asset-file-button>Wybierz z komputera</button><input data-asset-file type="file" accept="${meta.accept}" hidden></div><div class="asset-picker-divider"><span>albo</span></div><label class="asset-picker-url"><span>Wklej adres URL</span><input data-asset-url type="url" inputmode="url" placeholder="https://..." value="${currentIsLocal ? "" : escapeHtml(currentValue)}"><small>Adres musi prowadzić bezpośrednio do pliku. Linki z Discorda mogą wygasać.</small></label><p class="asset-picker-current" data-asset-picker-current>${currentValue ? (currentIsLocal ? "Obecnie ustawiono plik z komputera." : "Obecnie ustawiono adres URL.") : "Nie wybrano jeszcze tego assetu."}</p><p class="asset-picker-message" data-asset-picker-message role="status" aria-live="polite"></p><div class="asset-picker-foot"><button class="button button-small button-dark" type="button" data-asset-picker-close>Anuluj</button><button class="button button-small button-primary" type="button" data-asset-picker-apply>Ustaw asset</button></div></div>`;
     document.body.append(modal);
     document.body.classList.add("asset-picker-open");
     const fileInput = modal.querySelector("[data-asset-file]");
@@ -717,6 +732,7 @@ function bindProfileAssetPreview() {
       audioArtistInput = metadata.querySelector("[data-asset-audio-artist]");
     }
     const setMessage = (text, error = false) => { message.textContent = text; message.classList.toggle("is-error", error); };
+    if (currentValue && isExpiredDiscordUrl(currentValue)) setMessage("Ten link z Discorda wygasł. Wybierz plik z komputera albo wklej nowy, stały URL.", true);
     let onKeydown;
     const close = () => { if (onKeydown) document.removeEventListener("keydown", onKeydown); modal.remove(); document.body.classList.remove("asset-picker-open"); };
     fileButton.addEventListener("click", () => fileInput.click());
@@ -742,7 +758,7 @@ function bindProfileAssetPreview() {
       pendingValue = urlInput.value.trim() ? "" : (currentIsLocal && !urlInput.value.trim() ? currentValue : "");
       if (urlInput.value.trim()) current.textContent = "Adres URL zostanie użyty po zatwierdzeniu.";
       else if (!currentValue) current.textContent = "Nie wybrano jeszcze tego assetu.";
-      setMessage("");
+      setMessage(isExpiredDiscordUrl(urlInput.value) ? "Ten link z Discorda już wygasł. Wklej nowy URL albo wybierz plik z komputera." : "", Boolean(isExpiredDiscordUrl(urlInput.value)));
     });
     modal.querySelectorAll("[data-asset-picker-close]").forEach((button) => button.addEventListener("click", close));
     modal.addEventListener("click", (event) => { if (event.target === modal) close(); });
@@ -752,6 +768,7 @@ function bindProfileAssetPreview() {
       const typedUrl = urlInput.value.trim();
       const value = typedUrl ? assetValue(kind, typedUrl) : pendingValue;
       if (typedUrl && !value) return setMessage("Wpisz prawidłowy bezpośredni adres URL do pliku.", true);
+      if (typedUrl && isExpiredDiscordUrl(typedUrl)) return setMessage("Ten link z Discorda wygasł. Wybierz plik z komputera albo wklej nowy URL.", true);
       if (kind === "audio") {
         const cover = String(audioCoverInput?.value || "").trim();
         const safeCover = cover ? safeMediaUrl(cover) : "";
