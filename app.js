@@ -125,6 +125,8 @@ const CURSOR_EFFECT_DEFINITIONS = [
   { id: "lightning", name: "Lightning", description: "Błyskawiczne zygzaki", sample: "lightning" },
   { id: "stars", name: "Stars", description: "Gwiazdy i krzyżyki", sample: "stars" }
 ];
+const CURSOR_EFFECT_HIDDEN_IDS = new Set(["ring", "neon", "trail", "sparkle", "orbit", "bubbles", "crosshair", "rainbow", "magnetic", "dust", "glitter", "shards", "magic", "stars"]);
+const CURSOR_EFFECT_PICKER_DEFINITIONS = CURSOR_EFFECT_DEFINITIONS.filter((effect) => !CURSOR_EFFECT_HIDDEN_IDS.has(effect.id));
 const NAME_EFFECT_VALUES = ["none", "fuzzy", "typewrite", "rainbow", "shuffle", "gradient", "soft-glow", "outline"];
 const NAME_PARTICLE_VALUES = ["none", "blue", "green", "pink", "red", "white", "yellow"];
 let lastProfileParticles = "none";
@@ -428,9 +430,9 @@ dashboard = () => {
   return markup.replace('<section data-tab-panel="appearance" hidden>', `${hiddenAssetFields}<section data-tab-panel="appearance" hidden>`);
 };
 function cursorEffectsPanel() {
-  const options = CURSOR_EFFECT_DEFINITIONS.map((effect) => `<button class="cursor-effect-option" data-cursor-effect-option="${effect.id}" type="button" aria-pressed="false"><span class="cursor-effect-sample is-${effect.sample}" aria-hidden="true"><i></i></span><span class="cursor-effect-copy"><strong>${escapeHtml(effect.name)}</strong><small>${escapeHtml(effect.description)}</small></span></button>`).join("");
+  const options = CURSOR_EFFECT_PICKER_DEFINITIONS.map((effect) => `<button class="cursor-effect-option" data-cursor-effect-option="${effect.id}" type="button" aria-pressed="false"><span class="cursor-effect-sample is-${effect.sample}" aria-hidden="true"><i></i></span><span class="cursor-effect-copy"><strong>${escapeHtml(effect.name)}</strong><small>${escapeHtml(effect.description)}</small></span></button>`).join("");
   const selectOptions = CURSOR_EFFECT_DEFINITIONS.map((effect) => `<option value="${effect.id}">${escapeHtml(effect.name)}</option>`).join("");
-  return `<section data-tab-panel="cursor-effects" hidden><div class="panel-heading"><div><span class="panel-index">CURSOR STUDIO</span><h2>Efekty kursora</h2><p>Wybierz jeden z wielu efektów i porusz kursorem po panelu, aby zobaczyć go na żywo.</p></div><span class="cursor-effects-count">${CURSOR_EFFECT_DEFINITIONS.length} EFFECTS</span></div><div class="cursor-effects-hero"><div class="cursor-effects-hero-orb"><span></span></div><div><strong>Twój kursor, Twój klimat.</strong><p>Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.</p></div><button class="button button-small button-dark" data-dashboard-tab="appearance" type="button">Otwórz Wygląd</button></div><div class="cursor-effect-grid" role="group" aria-label="Wybierz efekt kursora">${options}</div><select class="cursor-effect-value" name="cursor_effect" aria-label="Efekt kursora">${selectOptions}</select><p class="cursor-effects-note">${icon("check")} Najedź na karty, przyciski i podgląd, żeby przetestować reakcje. Zapisz profil, aby opublikować wybrany efekt.</p></section>`;
+  return `<section data-tab-panel="cursor-effects" hidden><div class="panel-heading"><div><span class="panel-index">CURSOR STUDIO</span><h2>Efekty kursora</h2><p>Wybierz jeden z wielu efektów i porusz kursorem po panelu, aby zobaczyć go na żywo.</p></div><span class="cursor-effects-count">${CURSOR_EFFECT_PICKER_DEFINITIONS.length} EFFECTS</span></div><div class="cursor-effects-hero"><div class="cursor-effects-hero-orb"><span></span></div><div><strong>Twój kursor, Twój klimat.</strong><p>Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.</p></div><button class="button button-small button-dark" data-dashboard-tab="appearance" type="button">Otwórz Wygląd</button></div><div class="cursor-effect-grid" role="group" aria-label="Wybierz efekt kursora">${options}</div><select class="cursor-effect-value" name="cursor_effect" aria-label="Efekt kursora">${selectOptions}</select><p class="cursor-effects-note">${icon("check")} Najedź na karty, przyciski i podgląd, żeby przetestować reakcje. Zapisz profil, aby opublikować wybrany efekt.</p></section>`;
 }
 const baseCursorEffectsPanelMarkup = cursorEffectsPanel;
 cursorEffectsPanel = () => baseCursorEffectsPanelMarkup()
@@ -438,11 +440,11 @@ cursorEffectsPanel = () => baseCursorEffectsPanelMarkup()
   .replace("Efekty kursora", "Cząsteczki kursora")
   .replace("Wybierz jeden z wielu efektów i porusz kursorem po panelu, aby zobaczyć go na żywo.", "Wybierz, co ma wylatywać z kursora podczas ruchu i kliknięcia.")
   .replace("Twój kursor, Twój klimat.", "Cząsteczki wylatujące z kursora.")
-  .replace("Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.", "Każdy preset emituje własne kształty w wybranym kolorze. Działa na publicznym profilu po zapisaniu.")
+  .replace("Efekt działa na publicznym profilu po zapisaniu. Własny obraz kursora ustawisz w zakładce Wygląd.", "Śnieg jest biały, ogień pomarańczowy, serca różowe, liście zielone, monety żółte, a confetti wielokolorowe. Działa na publicznym profilu po zapisaniu.")
   .replace("Wybierz efekt kursora", "Wybierz efekt cząsteczek")
   .replace("Efekt kursora", "Efekt cząsteczek")
   .replace("Najedź na karty, przyciski i podgląd, żeby przetestować reakcje.", "Poruszaj kursorem i klikaj, aby zobaczyć wyrzucane cząsteczki.")
-  .replace('<select class="cursor-effect-value"', '<div class="cursor-effect-color-row"><label class="color-control cursor-effect-color-control">Kolor efektów kursora<input name="cursor_glow_color" type="color" value="#5865ee" aria-label="Kolor efektów kursora"><b data-color-label="cursor_glow_color">#5865EE</b></label><div class="cursor-effect-color-copy"><strong>Jeden kolor dla wszystkich presetów</strong><small>Każda cząsteczka zachowa wybrany kolor.</small></div></div><select class="cursor-effect-value"');
+  .replace('<select class="cursor-effect-value"', '<div class="cursor-effect-color-row"><label class="color-control cursor-effect-color-control">Kolor efektów kursora<input name="cursor_glow_color" type="color" value="#5865ee" aria-label="Kolor efektów kursora"><b data-color-label="cursor_glow_color">#5865EE</b></label><div class="cursor-effect-color-copy"><strong>Kolor większości presetów</strong><small>Śnieg biały, ogień pomarańczowy, serca różowe, liście zielone, monety żółte, confetti wielokolorowe.</small></div></div><select class="cursor-effect-value"');
 const baseDashboardWithCursorEffects = dashboard;
 dashboard = () => {
   let markup = baseDashboardWithCursorEffects();
