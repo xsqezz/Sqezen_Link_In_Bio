@@ -803,6 +803,7 @@ function bindProfileAssetPreview() {
       if (options[kind]) openPicker(kind);
     }));
   });
+  form.addEventListener("submit", (event) => { const config = readCustomization(form); const expiredAsset = [["tła", config.backgroundMediaUrl], ["audio", config.audioUrl], ["okładki audio", config.audioCoverUrl], ["kursora", config.cursorUrl], ["avatara", readField("avatar_url")]].find(([, value]) => isExpiredDiscordUrl(value)); if (!expiredAsset) return; event.preventDefault(); event.stopImmediatePropagation(); document.querySelector('[data-dashboard-tab="appearance"]')?.click(); feedback(`Link do ${expiredAsset[0]} z Discorda wygasł. Wybierz plik z komputera albo wklej nowy, stały URL.`, true); }, true);
   form.addEventListener("input", syncAssets);
   form.addEventListener("change", syncAssets);
   syncAssets();
