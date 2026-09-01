@@ -134,8 +134,12 @@ button.profile-asset-preview{cursor:pointer}
 .profile-asset-type{right:52px;padding:9px 10px;color:var(--text);font-size:.61rem;background:rgba(38,35,22,.88);border-radius:9px}
 .profile-asset-clear{right:9px;width:32px;height:32px;padding:0;color:#ff4056;font-size:1.2rem;background:rgba(31,23,25,.9);border:0;border-radius:9px;cursor:pointer}
 .profile-asset-clear:hover{color:#ff7180;background:rgba(73,28,34,.9)}
+.profile-audio-metadata{display:grid;gap:18px;margin-top:18px;padding:20px 22px;background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:14px}
+.profile-audio-metadata-heading{display:grid;gap:5px}.profile-audio-metadata-heading strong{color:var(--text);font-size:.8rem}.profile-audio-metadata-heading small{max-width:620px;color:var(--dim);font-size:.63rem;line-height:1.45}
+.profile-audio-metadata-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.profile-audio-metadata .field-label{margin:0}
 @media(max-width:760px){.profile-assets-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.profile-assets-section-heading{margin-left:2px}.profile-assets-panel{padding:15px 13px}.profile-assets-grid{grid-template-columns:1fr}.profile-asset-preview{height:150px}}
+@media(max-width:600px){.profile-audio-metadata-fields{grid-template-columns:1fr}}
 .dashboard-sidebar .sidebar-bottom{display:none}
 .dashboard-sidebar .account-avatar{color:#fff;background:var(--blue-accent,#5865ee)}
 @media(min-width:1001px){.dashboard-sidebar .sidebar-account{margin-top:auto}}
@@ -190,7 +194,6 @@ button.profile-asset-preview{cursor:pointer}
 .embed-editor-copy{display:grid;min-width:0;gap:4px}.embed-editor-kicker{color:var(--profile-accent,#5865ee);font-size:.52rem;font-weight:800;letter-spacing:.16em}.embed-editor-copy strong{font-size:.78rem}.embed-editor-copy small{color:var(--dim);font-size:.59rem}.embed-editor-actions{display:flex;flex:0 0 auto;align-items:center;gap:8px}.embed-editor-status{color:var(--dim);font-size:.58rem}.embed-editor-status.is-error{color:#ff8299}
 .dynamic-embed-page.is-embed-editor [data-dynamic-tile]{cursor:grab;touch-action:none;outline:1px dashed rgba(143,157,255,.9);outline-offset:8px}.dynamic-embed-page.is-embed-editor [data-dynamic-tile]:hover{outline-color:#fff}.dynamic-embed-page.is-embed-editor [data-dynamic-tile].is-dragging{cursor:grabbing;outline-color:#fff}
 @media(max-width:760px){.embed-editor-toolbar{top:12px;align-items:stretch;flex-direction:column;gap:10px;padding:13px 14px;border-radius:18px}.embed-editor-actions{justify-content:space-between;flex-wrap:wrap}.embed-editor-status{width:100%}.embed-editor-actions .button{flex:1}}
-.audio-metadata-grid{display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:2px;padding-top:18px;border-top:1px solid var(--soft)}
 .dynamic-audio-track{display:flex;min-width:0;align-items:center}.dynamic-audio-copy{display:grid;min-width:0;gap:4px}.dynamic-audio-title,.dynamic-audio-artist{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dynamic-audio-title{color:var(--profile-text,var(--text));font-size:.72rem;font-weight:750}.dynamic-audio-artist{color:var(--dim);font-size:.59rem}
-@media(max-width:760px){.audio-metadata-grid{grid-column:auto;grid-template-columns:1fr;padding-top:0;border-top:0}.dynamic-audio-widget{max-width:calc(100vw - 36px)}}
+@media(max-width:760px){.dynamic-audio-widget{max-width:calc(100vw - 36px)}}
 @media(prefers-reduced-motion:reduce){.dynamic-lyrics-widget:before,.dynamic-lyrics-visualizer i,.dynamic-lyrics-widget.is-playing .dynamic-lyrics-state:before,.dynamic-lyrics-widget.is-playing .dynamic-lyrics-line.is-active{animation:none!important}.dynamic-lyrics-line{transition:none}.dynamic-lyrics-viewport{scroll-behavior:auto}}
