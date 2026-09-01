@@ -375,9 +375,9 @@ async function wireAuth() { const loginForm = document.querySelector("#login-for
 
 async function wireDashboard() { const form = document.querySelector("#profile-form"); if (!form) return; const session = await supabaseClient.auth.getSession(); const current = session.data?.session; if (!current) return navigate(`/login?redirect=${encodeURIComponent("/dashboard")}`); dashboardCurrentUserId = current.user.id; const linksList = document.querySelector("#links-list"); const profileLink = document.querySelector("#view-profile"); const { data: profileData } = await supabaseClient.from("profiles").select("*").eq("id", current.user.id).maybeSingle(); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", current.user.id).order("position", { ascending: true }); const setValue = (name, value) => { if (form.elements[name]) form.elements[name].value = value || ""; }; setValue("username", profileData?.username); setValue("display_name", profileData?.display_name); setValue("bio", profileData?.bio); setValue("avatar_url", profileData?.avatar_url); form.elements.background_color.value = safeColor(profileData?.background_color); setCustomization(form, profileData?.customization); dashboardAssignedBadges = await loadProfileBadges(current.user.id); linksList.innerHTML = (links?.length ? links : [{}]).map(linkItem).join(""); document.querySelector("#account-email").textContent = current.user.email || "zalogowane konto"; document.querySelector("#account-email-field").value = current.user.email || "";
   const meta = () => { const username = String(form.elements.username?.value || "").trim().toLowerCase(); const display = String(form.elements.display_name?.value || username || "Twoje konto").trim(); const active = readLinks().filter((link) => safeUrl(link.url)).length; document.querySelector("#account-name").textContent = display; document.querySelector("#account-avatar").textContent = display.slice(0, 1).toUpperCase(); document.querySelector("#links-count").textContent = active; document.querySelector("#bio-count").textContent = `${String(form.elements.bio?.value || "").length} / 160`; document.querySelector("#color-value").textContent = String(form.elements.background_color.value).toUpperCase(); document.querySelectorAll("[data-output-for]").forEach((out) => { const field = form.elements[out.dataset.outputFor]; if (field) out.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; }); document.querySelectorAll("[data-color-label]").forEach((out) => { const field = form.elements[out.dataset.colorLabel]; if (field) out.textContent = String(field.value).toUpperCase(); }); const address = username ? `${location.origin}/${username}` : "Ustaw nazwę użytkownika"; document.querySelector("#profile-address-field").value = address; if (username) { profileLink.href = `/${encodeURIComponent(username)}`; profileLink.classList.remove("is-disabled"); } else { profileLink.href = "/"; profileLink.classList.add("is-disabled"); } }; const tabs = { profile: ["Profil", "SQEZEN / PROFILE", "Zbuduj swój profil.", "Ustaw informacje, które zobaczą osoby odwiedzające Twój adres."], links: ["Linki", "SQEZEN / LINKS", "Twoje odnośniki.", "Dodawaj, testuj i układaj linki w kolejności, którą lubisz."], appearance: ["Wygląd", "SQEZEN / CUSTOMIZE", "Twój klimat.", "Tło, karta, typografia i kolory — wszystko pod Twoją kontrolą."], account: ["Konto", "SQEZEN / ACCOUNT", "Konto i adres.", "Sprawdź e-mail i skopiuj publiczny adres profilu."] }; const setTab = (tab) => { const selected = tabs[tab] ? tab : "profile"; document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item.dataset.dashboardTab === selected)); document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel.dataset.tabPanel !== selected; }); const [label, eyebrow, title, subtitle] = tabs[selected]; document.querySelector("#topbar-section").textContent = label; document.querySelector("#dashboard-eyebrow").textContent = eyebrow; document.querySelector("#dashboard-title").textContent = title; document.querySelector("#dashboard-subtitle").textContent = subtitle; sessionStorage.setItem("sqezen_dashboard_tab", selected); }; document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.addEventListener("click", () => { setTab(item.dataset.dashboardTab); document.querySelector("#dashboard-sidebar")?.classList.remove("is-open"); })); setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "profile"); meta(); renderPreview();
-  form.addEventListener("input", (event) => { if (event.target.matches("[data-link-url]")) { const item = event.target.closest("[data-link-item]"); const detected = profileIcon({ url: event.target.value, icon: "website" }); if (detected !== "globe") item.querySelector("[data-link-icon]").value = detected; } meta(); renderPreview(); }); form.addEventListener("change", () => { meta(); renderPreview(); }); document.querySelector("#add-link").addEventListener("click", () => { linksList.insertAdjacentHTML("beforeend", linkItem({}, document.querySelectorAll("[data-link-item]").length)); updateLinkNumbers(); renderPreview(); linksList.lastElementChild?.querySelector("[data-link-title]")?.focus(); }); linksList.addEventListener("click", (event) => { const button = event.target.closest("[data-link-action]"); if (!button) return; const item = button.closest("[data-link-item]"); const action = button.dataset.linkAction; if (action === "remove") { item.remove(); if (!document.querySelector("[data-link-item]")) linksList.insertAdjacentHTML("beforeend", linkItem({}, 0)); } if (action === "duplicate") { const copy = { title: item.querySelector("[data-link-title]").value, url: item.querySelector("[data-link-url]").value, icon: item.querySelector("[data-link-icon]").value }; item.insertAdjacentHTML("afterend", linkItem(copy, 0)); } if (action === "up" && item.previousElementSibling) item.previousElementSibling.before(item); if (action === "down" && item.nextElementSibling) item.nextElementSibling.after(item); updateLinkNumbers(); meta(); renderPreview(); }); document.querySelectorAll("[data-color-preset]").forEach((item) => item.addEventListener("click", () => { form.elements.background_color.value = item.dataset.colorPreset; meta(); renderPreview(); })); document.querySelector("#reset-customization").addEventListener("click", () => { setCustomization(form, DEFAULT_CUSTOMIZATION); meta(); renderPreview(); feedback("Przywrócono ustawienia domyślne."); }); document.querySelector("#copy-profile-address").addEventListener("click", async () => { const value = document.querySelector("#profile-address-field").value; if (!value.startsWith("http")) return feedback("Najpierw ustaw nazwę użytkownika.", true); try { await navigator.clipboard.writeText(value); feedback("Adres skopiowany."); } catch { feedback("Nie udało się skopiować adresu.", true); } }); document.querySelector("#mobile-menu").addEventListener("click", () => document.querySelector("#dashboard-sidebar")?.classList.toggle("is-open")); document.querySelector("#logout-button").addEventListener("click", async () => { await supabaseClient.auth.signOut(); navigate("/"); }); form.addEventListener("submit", async (event) => { event.preventDefault(); const submit = form.querySelector("button[type=submit]"); const values = new FormData(form); const username = String(values.get("username") || "").trim().toLowerCase(); const display = String(values.get("display_name") || "").trim(); const linksValue = readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) })); if (!/^[a-z0-9_]{3,24}$/.test(username)) { setTab("profile"); return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true); } if (!display) { setTab("profile"); return feedback("Wpisz nazwę wyświetlaną.", true); } for (const link of linksValue) if (!safeUrl(link.url)) { setTab("links"); return feedback(`Sprawdź adres linku „${link.title || "bez nazwy"}”.`, true); } let customization = readCustomization(form); let avatarUrl = safeImageUrl(values.get("avatar_url")); busy(submit, true, "Zapisywanie…"); feedback("Przygotowuję materiały…");   try { if (avatarUrl && isDiscordUrl(avatarUrl)) { avatarUrl = await cacheDiscordAsset(avatarUrl, "avatar", PROFILE_ASSET_OPTIONS.avatar); const avatarInput = form.querySelector('[name="avatar_url"]'); if (avatarInput) avatarInput.value = avatarUrl; } } catch (error) { busy(submit, false); return feedback(String(error?.message || "Nie udało się zapisać trwałej kopii pliku. Wybierz plik z komputera."), true); } feedback("Zapisuję wszystkie zmiany…"); let save = await supabaseClient.from("profiles").upsert({ id: current.user.id, username, display_name: display, bio: String(values.get("bio") || "").trim(), avatar_url: avatarUrl, background_color: safeColor(values.get("background_color")), customization }); if (save.error) { busy(submit, false); return feedback(errorText(save.error), true); } const deleted = await supabaseClient.from("links").delete().eq("profile_id", current.user.id); if (deleted.error) { busy(submit, false); return feedback("Profil zapisany, ale nie udało się odświeżyć linków.", true); } if (linksValue.length) { const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({ profile_id: current.user.id, title: link.title || "Link", url: link.url, icon: link.icon, position: index }))); if (inserted.error) { busy(submit, false); return feedback("Profil zapisany, ale linki mają problem z zapisem.", true); } } linksValue.forEach((link, index) => { const input = document.querySelectorAll("[data-link-url]")[index]; if (input) input.value = link.url; }); busy(submit, false); meta(); document.querySelector("#top-status").innerHTML = `<i></i> zapisano przed chwilą`; feedback("Wszystkie zmiany zostały zapisane."); }); }
+  form.addEventListener("input", (event) => { if (event.target.matches("[data-link-url]")) { const item = event.target.closest("[data-link-item]"); const detected = profileIcon({ url: event.target.value, icon: "website" }); if (detected !== "globe") item.querySelector("[data-link-icon]").value = detected; } if (event.target.matches("#profile-form input[type=range]")) return; meta(); renderPreview(); }); form.addEventListener("change", (event) => { if (event.target.matches("#profile-form input[type=range]")) { document.querySelector("#dashboard-preview")?.classList.remove("is-range-updating"); return; } meta(); renderPreview(); }); document.querySelector("#add-link").addEventListener("click", () => { linksList.insertAdjacentHTML("beforeend", linkItem({}, document.querySelectorAll("[data-link-item]").length)); updateLinkNumbers(); renderPreview(); linksList.lastElementChild?.querySelector("[data-link-title]")?.focus(); }); linksList.addEventListener("click", (event) => { const button = event.target.closest("[data-link-action]"); if (!button) return; const item = button.closest("[data-link-item]"); const action = button.dataset.linkAction; if (action === "remove") { item.remove(); if (!document.querySelector("[data-link-item]")) linksList.insertAdjacentHTML("beforeend", linkItem({}, 0)); } if (action === "duplicate") { const copy = { title: item.querySelector("[data-link-title]").value, url: item.querySelector("[data-link-url]").value, icon: item.querySelector("[data-link-icon]").value }; item.insertAdjacentHTML("afterend", linkItem(copy, 0)); } if (action === "up" && item.previousElementSibling) item.previousElementSibling.before(item); if (action === "down" && item.nextElementSibling) item.nextElementSibling.after(item); updateLinkNumbers(); meta(); renderPreview(); }); document.querySelectorAll("[data-color-preset]").forEach((item) => item.addEventListener("click", () => { form.elements.background_color.value = item.dataset.colorPreset; meta(); renderPreview(); })); document.querySelector("#reset-customization").addEventListener("click", () => { setCustomization(form, DEFAULT_CUSTOMIZATION); meta(); renderPreview(); feedback("Przywrócono ustawienia domyślne."); }); document.querySelector("#copy-profile-address").addEventListener("click", async () => { const value = document.querySelector("#profile-address-field").value; if (!value.startsWith("http")) return feedback("Najpierw ustaw nazwę użytkownika.", true); try { await navigator.clipboard.writeText(value); feedback("Adres skopiowany."); } catch { feedback("Nie udało się skopiować adresu.", true); } }); document.querySelector("#mobile-menu").addEventListener("click", () => document.querySelector("#dashboard-sidebar")?.classList.toggle("is-open")); document.querySelector("#logout-button").addEventListener("click", async () => { await supabaseClient.auth.signOut(); navigate("/"); }); form.addEventListener("submit", async (event) => { event.preventDefault(); const submit = form.querySelector("button[type=submit]"); const values = new FormData(form); const username = String(values.get("username") || "").trim().toLowerCase(); const display = String(values.get("display_name") || "").trim(); const linksValue = readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) })); if (!/^[a-z0-9_]{3,24}$/.test(username)) { setTab("profile"); return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true); } if (!display) { setTab("profile"); return feedback("Wpisz nazwę wyświetlaną.", true); } for (const link of linksValue) if (!safeUrl(link.url)) { setTab("links"); return feedback(`Sprawdź adres linku „${link.title || "bez nazwy"}”.`, true); } let customization = readCustomization(form); let avatarUrl = safeImageUrl(values.get("avatar_url")); busy(submit, true, "Zapisywanie…"); feedback("Przygotowuję materiały…");   try { if (avatarUrl && isDiscordUrl(avatarUrl)) { avatarUrl = await cacheDiscordAsset(avatarUrl, "avatar", PROFILE_ASSET_OPTIONS.avatar); const avatarInput = form.querySelector('[name="avatar_url"]'); if (avatarInput) avatarInput.value = avatarUrl; } } catch (error) { busy(submit, false); return feedback(String(error?.message || "Nie udało się zapisać trwałej kopii pliku. Wybierz plik z komputera."), true); } feedback("Zapisuję wszystkie zmiany…"); let save = await supabaseClient.from("profiles").upsert({ id: current.user.id, username, display_name: display, bio: String(values.get("bio") || "").trim(), avatar_url: avatarUrl, background_color: safeColor(values.get("background_color")), customization }); if (save.error) { busy(submit, false); return feedback(errorText(save.error), true); } const deleted = await supabaseClient.from("links").delete().eq("profile_id", current.user.id); if (deleted.error) { busy(submit, false); return feedback("Profil zapisany, ale nie udało się odświeżyć linków.", true); } if (linksValue.length) { const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({ profile_id: current.user.id, title: link.title || "Link", url: link.url, icon: link.icon, position: index }))); if (inserted.error) { busy(submit, false); return feedback("Profil zapisany, ale linki mają problem z zapisem.", true); } } linksValue.forEach((link, index) => { const input = document.querySelectorAll("[data-link-url]")[index]; if (input) input.value = link.url; }); busy(submit, false); meta(); document.querySelector("#top-status").innerHTML = `<i></i> zapisano przed chwilą`; feedback("Wszystkie zmiany zostały zapisane."); }); }
 function updateLinkNumbers() { document.querySelectorAll("[data-link-item]").forEach((item, index) => { item.querySelector(".link-number").textContent = String(index + 1).padStart(2, "0"); item.querySelector(".link-item-name").textContent = `Link ${index + 1}`; }); }
-document.addEventListener("input", (event) => { const field = event.target; if (!field.matches?.("#profile-form input[type=range]")) return; const output = document.querySelector(`[data-output-for="${field.name}"]`); if (output) output.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; renderPreview(); });
+document.addEventListener("input", (event) => { const field = event.target; if (!field.matches?.("#profile-form input[type=range]")) return; const output = document.querySelector(`[data-output-for="${field.name}"]`); if (output) output.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; if (syncPreviewRange(field)) return; renderPreview(); });
 function publicLink(link) { const href = safeUrl(link.url); if (!href) return ""; return `<a class="profile-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"><span class="profile-link-icon">${icon(profileIcon(link))}</span><span class="profile-link-title">${escapeHtml(String(link.title || "Link").trim() || "Link")}</span><span class="profile-link-arrow">${icon("arrowUp")}</span></a>`; }
 async function publicProfile(username) { const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle(); if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Nie udało się wczytać profilu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`); if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true }); const config = sanitizeCustomization(data.customization); const media = config.backgroundMediaUrl; const mediaMarkup = media ? (/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : ""; const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary; const style = [`--profile-accent:${safeColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";"); const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`; return `<div class="public-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div>${config.showBranding ? `<a class="public-brand" href="/">${brandMarkup("public-brand-logo")}</a>` : ""}<main class="public-main"><section class="public-card"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><div class="public-tools">${config.audioUrl ? `<button class="icon-button audio-toggle" data-audio-toggle type="button" aria-label="Odtwórz audio">${icon("sparkle")}</button><audio data-profile-audio preload="none" src="${escapeHtml(config.audioUrl)}"></audio>` : ""}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div></div>${avatar(data)}${config.showHandle ? `<p class="public-handle">@${escapeHtml(data.username)}</p>` : ""}<h1>${escapeHtml(data.display_name || data.username)}</h1>${config.location ? `<p class="public-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links">${(links || []).map(publicLink).filter(Boolean).join("") || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`}</div>${config.showBranding ? `<div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <b>sqezen</b></span></div>` : ""}</section>${config.showBranding ? `<a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a>` : ""}</main></div>`; }
 function wirePublic() { const copy = document.querySelector("[data-copy-profile]"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(copy.dataset.copyProfile); copy.innerHTML = icon("check"); setTimeout(() => { copy.innerHTML = icon("copy"); }, 1400); } catch {} }); const page = document.querySelector(".public-page"); const cursor = page?.dataset.customCursor; if (cursor) page.style.cursor = `url("${cursor.replace(/["\\\n\r]/g, "")}"),auto`; const audio = document.querySelector("[data-profile-audio]"); const toggle = document.querySelector("[data-audio-toggle]"); const volume = document.querySelector("[data-audio-volume]"); const label = document.querySelector("[data-audio-label]"); if (audio && toggle) { const updateAudioUi = () => { const playing = !audio.paused; toggle.classList.toggle("is-playing", playing); toggle.setAttribute("aria-label", playing ? "Sound on" : "Sound off"); if (label) label.textContent = playing ? "SOUND ON" : "SOUND OFF"; if (volume && document.activeElement !== volume) volume.value = String(audio.volume); }; audio.volume = Number(volume?.value || 0.72); toggle.addEventListener("click", async () => { try { if (audio.paused) await audio.play(); else audio.pause(); } catch {} updateAudioUi(); }); volume?.addEventListener("input", () => { audio.volume = Number(volume.value); updateAudioUi(); }); audio.addEventListener("play", updateAudioUi); audio.addEventListener("pause", updateAudioUi); audio.addEventListener("volumechange", updateAudioUi); updateAudioUi(); audio.play().then(updateAudioUi).catch(updateAudioUi); } }
@@ -450,7 +450,13 @@ dashboard = () => {
   let markup = baseDashboardWithCursorEffects();
   const cursorTab = `<button class="sidebar-item" data-dashboard-tab="cursor-effects" type="button">${icon("sparkle")}<span>Cząsteczki kursora</span><kbd>05</kbd></button>`;
   markup = markup.replace("</nav>", `${cursorTab}</nav>`);
-  return markup.replace('<section data-tab-panel="account" hidden>', `${cursorEffectsPanel()}<section data-tab-panel="account" hidden>`);
+  markup = markup.replace('<section data-tab-panel="account" hidden>', `${cursorEffectsPanel()}<section data-tab-panel="account" hidden>`);
+  markup = markup.replace(/<div class="cursor-effects-hero">[\s\S]*?(?=<div class="cursor-effect-grid")/, "");
+  markup = markup.replace(`<button class="button button-primary save-button" type="submit">Zapisz wszystkie zmiany ${icon("check")}</button>`, '<span class="auto-save-note">Zmiany zapisują się automatycznie.</span>');
+  return markup
+    .replace("Zapisz profil, aby opublikować wybrany efekt.", "Wybrany efekt zapisuje się automatycznie.")
+    .replace("Zapisz profil, aby opublikować układ.", "Układ zapisuje się automatycznie.")
+    .replace("Zmiany są widoczne tutaj od razu. Opublikują się po zapisaniu.", "Zmiany zapisują się automatycznie i są publikowane po chwili.");
 };
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
@@ -489,6 +495,37 @@ renderPreview = function () {
     }
   });
   return result;
+};
+const baseRenderPreviewWithFrameThrottle = renderPreview;
+let previewFrame = 0;
+const PREVIEW_RANGE_NAMES = new Set(["profile_opacity", "profile_blur", "card_width", "avatar_size", "button_radius"]);
+function syncPreviewRange(field) {
+  const target = document.querySelector("#dashboard-preview");
+  const name = String(field?.name || "");
+  const value = Number(field?.value);
+  if (!Number.isFinite(value) || !PREVIEW_RANGE_NAMES.has(name)) return false;
+  if (!target) return true;
+  const card = target.querySelector(".preview-card");
+  const dynamicPreview = target.querySelector(".dashboard-dynamic-preview");
+  const styleTarget = card || dynamicPreview;
+  if (!styleTarget) return false;
+  target.classList.add("is-range-updating");
+  if (name === "profile_opacity") styleTarget.style.setProperty("--preview-opacity", String(safeNumber(value, 45, 100, 92) / 100));
+  if (name === "profile_blur") styleTarget.style.setProperty("--preview-blur", `${safeNumber(value, 0, 40, 18)}px`);
+  if (name === "card_width" && card) card.style.width = `${Math.round(70 + ((safeNumber(value, 360, 680, 520) - 360) / 320) * 30)}%`;
+  if (name === "avatar_size") styleTarget.style.setProperty("--preview-avatar", `${safeNumber(value, 72, 148, 104)}px`);
+  if (name === "button_radius") styleTarget.style.setProperty("--preview-radius", `${safeNumber(value, 0, 28, 13)}px`);
+  return true;
+}
+renderPreview = function () {
+  const activeRange = document.activeElement?.matches?.("#profile-form input[type=range]") ? document.activeElement : null;
+  if (activeRange && syncPreviewRange(activeRange)) return;
+  document.querySelector("#dashboard-preview")?.classList.remove("is-range-updating");
+  if (previewFrame) return;
+  previewFrame = window.requestAnimationFrame(() => {
+    previewFrame = 0;
+    baseRenderPreviewWithFrameThrottle();
+  });
 };
 const baseLandingMinimal = landingMinimal;
 landingMinimal = () => baseLandingMinimal().replace('<div class="landing-showcase landing-example">', `<div class="landing-minimal-actions">${button("/login", "Zaloguj się")}${button("/register", "Stwórz profil", true)}</div><div class="landing-showcase landing-example">`);
@@ -1108,6 +1145,137 @@ wireDashboard = async function () {
   syncColor();
   if (sessionStorage.getItem("sqezen_dashboard_tab") === "cursor-effects") showPanel();
 };
+const baseFeedbackWithAutoSave = feedback;
+feedback = (message, error = false) => {
+  const text = String(message)
+    .replace("Zapisz zmiany, aby opublikować.", "Zmiana zostanie opublikowana automatycznie.")
+    .replace("Zapisz zmiany, aby opublikować go na profilu.", "Zmiana zostanie opublikowana automatycznie.")
+    .replace("Zapisz profil, aby opublikować zmianę.", "Zmiana zostanie opublikowana automatycznie.");
+  return baseFeedbackWithAutoSave(text, error);
+};
+async function saveDashboardProfile(form) {
+  const userId = dashboardCurrentUserId;
+  if (!form || !userId) return false;
+  const status = document.querySelector("#top-status");
+  const setStatus = (message) => { if (status) { status.dataset.saveState = ""; status.innerHTML = `<i></i> ${message}`; } };
+  const values = new FormData(form);
+  const username = String(values.get("username") || "").trim().toLowerCase();
+  const display = String(values.get("display_name") || "").trim();
+  const linksValue = readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) }));
+  if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+    setStatus("uzupełnij dane");
+    return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true);
+  }
+  if (!display) {
+    setStatus("uzupełnij dane");
+    return feedback("Wpisz nazwę wyświetlaną.", true);
+  }
+  for (const link of linksValue) {
+    if (!safeUrl(link.url)) {
+      setStatus("sprawdź link");
+      return feedback(`Sprawdź adres linku „${link.title || "bez nazwy"}”.`, true);
+    }
+  }
+  const customization = readCustomization(form);
+  let avatarUrl = safeImageUrl(values.get("avatar_url"));
+  setStatus("zapisuję…");
+  feedback("Zapisuję zmiany…");
+  try {
+    if (avatarUrl && isDiscordUrl(avatarUrl)) {
+      avatarUrl = await cacheDiscordAsset(avatarUrl, "avatar", PROFILE_ASSET_OPTIONS.avatar);
+      const avatarInput = form.querySelector('[name="avatar_url"]');
+      if (avatarInput) avatarInput.value = avatarUrl;
+    }
+    const save = await supabaseClient.from("profiles").upsert({
+      id: userId,
+      username,
+      display_name: display,
+      bio: String(values.get("bio") || "").trim(),
+      avatar_url: avatarUrl,
+      background_color: safeColor(values.get("background_color")),
+      customization
+    });
+    if (save.error) throw save.error;
+    const deleted = await supabaseClient.from("links").delete().eq("profile_id", userId);
+    if (deleted.error) {
+      setStatus("częściowo zapisano");
+      return feedback("Profil zapisany, ale nie udało się odświeżyć linków.", true);
+    }
+    if (linksValue.length) {
+      const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({
+        profile_id: userId,
+        title: link.title || "Link",
+        url: link.url,
+        icon: link.icon,
+        position: index
+      })));
+      if (inserted.error) {
+        setStatus("częściowo zapisano");
+        return feedback("Profil zapisany, ale linki mają problem z zapisem.", true);
+      }
+    }
+    linksValue.forEach((link, index) => {
+      const input = form.querySelectorAll("[data-link-url]")[index];
+      if (input) input.value = link.url;
+    });
+    setStatus("zapisano przed chwilą");
+    feedback("Wszystkie zmiany zostały zapisane.");
+    return true;
+  } catch (error) {
+    console.error("Dashboard autosave failed", error);
+    setStatus("błąd zapisu");
+    return feedback(errorText(error), true);
+  }
+}
+const baseWireDashboardWithAutoSave = wireDashboard;
+wireDashboard = async function () {
+  await baseWireDashboardWithAutoSave();
+  const form = document.querySelector("#profile-form");
+  if (!form || form.dataset.autoSaveBound === "true") return;
+  form.dataset.autoSaveBound = "true";
+  let timer = 0;
+  let queued = false;
+  let saving = false;
+  const schedule = (delay = 700) => {
+    queued = true;
+    window.clearTimeout(timer);
+    const status = document.querySelector("#top-status");
+    if (status && status.dataset.saveState !== "pending") {
+      status.dataset.saveState = "pending";
+      status.innerHTML = "<i></i> oczekuje na zapis";
+    }
+    timer = window.setTimeout(run, delay);
+  };
+  const run = async () => {
+    timer = 0;
+    if (!queued) return;
+    if (saving) {
+      timer = window.setTimeout(run, 250);
+      return;
+    }
+    queued = false;
+    saving = true;
+    try {
+      await saveDashboardProfile(form);
+    } finally {
+      saving = false;
+      if (queued && !timer) timer = window.setTimeout(run, 250);
+    }
+  };
+  form.addEventListener("input", (event) => {
+    if (event.target.matches("[readonly]")) return;
+    schedule();
+  });
+  form.addEventListener("change", () => schedule());
+  form.addEventListener("click", (event) => {
+    if (event.target.closest("#add-link,[data-link-action],[data-color-preset],#reset-customization,[data-embed-default-button],[data-asset-clear]")) schedule();
+  });
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    schedule(0);
+  }, true);
+};
 const baseWirePublic = wirePublic;
 wirePublic = function () {
   baseWirePublic();
@@ -1337,6 +1505,11 @@ function clampDynamicEmbedTiles(main) {
 function dynamicEmbedEditorToolbar() {
   return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
 }
+const baseDynamicEmbedEditorToolbarWithAutoSave = dynamicEmbedEditorToolbar;
+dynamicEmbedEditorToolbar = () => baseDynamicEmbedEditorToolbarWithAutoSave().replace(
+  '<span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button>',
+  '<span class="embed-editor-status" data-embed-editor-status>Changes save automatically</span><button class="button button-small button-primary" data-embed-editor-save type="button" hidden aria-hidden="true" tabindex="-1">Save layout</button>'
+);
 const baseWirePublicWithEmbedEditor = wirePublic;
 wirePublic = function () {
   baseWirePublicWithEmbedEditor();
@@ -1419,6 +1592,39 @@ wirePublic = function () {
     }
   });
   setStatus("Drag any element to arrange it");
+};
+const baseWirePublicWithEmbedAutoSave = wirePublic;
+wirePublic = function () {
+  baseWirePublicWithEmbedAutoSave();
+  const page = document.querySelector(".dynamic-embed-page.is-embed-editor");
+  const main = page?.querySelector(".dynamic-embed-main");
+  const saveButton = page?.querySelector("[data-embed-editor-save]");
+  const status = page?.querySelector("[data-embed-editor-status]");
+  if (!page || !main || !saveButton || page.dataset.autoSaveBound === "true") return;
+  page.dataset.autoSaveBound = "true";
+  let timer = 0;
+  let dirty = false;
+  const schedule = () => {
+    window.clearTimeout(timer);
+    if (status) status.textContent = "Changes save automatically";
+    timer = window.setTimeout(() => {
+      timer = 0;
+      if (dirty) saveButton.click();
+      dirty = false;
+    }, 700);
+  };
+  main.addEventListener("pointerdown", (event) => {
+    if (event.target.closest("[data-dynamic-tile]") && !event.target.closest("button,input,a,select,textarea")) dirty = false;
+  }, true);
+  main.addEventListener("pointermove", (event) => {
+    if (event.target.closest("[data-dynamic-tile]")) dirty = true;
+  }, true);
+  main.addEventListener("pointerup", (event) => {
+    if (event.target.closest("[data-dynamic-tile]") && dirty) schedule();
+  }, true);
+  main.addEventListener("pointercancel", (event) => {
+    if (event.target.closest("[data-dynamic-tile]") && dirty) schedule();
+  }, true);
 };
 function wireAdaptiveBackgroundMedia() {
   document.querySelectorAll(".public-media").forEach((media) => {
