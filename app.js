@@ -458,6 +458,8 @@ dashboard = () => {
     .replace("Zapisz profil, aby opublikować układ.", "Układ zapisuje się automatycznie.")
     .replace("Zmiany są widoczne tutaj od razu. Opublikują się po zapisaniu.", "Zmiany zapisują się automatycznie i są publikowane po chwili.");
 };
+const baseDashboardWithoutIntroDecoration = dashboard;
+dashboard = () => baseDashboardWithoutIntroDecoration().replace(/<span class="intro-orb">[\s\S]*?<\/span>/, "");
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();
