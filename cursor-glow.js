@@ -172,10 +172,13 @@
       appliedGlow = glowColor;
       appliedEffect = cursorEffect;
       appliedDashboard = isDashboard;
+      const effectGlowColor = FIXED_EFFECT_COLORS[cursorEffect] || (cursorEffect === "confetti" ? CONFETTI_COLORS[0] : glowColor);
       document.documentElement.style.setProperty("--cursor-glow", glowColor);
       document.documentElement.style.setProperty("--cursor-glow-rgb", colorRgb(glowColor));
       document.documentElement.dataset.cursorEffect = cursorEffect;
-      effects.style.color = glowColor;
+      glow.style.setProperty("--cursor-glow", effectGlowColor);
+      glow.style.setProperty("--cursor-glow-rgb", colorRgb(effectGlowColor));
+      effects.style.color = effectGlowColor;
       setEffectClass(glow, cursorEffect);
       setEffectClass(effects, cursorEffect);
       setEffectClass(cursor, cursorEffect);
