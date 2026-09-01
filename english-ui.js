@@ -132,6 +132,8 @@
     "zaloguj się": "sign in",
     "stwórz profil": "create profile",
     "Tożsamość": "Identity",
+    "Nazwa użytkownika i bio": "Username & Bio",
+    "Preferencje": "Preferences",
     "Bezpośredni adres do zdjęcia profilowego.": "Direct URL to your profile image.",
     "Ustaw swój avatar.": "Set your avatar.",
     "Wybierz bezpośredni adres zdjęcia profilowego.": "Choose a direct URL for your profile image.",

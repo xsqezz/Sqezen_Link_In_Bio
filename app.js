@@ -488,19 +488,18 @@ dashboard = () => {
     nav.setAttribute("role", "tablist");
     nav.setAttribute("aria-label", "Panel profilu");
     nav.innerHTML = [
-      workspaceTabButton("identity", "Tożsamość", "dashboard", "01"),
+      workspaceTabButton("identity", "Nazwa użytkownika i bio", "dashboard", "01"),
       workspaceTabButton("avatar", "Avatar", "dashboard", "02"),
       workspaceTabButton("links", "Linki", "link", "03", '<kbd id="links-count">0</kbd>'),
       workspaceTabButton("profile-card", "Karta profilu", "dashboard", "04"),
-      workspaceTabButton("name-effect", "Efekt nazwy", "sparkle", "05"),
-      workspaceTabButton("color-tone", "Kolor i ton", "palette", "06"),
-      workspaceTabButton("layout-details", "Układ i detale", "settings", "07"),
-      workspaceTabButton("assets", "Materiały", "sparkle", "08"),
-      workspaceTabButton("standard-embed", "Zwykły embed", "link", "09"),
-      workspaceTabButton("dynamic-embed", "Dynamic embed", "link", "10"),
-      workspaceTabButton("cursor-effects", "Cząsteczki kursora", "sparkle", "11"),
-      workspaceTabButton("cursor-color", "Kolor efektów", "palette", "12"),
-      workspaceTabButton("account", "Konto", "settings", "13"),
+      workspaceTabButton("name-effect", "Preferencje", "settings", "05"),
+      workspaceTabButton("layout-details", "Układ i detale", "settings", "06"),
+      workspaceTabButton("assets", "Materiały", "sparkle", "07"),
+      workspaceTabButton("standard-embed", "Zwykły embed", "link", "08"),
+      workspaceTabButton("dynamic-embed", "Dynamic embed", "link", "09"),
+      workspaceTabButton("cursor-effects", "Cząsteczki kursora", "sparkle", "10"),
+      workspaceTabButton("cursor-color", "Kolor efektów", "palette", "11"),
+      workspaceTabButton("account", "Konto", "settings", "12"),
       '<button class="sidebar-item" data-dashboard-tab="profile" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
       '<button class="sidebar-item" data-dashboard-tab="appearance" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
       '<button class="sidebar-item" data-dashboard-tab="embed" type="button" hidden aria-hidden="true" tabindex="-1"></button>'
@@ -543,7 +542,6 @@ dashboard = () => {
     const layoutCard = findCard("Układ i detale");
     const profileCardPanel = profileCard ? document.createElement("section") : null;
     const nameEffectPanel = document.createElement("section");
-    const colorPanel = colorCard ? document.createElement("section") : null;
     const layoutPanel = layoutCard ? document.createElement("section") : null;
     let locationField = null;
     let assetsPanel = null;
@@ -554,7 +552,7 @@ dashboard = () => {
       assetsPanel.setAttribute("role", "tabpanel");
       assetsPanel.hidden = true;
     } else if (hiddenFields.length) {
-      assetsPanel = workspacePanel("assets", "08", "Materiały", "Pliki używane przez Twój profil.");
+      assetsPanel = workspacePanel("assets", "07", "Materiały", "Pliki używane przez Twój profil.");
     }
 
     if (profileCardPanel) {
@@ -571,6 +569,7 @@ dashboard = () => {
       if (locationField) locationField.remove();
       if (fieldGrid && !fieldGrid.children.length) fieldGrid.remove();
       profileCardPanel.append(profileCard);
+      if (colorCard) profileCardPanel.append(colorCard);
 
       if (particleField || nameEffectField) {
         nameEffectPanel.dataset.tabPanel = "name-effect";
@@ -595,13 +594,6 @@ dashboard = () => {
       identityPanel = profilePanel;
     }
 
-    if (colorPanel) {
-      colorPanel.dataset.tabPanel = "color-tone";
-      colorPanel.id = "dashboard-panel-color-tone";
-      colorPanel.setAttribute("role", "tabpanel");
-      colorPanel.hidden = true;
-      colorPanel.append(colorCard);
-    }
     if (layoutPanel) {
       layoutPanel.dataset.tabPanel = "layout-details";
       layoutPanel.id = "dashboard-panel-layout-details";
@@ -616,7 +608,7 @@ dashboard = () => {
       hiddenFields.forEach((field) => assetsPanel.append(field));
     }
     if (assetsTop) assetsTop.remove();
-    const resetTarget = profileCardPanel || colorPanel || layoutPanel || assetsPanel;
+    const resetTarget = profileCardPanel || layoutPanel || assetsPanel;
     if (resetButton && resetTarget) {
       const toolbar = document.createElement("div");
       toolbar.className = "workspace-panel-toolbar";
@@ -624,7 +616,7 @@ dashboard = () => {
       resetTarget.prepend(toolbar);
     }
 
-    const replacement = [profileCardPanel, nameEffectPanel, colorPanel, layoutPanel, assetsPanel].filter(Boolean);
+    const replacement = [profileCardPanel, nameEffectPanel, layoutPanel, assetsPanel].filter(Boolean);
     if (profileCardPanel) appearancePanel.replaceWith(...replacement);
     else if (assetsPanel) appearancePanel.replaceWith(assetsPanel);
   }
@@ -632,7 +624,7 @@ dashboard = () => {
   const cursorPanel = panel("cursor-effects");
   const cursorColorRow = cursorPanel?.querySelector(".cursor-effect-color-row");
   if (cursorPanel && cursorColorRow) {
-    const cursorColorPanel = workspacePanel("cursor-color", "12", "Kolor efektów kursora", "Ustaw kolor większości efektów i sprawdź ich stałe palety.");
+    const cursorColorPanel = workspacePanel("cursor-color", "11", "Kolor efektów kursora", "Ustaw kolor większości efektów i sprawdź ich stałe palety.");
     cursorColorRow.remove();
     cursorColorPanel.append(cursorColorRow);
     editor.insertBefore(cursorColorPanel, cursorPanel);
@@ -1459,12 +1451,11 @@ wireDashboard = async function () {
   }, true);
 };
 const DASHBOARD_WORKSPACE_TABS = Object.freeze({
-  identity: { panel: "identity", label: "Tożsamość", eyebrow: "SQEZEN / IDENTITY", title: "Zbuduj swój profil.", subtitle: "Ustaw informacje, które zobaczą osoby odwiedzające Twój adres." },
+  identity: { panel: "identity", label: "Nazwa użytkownika i bio", eyebrow: "SQEZEN / USERNAME & BIO", title: "Zbuduj swój profil.", subtitle: "Ustaw informacje, które zobaczą osoby odwiedzające Twój adres." },
   avatar: { panel: "avatar", label: "Avatar", eyebrow: "SQEZEN / AVATAR", title: "Ustaw swój avatar.", subtitle: "Wybierz bezpośredni adres zdjęcia profilowego." },
   links: { panel: "links", label: "Linki", eyebrow: "SQEZEN / LINKS", title: "Twoje odnośniki.", subtitle: "Dodawaj, testuj i układaj linki w kolejności, którą lubisz." },
   "profile-card": { panel: "profile-card", label: "Karta profilu", eyebrow: "SQEZEN / PROFILE CARD", title: "Dopasuj kartę profilu.", subtitle: "Ustaw rozmiar, przezroczystość i efekty powierzchni." },
-  "name-effect": { panel: "name-effect", label: "Efekt nazwy", eyebrow: "SQEZEN / NAME EFFECT", title: "Ożyw swoją nazwę.", subtitle: "Połącz animację nazwy z delikatnymi cząsteczkami." },
-  "color-tone": { panel: "color-tone", label: "Kolor i ton", eyebrow: "SQEZEN / COLOR", title: "Zbuduj swoją paletę.", subtitle: "Dobierz kolory akcentu, tekstu, karty i przycisków." },
+  "name-effect": { panel: "name-effect", label: "Preferencje", eyebrow: "SQEZEN / PREFERENCES", title: "Ustaw swoje preferencje.", subtitle: "Wybierz efekt nazwy i delikatne cząsteczki." },
   "layout-details": { panel: "layout-details", label: "Układ i detale", eyebrow: "SQEZEN / LAYOUT", title: "Dopracuj szczegóły.", subtitle: "Wybierz układ, odstępy, font i styl przycisków." },
   assets: { panel: "assets", label: "Materiały", eyebrow: "SQEZEN / ASSETS", title: "Dodaj materiały profilu.", subtitle: "Zarządzaj tłem, audio, avatarem i własnym kursorem." },
   "standard-embed": { panel: "embed", label: "Zwykły embed", eyebrow: "SQEZEN / STANDARD EMBED", title: "Osadź kartę profilu.", subtitle: "Skopiuj zwykły embed z pełną kartą Twojego profilu.", embedMode: "standard" },
@@ -1474,7 +1465,7 @@ const DASHBOARD_WORKSPACE_TABS = Object.freeze({
   account: { panel: "account", label: "Konto", eyebrow: "SQEZEN / ACCOUNT", title: "Konto i adres.", subtitle: "Sprawdź e-mail i skopiuj publiczny adres profilu." },
   "badge-admin": { panel: "badge-admin", label: "Odznaki", eyebrow: "SQEZEN / BADGES", title: "Zarządzaj odznakami.", subtitle: "Przyznawaj i porządkuj odznaki profili." }
 });
-const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "standard-embed" });
+const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "standard-embed", "color-tone": "profile-card" });
 const baseWireDashboardWithWorkspaceTabs = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboardWithWorkspaceTabs();
