@@ -241,6 +241,8 @@ dashboard = () => baseDashboardWithFlatSidebar().replace(/<div class="sidebar-br
 function profileAssetPreview() {
   return `<aside class="preview-column profile-assets-column"><div class="profile-assets-section-heading"><span class="panel-index">PROFILE ASSETS</span><h2>Assets Uploader</h2><p>Podgląd elementów ustawionych na Twoim profilu.</p></div><div class="profile-assets-panel"><div class="profile-assets-grid"><article class="profile-asset-card" data-profile-asset-card="background"><h3>Background</h3><div class="profile-asset-preview" data-asset-preview="background"><span class="profile-asset-empty">Brak tła</span></div><small class="profile-asset-status" data-asset-status="background" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="background" hidden></span><button class="profile-asset-clear" data-asset-clear="background" type="button" aria-label="Usuń tło" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="audio"><h3>Audio</h3><button class="profile-asset-preview profile-asset-audio-action" data-asset-preview="audio" data-asset-open="audio" type="button"><span class="profile-asset-empty-icon">${icon("volume")}</span><span>Kliknij, aby otworzyć ustawienia audio</span></button><small class="profile-asset-status" data-asset-status="audio" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="audio" hidden></span><button class="profile-asset-clear" data-asset-clear="audio" type="button" aria-label="Usuń audio" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="avatar"><h3>Profile Avatar</h3><div class="profile-asset-preview" data-asset-preview="avatar"><span class="profile-asset-avatar-fallback">S</span></div><small class="profile-asset-status" data-asset-status="avatar" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="avatar" hidden></span><button class="profile-asset-clear" data-asset-clear="avatar" type="button" aria-label="Usuń avatar" hidden>×</button></article><article class="profile-asset-card" data-profile-asset-card="cursor"><h3>Custom Cursor</h3><div class="profile-asset-preview" data-asset-preview="cursor"><span class="profile-asset-empty">Brak custom cursora</span></div><small class="profile-asset-status" data-asset-status="cursor" aria-live="polite"></small><span class="profile-asset-type" data-asset-type="cursor" hidden></span><button class="profile-asset-clear" data-asset-clear="cursor" type="button" aria-label="Usuń custom cursora" hidden>×</button></article></div></div></aside>`;
 }
+const baseProfileAssetPreview = profileAssetPreview;
+profileAssetPreview = () => baseProfileAssetPreview().replace('</div></div></aside>', '</div></div><section class="profile-audio-metadata" data-audio-metadata><div class="profile-audio-metadata-heading"><strong>Szczegóły utworu</strong><small>Tytuł i wykonawca pokażą się w Dynamic embed i pomogą znaleźć lyrics automatycznie.</small></div><div class="profile-audio-metadata-fields"><label class="field-label">Tytuł utworu<input data-audio-title-control type="text" maxlength="80" placeholder="Nazwa utworu"></label><label class="field-label">Wykonawca<input data-audio-artist-control type="text" maxlength="60" placeholder="Nazwa wykonawcy"></label></div></section></aside>');
 const baseDashboardWithProfileAssets = dashboard;
 dashboard = () => baseDashboardWithProfileAssets().replace('<form id="profile-form" class="dashboard-grid">', '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column">[\s\S]*?<\/aside>/, profileAssetPreview());
 const profileAssetTopPreview = () => profileAssetPreview().replace('<aside class="preview-column profile-assets-column">', '<section class="profile-assets-top">').replace('</aside>', '</section>');
@@ -248,8 +250,6 @@ const baseDashboardWithTopProfileAssets = dashboard;
 dashboard = () => baseDashboardWithTopProfileAssets().replace('<form id="profile-form" class="dashboard-grid dashboard-grid-assets">', profileAssetTopPreview() + '<form id="profile-form" class="dashboard-grid dashboard-grid-assets">').replace(/<aside class="preview-column profile-assets-column">[\s\S]*?<\/aside>/, '').replace('<h2>Twój klimat</h2><p>Ustaw profil dokładnie tak, jak chcesz go pokazywać.</p>', '<h2>General Customization</h2><p>Background, card, type and colors — all under your control.</p>');
 const baseDashboardWithAppearanceAssets = dashboard;
 dashboard = () => baseDashboardWithAppearanceAssets().replace(profileAssetTopPreview(), '').replace('<section data-tab-panel="appearance" hidden>', `<section data-tab-panel="appearance" hidden>${profileAssetTopPreview()}`);
-const baseDashboardWithAudioMetadata = dashboard;
-dashboard = () => baseDashboardWithAudioMetadata().replace('<label class="field-label">Audio profilu<input name="audio_url" type="text" placeholder="https://.../track.mp3"><small>Odwiedzający uruchamia je ręcznie.</small></label>', `<label class="field-label">Audio profilu<input name="audio_url" type="text" placeholder="https://.../track.mp3"><small>Odwiedzający uruchamia je ręcznie.</small></label><div class="audio-metadata-grid"><label class="field-label">Tytuł utworu<input name="audio_title" type="text" maxlength="80" placeholder="Nazwa utworu"><small>Wyświetli się w odtwarzaczu.</small></label><label class="field-label">Wykonawca<input name="audio_artist" type="text" maxlength="60" placeholder="Nazwa wykonawcy"><small>Wyświetli się pod tytułem.</small></label></div>`);
 const baseDashboardWithCursorGlowColor = dashboard;
 dashboard = () => baseDashboardWithCursorGlowColor().replace('<label class="color-control">Gradient 1<input name="gradient_primary" type="color" value="#151521"><b data-color-label="gradient_primary">#151521</b></label>', '<label class="color-control">Kolor glow kursora<input name="cursor_glow_color" type="color" value="#5865ee"><b data-color-label="cursor_glow_color">#5865EE</b></label><label class="color-control">Gradient 1<input name="gradient_primary" type="color" value="#151521"><b data-color-label="gradient_primary">#151521</b></label>');
 const baseDashboardWithLogo = dashboard;
@@ -695,6 +695,24 @@ function bindProfileAssetPreview() {
     return value && value.length <= 5 ? `.${value}` : "FILE";
   };
   const readField = (name) => { const field = form.elements.namedItem(name); return String(field?.value || "").trim(); };
+  const audioTitleControl = document.querySelector("[data-audio-title-control]");
+  const audioArtistControl = document.querySelector("[data-audio-artist-control]");
+  const syncAudioMetadata = () => {
+    const titleField = form.elements.audio_title;
+    const artistField = form.elements.audio_artist;
+    if (audioTitleControl && document.activeElement !== audioTitleControl) audioTitleControl.value = String(titleField?.value || "");
+    if (audioArtistControl && document.activeElement !== audioArtistControl) audioArtistControl.value = String(artistField?.value || "");
+  };
+  const bindAudioMetadataControl = (control, fieldName, maxLength) => {
+    if (!control || control.dataset.audioMetadataBound === "true") return;
+    control.dataset.audioMetadataBound = "true";
+    control.addEventListener("input", () => {
+      const field = form.elements[fieldName];
+      if (!field) return;
+      field.value = String(control.value || "").trim().slice(0, maxLength);
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  };
   const setAssetStatus = (card, status, message = "") => { if (!card) return; const node = card.querySelector("[data-asset-status]"); card.dataset.assetStatus = status || ""; if (node) node.textContent = message; };
   const watchAssetLoad = (kind, card, element, url) => {
     if (!element) return;
@@ -730,6 +748,7 @@ function bindProfileAssetPreview() {
     try { config = readCustomization(form) || {}; } catch {}
     const fallback = { background: config.backgroundMediaUrl, audio: config.audioUrl, avatar: readField("avatar_url"), cursor: config.cursorUrl };
     Object.entries(fields).forEach(([kind, fieldName]) => syncAsset(kind, readField(fieldName) || fallback[kind] || ""));
+    syncAudioMetadata();
   };
   const openPicker = (kind) => {
     const meta = options[kind];
@@ -855,6 +874,7 @@ function bindProfileAssetPreview() {
       const field = form.elements[fields[button.dataset.assetClear]];
       if (!field) return;
       field.value = "";
+      if (button.dataset.assetClear === "audio") ["audio_title", "audio_artist", "audio_lyrics"].forEach((name) => { const metadataField = form.elements[name]; if (metadataField) metadataField.value = ""; });
       field.dispatchEvent(new Event("input", { bubbles: true }));
       syncAssets();
       feedback(`${button.dataset.assetClear === "background" ? "Tło" : button.dataset.assetClear === "audio" ? "Audio" : button.dataset.assetClear === "avatar" ? "Avatar" : "Custom cursor"} usunięte. Zapisz zmiany, aby opublikować.`);
@@ -865,6 +885,8 @@ function bindProfileAssetPreview() {
       if (options[kind]) openPicker(kind);
     }));
   });
+  bindAudioMetadataControl(audioTitleControl, "audio_title", 80);
+  bindAudioMetadataControl(audioArtistControl, "audio_artist", 60);
   form.addEventListener("submit", (event) => { const config = readCustomization(form); const expiredAsset = [["tła", config.backgroundMediaUrl], ["audio", config.audioUrl], ["kursora", config.cursorUrl], ["avatara", readField("avatar_url")]].find(([, value]) => isExpiredDiscordUrl(value)); if (!expiredAsset) return; event.preventDefault(); event.stopImmediatePropagation(); document.querySelector('[data-dashboard-tab="appearance"]')?.click(); feedback(`Link do ${expiredAsset[0]} z Discorda wygasł. Wybierz plik z komputera albo wklej nowy, stały URL.`, true); }, true);
   form.addEventListener("input", syncAssets);
   form.addEventListener("change", syncAssets);
