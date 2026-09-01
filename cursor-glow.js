@@ -211,6 +211,7 @@
     };
 
     const render = () => {
+      frame = 0;
       currentX += (targetX - currentX) * 0.2;
       currentY += (targetY - currentY) * 0.2;
       currentScale += (targetScale - currentScale) * 0.2;
@@ -219,8 +220,10 @@
       const cursorY = targetY;
       const cursorOffset = cursor.classList.contains("has-image") ? "translate3d(-12px,-9px,0)" : "translate3d(-50%,-50%,0)";
       cursor.style.transform = `translate3d(${cursorX}px,${cursorY}px,0) ${cursorOffset} scale(${currentScale})`;
-      frame = requestAnimationFrame(render);
+      const positionSettled = Math.abs(targetX - currentX) < 0.1 && Math.abs(targetY - currentY) < 0.1 && Math.abs(targetScale - currentScale) < 0.001;
+      if (visible && !positionSettled) frame = requestAnimationFrame(render);
     };
+    const requestRender = () => { if (!frame) frame = requestAnimationFrame(render); };
 
     document.addEventListener("pointermove", (event) => {
       targetX = event.clientX;
@@ -228,18 +231,20 @@
       syncCursor();
       if (!document.documentElement.classList.contains("cursor-enhanced")) return;
       const interactive = Boolean(event.target?.closest?.("a,button,input,textarea,select,[role='button']"));
+      const formControl = Boolean(event.target?.closest?.("input,textarea,select"));
       targetScale = appliedEffect === "magnetic" && interactive ? 1.42 : appliedEffect === "magnetic" ? 1.08 : 1;
-      spawnMovementParticles(appliedEffect, targetX, targetY);
+      if (!formControl) spawnMovementParticles(appliedEffect, targetX, targetY);
       cursor.style.opacity = "1";
       if (!visible) {
         visible = true;
         glow.style.opacity = appliedEffect === "none" ? "0" : "0.34";
       }
+      requestRender();
     }, { passive: true });
     document.addEventListener("pointerdown", (event) => {
       syncCursor();
       if (!document.documentElement.classList.contains("cursor-enhanced")) return;
-      spawnClickBurst(appliedEffect, event.clientX, event.clientY);
+      if (!event.target?.closest?.("input,textarea,select")) spawnClickBurst(appliedEffect, event.clientX, event.clientY);
     }, { passive: true });
     window.addEventListener("blur", () => {
       visible = false;
@@ -263,7 +268,7 @@
     document.addEventListener("change", syncCursor, { passive: true });
     const syncTimer = window.setInterval(syncCursor, 300);
     syncCursor();
-    render();
+    requestRender();
 
     window.addEventListener("pagehide", () => {
       cancelAnimationFrame(frame);

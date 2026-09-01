@@ -180,8 +180,10 @@
       const trimmed = original.trim();
       if (!trimmed) return;
       const translated = textMap.get(trimmed);
-      if (translated) node.nodeValue = original.replace(trimmed, translated);
-      else node.nodeValue = partMap.reduce((value, [from, to]) => value.replaceAll(from, to), original);
+      const nextValue = translated
+        ? original.replace(trimmed, translated)
+        : partMap.reduce((value, [from, to]) => value.replaceAll(from, to), original);
+      if (nextValue !== original) node.nodeValue = nextValue;
     });
     root.querySelectorAll?.("input, textarea, select").forEach((field) => {
       ["placeholder", "aria-label"].forEach((name) => { const value = field.getAttribute(name); if (value && attrMap.has(value)) field.setAttribute(name, attrMap.get(value)); });
@@ -190,7 +192,32 @@
     document.documentElement.lang = "en";
   };
   let queued = false;
-  const observer = new MutationObserver(() => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; translate(); }); });
+  const pendingRoots = new Set();
+  const queueRoot = (node) => {
+    const root = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+    if (!root || root.closest("[aria-hidden='true'],.cursor-effects,.cursor-glow,.site-cursor")) return;
+    pendingRoots.add(root);
+  };
+  const flushTranslations = () => {
+    queued = false;
+    const roots = Array.from(pendingRoots);
+    pendingRoots.clear();
+    roots
+      .filter((root) => !roots.some((other) => other !== root && other.contains(root)))
+      .forEach((root) => translate(root));
+  };
+  const observer = new MutationObserver((records) => {
+    records.forEach((record) => {
+      if (record.type === "childList" && record.addedNodes.length) {
+        if (record.target === document.body || record.target === document.documentElement) record.addedNodes.forEach(queueRoot);
+        else queueRoot(record.target);
+      }
+      if (record.type === "characterData") queueRoot(record.target);
+    });
+    if (!pendingRoots.size || queued) return;
+    queued = true;
+    requestAnimationFrame(flushTranslations);
+  });
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
   translate();
 })();
