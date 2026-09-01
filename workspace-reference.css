@@ -22,7 +22,7 @@ body[data-route="/dashboard"]{background:#000!important}
 .sidebar-account{margin-top:13px;padding:10px 4px}
 .account-avatar{color:#fff;background:var(--blue-accent);border-radius:9px}
 .sidebar-bottom{border-top-color:rgba(255,255,255,.13)}
-.dashboard-intro{padding:0 0 32px}
+.dashboard-intro{display:none!important}
 .dashboard-intro h1{font-size:clamp(3.2rem,5.7vw,5.25rem);font-weight:500;letter-spacing:-.115em;line-height:.88}
 .dashboard-intro>div>p:last-child{margin-top:19px;color:#939aa7;font-size:.8rem}
 .intro-orb{width:44px;height:44px;color:var(--blue-accent);background:#0d0d11;border-color:rgba(255,255,255,.18);border-radius:12px}
