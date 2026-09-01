@@ -116,6 +116,7 @@
 .profile-asset-card{position:relative;display:grid;min-width:0;gap:9px}
 .profile-asset-card h3{margin:0;color:var(--text);font-size:1rem;font-weight:600;letter-spacing:-.03em}
 .profile-asset-preview{display:flex;width:100%;height:150px;align-items:center;justify-content:center;overflow:hidden;padding:0;color:var(--dim);font-size:.68rem;line-height:1.4;text-align:center;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px}
+.profile-asset-status{display:block;min-height:0;overflow:hidden;color:#ff8997;font-size:.61rem;line-height:1.35}.profile-asset-card[data-asset-status="error"] .profile-asset-status{min-height:2.7em}.profile-asset-card[data-asset-status="error"] .profile-asset-preview{border-color:rgba(255,64,86,.55)}
 button.profile-asset-preview{cursor:pointer}
 .profile-asset-preview:hover{border-color:rgba(88,101,238,.55)}
 .profile-asset-preview img,.profile-asset-preview video{display:block;width:100%;height:100%;object-fit:cover}
