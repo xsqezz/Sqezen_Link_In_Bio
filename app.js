@@ -125,7 +125,7 @@ const CURSOR_EFFECT_DEFINITIONS = [
   { id: "lightning", name: "Lightning", description: "Błyskawiczne zygzaki", sample: "lightning" },
   { id: "stars", name: "Stars", description: "Gwiazdy i krzyżyki", sample: "stars" }
 ];
-const CURSOR_EFFECT_HIDDEN_IDS = new Set(["ring", "neon", "trail", "sparkle", "orbit", "bubbles", "crosshair", "rainbow", "magnetic", "dust", "glitter", "shards", "magic", "stars"]);
+const CURSOR_EFFECT_HIDDEN_IDS = new Set(["glow", "ring", "neon", "trail", "sparkle", "orbit", "bubbles", "crosshair", "rainbow", "magnetic", "dust", "glitter", "shards", "magic", "stars"]);
 const CURSOR_EFFECT_PICKER_DEFINITIONS = CURSOR_EFFECT_DEFINITIONS.filter((effect) => !CURSOR_EFFECT_HIDDEN_IDS.has(effect.id));
 const NAME_EFFECT_VALUES = ["none", "fuzzy", "typewrite", "rainbow", "shuffle", "gradient", "soft-glow", "outline"];
 const NAME_PARTICLE_VALUES = ["none", "blue", "green", "pink", "red", "white", "yellow"];
