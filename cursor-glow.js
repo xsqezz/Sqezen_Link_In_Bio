@@ -1,6 +1,14 @@
 (() => {
   const CURSOR_EFFECTS = new Set(["none", "glow", "ring", "neon", "comet", "trail", "sparkle", "orbit", "bubbles", "fire", "snow", "hearts", "pixel", "crosshair", "spotlight", "ripple", "rainbow", "magnetic", "dust", "glitter", "confetti", "leaves", "petals", "shards", "orbs", "smoke", "magic", "coins", "lightning", "stars"]);
   const PARTICLE_GLYPHS = { hearts: "♥", leaves: "❧", petals: "✿", magic: "✧", lightning: "ϟ", stars: "✦", glitter: "✧" };
+  const FIXED_EFFECT_COLORS = Object.freeze({
+    fire: "#ff8a4c",
+    snow: "#ffffff",
+    hearts: "#ff4d6d",
+    leaves: "#8dff9b",
+    coins: "#ffc34d"
+  });
+  const CONFETTI_COLORS = Object.freeze(["#57d9ff", "#ff7096", "#ffe574", "#8dff9b", "#a78bfa"]);
   const cleanCursorUrl = (value) => String(value || "").replace(/["\\\n\r]/g, "").trim();
   const cleanColor = (value) => /^#[0-9a-f]{6}$/i.test(String(value || "").trim()) ? String(value).trim().toLowerCase() : "";
   const colorRgb = (value) => {
@@ -86,7 +94,9 @@
       particle.className = `cursor-particle is-${effect}`;
       particle.style.left = `${x}px`;
       particle.style.top = `${y}px`;
-      particle.style.color = appliedGlow || "#5865ee";
+      particle.style.color = effect === "confetti"
+        ? CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]
+        : FIXED_EFFECT_COLORS[effect] || appliedGlow || "#5865ee";
       particle.style.setProperty("--particle-x", `${offsetX}px`);
       particle.style.setProperty("--particle-y", `${offsetY}px`);
       particle.style.setProperty("--particle-duration", `${duration}ms`);
