@@ -23,10 +23,14 @@ body.asset-picker-open{overflow:hidden}
 .asset-picker-current{min-height:18px;margin:18px 0 0;color:#8490a7;font-size:12px}
 .asset-picker-audio-meta{display:grid;gap:12px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}
 .asset-picker-meta-title{color:#e6e8ef;font-size:13px;font-weight:700}
-.asset-picker-audio-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.asset-picker-audio-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .asset-picker-audio-fields label{display:grid;gap:7px;color:#aeb4c5;font-size:11px;font-weight:600}
 .asset-picker-audio-fields input{width:100%;min-height:42px;padding:0 11px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#0c0c10;color:#f5f5f7;font:inherit;font-size:12px;outline:none;box-sizing:border-box}
 .asset-picker-audio-fields input:focus{border-color:#5865ee;box-shadow:0 0 0 3px rgba(88,101,238,.15)}
+.asset-picker-lyrics-field{display:grid;gap:7px;margin-top:2px;color:#aeb4c5;font-size:11px;font-weight:600}
+.asset-picker-lyrics-field textarea{width:100%;min-height:126px;padding:11px;resize:vertical;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#0c0c10;color:#f5f5f7;font:inherit;font-size:12px;line-height:1.5;outline:none;box-sizing:border-box}
+.asset-picker-lyrics-field textarea:focus{border-color:#5865ee;box-shadow:0 0 0 3px rgba(88,101,238,.15)}
+.asset-picker-lyrics-field small{color:#72798b;font-size:12px;font-weight:400;line-height:1.45}
 .asset-picker-message{min-height:20px;margin:8px 0 0;color:#8f9cff;font-size:12px;line-height:1.5}
 .asset-picker-message.is-error{color:#ff778c}
 .asset-picker-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}
