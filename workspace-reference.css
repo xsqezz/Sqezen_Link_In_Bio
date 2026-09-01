@@ -14,10 +14,15 @@ body[data-route="/dashboard"]{background:#000!important}
 .sidebar-brand{margin-bottom:25px}
 .sidebar-label{color:#646c79}
 .sidebar-caption{color:#f5f6fb;font-size:.8rem}
-.dashboard-nav-list{gap:3px}
-.sidebar-item{min-height:40px;color:#8e96a4;border-radius:8px}
+.dashboard-nav-list{display:grid;max-height:calc(100svh - 260px);gap:3px;overflow-y:auto;padding-right:4px;scrollbar-color:rgba(255,255,255,.2) transparent;scrollbar-width:thin}
+.dashboard-nav-list::-webkit-scrollbar{width:4px}.dashboard-nav-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:999px}
+.sidebar-item{min-height:40px;color:#8e96a4;border-radius:8px;white-space:nowrap}
 .sidebar-item:hover,.sidebar-item.is-active{color:#f5f6fb;background:#151519}
 .sidebar-item.is-active svg{color:var(--blue-accent)}
+.sidebar-item[hidden],[data-tab-panel][hidden]{display:none!important}
+.workspace-panel-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px}
+.name-effect-card{margin-top:0}
+.name-effect-card .field-grid{margin-top:21px}
 .sidebar-rule{margin:25px 8px;background:rgba(255,255,255,.13)}
 .sidebar-account{margin-top:13px;padding:10px 4px}
 .account-avatar{color:#fff;background:var(--blue-accent);border-radius:9px}
@@ -115,7 +120,7 @@ html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enha
 .embed-code-card textarea{min-height:78px;padding:12px;resize:vertical;color:var(--muted);font-size:.68rem;line-height:1.55}
 .embed-preview-shell{overflow:hidden;background:#07070a;border:1px solid var(--line);border-radius:14px}
 .embed-preview-shell iframe{display:block;width:100%;height:430px;border:0;background:#07070a}
-@media(max-width:1000px){.dashboard-layout{gap:24px}.dashboard-grid{grid-template-columns:1fr}.preview-column{order:-1}.preview-sticky{position:static}.dashboard-preview{min-height:420px}}
+@media(max-width:1000px){.dashboard-layout{gap:24px}.dashboard-sidebar{min-height:0}.dashboard-nav-list{display:flex;max-height:none;overflow-x:auto;overflow-y:hidden;padding:2px 0 5px}.dashboard-nav-list .sidebar-item{flex:0 0 auto}.dashboard-grid{grid-template-columns:1fr}.preview-column{order:-1}.preview-sticky{position:static}.dashboard-preview{min-height:420px}}
 @media(max-width:760px){.dashboard-page{width:calc(100% - 32px)}.dashboard-topbar{min-height:72px}.dashboard-layout{padding-top:28px}.dashboard-intro h1{font-size:clamp(3rem,13vw,4.6rem)}.editor-panel,.preview-sticky{padding:19px 16px}.custom-carousel-nav{margin-top:17px}.empty-page{padding:110px 0 80px}}
 .badge-symbol{display:inline-grid;place-items:center;font-family:"Segoe UI Symbol",Inter,ui-sans-serif,sans-serif;font-size:1.1rem;font-weight:900;line-height:1}
 .badge-symbol svg{display:block;width:1.3em;height:1.3em;overflow:visible}
