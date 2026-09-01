@@ -6,6 +6,12 @@
 .cursor-glow.is-spotlight{width:280px;height:280px;filter:blur(26px)}
 .cursor-glow.is-rainbow{width:190px;height:190px;filter:blur(22px);animation:cursor-hue-shift 3s linear infinite}
 .cursor-glow.is-magnetic{width:205px;height:205px;filter:blur(21px)}
+.cursor-glow.is-fire{--cursor-glow:#ff8a4c}
+.cursor-glow.is-snow{--cursor-glow:#fff}
+.cursor-glow.is-hearts{--cursor-glow:#ff4d6d}
+.cursor-glow.is-leaves{--cursor-glow:#8dff9b}
+.cursor-glow.is-coins{--cursor-glow:#ffc34d}
+.cursor-glow.is-confetti{--cursor-glow:#57d9ff;background:conic-gradient(#57d9ff,#ff7096,#ffe574,#8dff9b,#a78bfa,#57d9ff)}
 .cursor-effects{position:fixed;inset:0;z-index:10001;overflow:hidden;pointer-events:none}
 .cursor-particle{position:absolute;display:block;width:7px;height:7px;pointer-events:none;background:var(--cursor-glow,#5865ee);border-radius:50%;opacity:.8;mix-blend-mode:screen;transform:translate(-50%,-50%);will-change:transform,opacity;animation:cursor-particle-drift var(--particle-duration,760ms) cubic-bezier(.18,.72,.32,1) forwards}
 .cursor-particle.is-trail{width:6px;height:6px;box-shadow:0 0 10px 2px currentColor}
