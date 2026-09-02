@@ -40,6 +40,7 @@ function navigate(path) { history.pushState(null, "", path); render(); scrollTo(
 function safeColor(value, fallback = "#5865ee") { const color = String(value || ""); if (!/^#[0-9a-f]{6}$/i.test(color)) return fallback; return color.toLowerCase() === "#c9cdd4" ? "#5865ee" : color; }
 function themeColor(value, fallback = "#5865ee") { const color = String(value || ""); return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : fallback; }
 function migrateColor(value, legacy, fallback) { const color = safeColor(value, fallback); return color.toLowerCase() === legacy ? fallback : color; }
+function profileAccentColor(value) { const color = safeColor(value, "#626262").toLowerCase(); return color === "#5865ee" ? "#626262" : color; }
 function normalizeUrl(value) { const raw = String(value || "").trim(); if (!raw || /^(javascript|data|vbscript):/i.test(raw)) return ""; if (/^(https?:|mailto:)/i.test(raw)) return raw; return `https://${raw.replace(/^\/\//, "").replace(/\s+/g, "")}`; }
 function safeUrl(value) { const normalized = normalizeUrl(value); try { const url = new URL(normalized); return ["https:", "http:", "mailto:"].includes(url.protocol) ? url.href : ""; } catch { return ""; } }
 function safeMediaUrl(value) { const raw = String(value || "").trim(); if (/^data:(?:image\/(?:png|jpeg|gif|webp)|audio\/(?:mpeg|mp3|wav|ogg|aac|webm)|video\/(?:mp4|webm|ogg));base64,[a-z0-9+/=\s]+$/i.test(raw) && raw.length <= 18000000) return raw.replace(/\s+/g, ""); const url = safeUrl(raw); return /^https?:/i.test(url) ? url : ""; }
@@ -1964,7 +1965,7 @@ async function dynamicEmbedProfile(username) {
   const media = config.backgroundMediaUrl;
   const mediaMarkup = media ? (isVideoMedia(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : "";
   const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary;
-  const style = [`--profile-accent:${safeColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";");
+  const style = [`--profile-accent:${profileAccentColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";");
   const connections = (links || []).map((link) => { const href = safeUrl(link.url); if (!href) return ""; const title = String(link.title || "Link").trim() || "Link"; return `<a class="embed-connection" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${icon(profileIcon(link))}</a>`; }).filter(Boolean).slice(0, 5).join("") || `<span class="embed-connection embed-connection-empty">${icon("globe")}</span>`;
   const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
   const positions = config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions();
@@ -1982,7 +1983,7 @@ dynamicEmbedProfile = async function (username) {
 };
 const basePublicProfile = publicProfile;
 publicProfile = async function (username) {
-  const markup = await basePublicProfile(username);
+  const markup = (await basePublicProfile(username)).replace(/--profile-accent:#5865ee/i, "--profile-accent:#626262");
   const audioMarkup = markup.match(/<audio data-profile-audio[^>]*><\/audio>/)?.[0];
   if (!audioMarkup) return markup;
   const audioControl = /<button class="icon-button audio-toggle"[\s\S]*?<\/button><audio data-profile-audio[^>]*><\/audio>/;
