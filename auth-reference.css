@@ -15,7 +15,7 @@
 .auth-reference-actions a{min-height:50px;border-radius:3px;font-size:1rem;font-weight:450;letter-spacing:-.035em}
 .auth-reference-actions .button-ghost{min-height:48px;padding:0 0 12px;background:transparent;border:0;border-bottom:2px solid var(--blue-accent);border-radius:0}
 .auth-reference-actions .button-ghost:hover{color:#fff;background:transparent;transform:none}
-.auth-reference-actions .button-primary{padding:0 25px;box-shadow:0 14px 36px rgba(88,101,238,.15)}
+.auth-reference-actions .button-primary{padding:0 25px;box-shadow:0 14px 36px rgba(98,98,98,.15)}
 .auth-reference-card{width:100%;padding:42px 40px 34px;background:#000;border:1px solid rgba(255,255,255,.28);border-radius:19px;box-shadow:none;animation:fadeUp .4s ease both}
 .auth-reference-card-head{display:flex;align-items:center;justify-content:flex-end;margin-bottom:43px}
 .auth-reference-step{color:var(--blue-accent);font-size:.86rem;font-weight:600;letter-spacing:.02em}
