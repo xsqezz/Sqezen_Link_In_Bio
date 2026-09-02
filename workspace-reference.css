@@ -68,8 +68,8 @@ body[data-route="/dashboard"]{background:#000!important}
 .public-page{background:#000!important}
 .public-page .public-card{background:rgba(var(--profile-card-rgb,23,24,32),var(--profile-opacity,.92));backdrop-filter:blur(var(--profile-blur,18px));-webkit-backdrop-filter:blur(var(--profile-blur,18px));border-color:rgba(255,255,255,.24);box-shadow:none}
 .public-page .profile-link{background:#0b0b0e;border-color:rgba(255,255,255,.16)}
-.public-page .profile-link:hover{background:#151519;border-color:rgba(88,101,238,.65)}
-.public-page .profile-link-icon,.public-page .profile-link-arrow{color:var(--blue-accent)}
+.public-page .profile-link:hover{background:#151519;border-color:rgba(98,98,98,.65)}
+.public-page .profile-link-icon,.public-page .profile-link-arrow{color:var(--profile-accent,#626262)}
 .public-page .public-card-footer,.public-page .public-brand,.public-page .claim-link{color:#717987}
 
 /* Keep the logo mark only in the homepage's example profile. */
@@ -82,12 +82,12 @@ html.cursor-enhanced:has(#dashboard-preview:hover) #dashboard-preview,html.curso
 html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enhanced:has(#dashboard-preview:hover) .site-cursor{opacity:0!important}
 .profile-audio-widget{position:fixed;left:28px;bottom:28px;z-index:4;display:grid;width:140px;gap:7px}
 .profile-audio-toggle{display:flex;width:max-content;min-width:112px;height:34px;align-items:center;gap:9px;padding:0 12px;color:#f5f6fb;background:#050507;border:1px solid rgba(255,255,255,.13);border-radius:999px;box-shadow:0 10px 28px rgba(0,0,0,.36);cursor:pointer;font:inherit;font-size:.55rem;font-weight:800;letter-spacing:.12em;line-height:1;transition:background .18s ease,border-color .18s ease,color .18s ease}
-.profile-audio-toggle:hover{background:#101014;border-color:rgba(88,101,238,.62)}
-.profile-audio-toggle.is-playing{border-color:rgba(88,101,238,.62);color:#fff}
-.profile-audio-toggle span:first-child{display:grid;place-items:center;color:var(--blue-accent)}
+.profile-audio-toggle:hover{background:#101014;border-color:rgba(98,98,98,.62)}
+.profile-audio-toggle.is-playing{border-color:rgba(98,98,98,.62);color:#fff}
+.profile-audio-toggle span:first-child{display:grid;place-items:center;color:var(--profile-accent,#626262)}
 .profile-audio-toggle svg{width:16px;height:16px}
 .profile-audio-volume{display:block;width:112px;padding:0 8px}
-.profile-audio-volume input{display:block;width:100%;height:3px;min-height:0;padding:0;accent-color:var(--blue-accent);cursor:pointer}
+.profile-audio-volume input{display:block;width:100%;height:3px;min-height:0;padding:0;accent-color:var(--profile-accent,#626262);cursor:pointer}
 .profile-audio-widget audio{display:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .cursor-input-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
@@ -274,3 +274,14 @@ html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enha
 .cursor-effect-sample.is-magnetic i{box-shadow:14px 0 0 -3px currentColor,-14px 0 0 -3px color-mix(in srgb,currentColor 70%,transparent),0 0 13px 3px currentColor}
 @media(max-width:560px){.cursor-effect-color-row{align-items:stretch;flex-direction:column;gap:10px}.cursor-effect-color-control{width:auto;flex-basis:auto}}
 @media(prefers-reduced-motion:reduce){.name-effect-sample[class*="is-"],.name-effect-sample[class*="is-"]::before,.name-effect-sample[class*="is-"]::after,.public-page[class*="name-"] .public-card h1,.public-page.name-fuzzy .public-card h1::before,.public-page.name-fuzzy .public-card h1::after,.dynamic-embed-page[class*="name-"] .embed-profile-card h1,.dynamic-embed-page.name-fuzzy .embed-profile-card h1::before,.dynamic-embed-page.name-fuzzy .embed-profile-card h1::after,.preview-card[class*="preview-name-"] .preview-name,.preview-name-fuzzy .preview-name::before,.preview-name-fuzzy .preview-name::after{animation-duration:1.2s!important;animation-iteration-count:infinite!important}}
+
+/* Keep profile copy and preview copy on the configured text theme. */
+.public-page,.dynamic-embed-page{color:var(--profile-text,var(--text));--muted:var(--profile-text,var(--text));--dim:var(--profile-text,var(--text))}
+.dashboard-preview .preview-card,.dashboard-dynamic-preview{--muted:var(--preview-text,var(--text));--dim:var(--preview-text,var(--text))}
+.public-page .avatar-fallback{color:var(--profile-text,var(--text))!important}
+.dashboard-preview .avatar-fallback{color:var(--preview-text,var(--text))!important}
+.dynamic-embed-page .dynamic-lyrics-line{color:var(--profile-text,var(--text))}
+.public-page .audio-toggle.is-playing{color:var(--profile-accent,#626262)}
+.dynamic-embed-page .embed-kicker{color:var(--profile-text,var(--text))}
+.dynamic-embed-page.is-position-editing [data-dynamic-tile]{outline-color:rgba(98,98,98,.9)}
+.dynamic-embed-page.is-embed-editor [data-dynamic-tile]{outline-color:rgba(98,98,98,.9)}
