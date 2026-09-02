@@ -400,7 +400,7 @@ dashboard = () => baseDashboardWithEmbedBuilder().replace('<span>Embed</span><kb
 const baseDashboardWithoutEmbedCode = dashboard;
 dashboard = () => baseDashboardWithoutEmbedCode().replace('<label class="field-label">Kod iframe<textarea id="embed-code" rows="3" readonly></textarea><small>Wybierz wariant powyżej, a potem wklej ten kod na swoją stronę.</small></label>', '<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>').replace('<div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">', '<div class="embed-mode-heading"><span>Rodzaj embedu</span><small>Wybierz, jak ma wyglądać osadzony profil.</small></div><div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">');
 const baseDashboardWithEmbedDefaults = dashboard;
-dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><input id="dynamic-embed-positions" name="dynamic_embed_positions" type="hidden" value="{}"><div class="embed-mode-heading">').replace('<div class="embed-code-card">', '<div class="embed-default-row"><span data-embed-default-label>Domyślny embed: zwykły</span><button class="button button-small button-dark" data-embed-default-button type="button">Ustaw dynamic embed jako domyślny</button></div><div class="embed-position-row"><span data-embed-position-label>Ustaw układ kafelków dynamicznego embedu.</span><button class="button button-small button-dark" data-embed-position-toggle type="button">Edytuj pozycje kafelków</button></div><div class="embed-code-card">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
+dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><input id="dynamic-embed-positions" name="dynamic_embed_positions" type="hidden" value="{}"><div class="embed-mode-heading">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
 const baseDashboardWithoutLiveEmbedPreview = dashboard;
 dashboard = () => baseDashboardWithoutLiveEmbedPreview().replace('<div class="embed-code-card"><div class="embed-preview-shell"><iframe id="embed-preview" title="Podgląd dynamicznego embedu" loading="lazy"></iframe></div></div>', '').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>', '<h2>Embed Builder</h2><p>Wybierz wariant embedu i ustaw jego układ.</p>');
 const baseDashboardWithFlatSidebar = dashboard;
@@ -740,8 +740,6 @@ wireDashboard = async function () {
   const embedPreview = document.querySelector("#embed-preview");
   const embedModes = Array.from(document.querySelectorAll("[data-embed-mode]"));
   const embedDefault = form.elements.default_embed;
-  const embedDefaultButton = document.querySelector("[data-embed-default-button]");
-  const embedDefaultLabel = document.querySelector("[data-embed-default-label]");
   if (embedTab && embedPanel && embedTab.dataset.bound !== "true") {
     embedTab.dataset.bound = "true";
     let embedMode = embedDefault?.value === "dynamic" ? "dynamic" : sessionStorage.getItem("sqezen_embed_mode") === "dynamic" ? "dynamic" : "standard";
@@ -753,7 +751,6 @@ wireDashboard = async function () {
       const active = mode.dataset.embedMode === embedMode;
       mode.classList.toggle("is-active", active);
       mode.setAttribute("aria-pressed", String(active));
-      if (active && embedDefaultLabel) embedDefaultLabel.textContent = `Domyślny embed: ${embedDefault?.value === "dynamic" ? "dynamiczny" : "zwykły"}`;
     });
     const updateEmbed = () => {
       const embedUrl = getEmbedUrl();
@@ -763,12 +760,6 @@ wireDashboard = async function () {
         embedPreview.style.height = `${height}px`;
       }
       updateEmbedModeUi();
-      if (embedDefaultButton) {
-        const defaultMode = embedDefault?.value === "dynamic" ? "dynamic" : "standard";
-        const sameAsDefault = embedMode === defaultMode;
-        embedDefaultButton.disabled = sameAsDefault;
-        embedDefaultButton.textContent = sameAsDefault ? `${embedMode === "dynamic" ? "Dynamic embed" : "Zwykły embed"} jest domyślny` : `Ustaw ${embedMode === "dynamic" ? "dynamic embed" : "zwykły embed"} jako domyślny`;
-      }
     };
     const showEmbed = () => {
       document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item === embedTab));
@@ -786,13 +777,6 @@ wireDashboard = async function () {
       sessionStorage.setItem("sqezen_embed_mode", embedMode);
       updateEmbed();
     }));
-    embedDefaultButton?.addEventListener("click", () => {
-      if (!embedDefault) return;
-      embedDefault.value = embedMode;
-      updateEmbed();
-      renderPreview();
-      feedback(`${embedMode === "dynamic" ? "Dynamic embed" : "Zwykły embed"} ustawiony jako domyślny. Zapisz profil, aby opublikować zmianę.`);
-    });
     form.addEventListener("input", updateEmbed);
     form.addEventListener("change", updateEmbed);
     updateEmbed();
@@ -1427,7 +1411,7 @@ wireDashboard = async function () {
   });
   form.addEventListener("change", () => schedule());
   form.addEventListener("click", (event) => {
-    if (event.target.closest("#add-link,[data-link-action],[data-color-preset],#reset-customization,[data-embed-default-button],[data-asset-clear]")) schedule();
+    if (event.target.closest("#add-link,[data-link-action],[data-color-preset],#reset-customization,[data-asset-clear]")) schedule();
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1481,9 +1465,6 @@ wireDashboard = async function () {
     embedModes.forEach((modeButton) => {
       modeButton.hidden = false;
     });
-    const positionRow = embedPanel?.querySelector(".embed-position-row");
-    const activeMode = embedModes.find((modeButton) => modeButton.classList.contains("is-active"))?.dataset.embedMode;
-    if (positionRow) positionRow.hidden = activeMode !== "dynamic";
   };
   const setTab = (requested) => {
     const selected = normalizeTab(requested);
@@ -1525,6 +1506,12 @@ wireDashboard = async function () {
     modeButton.addEventListener("click", () => {
       if (changingEmbedMode) return;
       setTab("embed-builder");
+      const selectedMode = modeButton.dataset.embedMode === "dynamic" ? "dynamic" : "standard";
+      const defaultEmbed = form.elements.default_embed;
+      if (defaultEmbed && defaultEmbed.value !== selectedMode) {
+        defaultEmbed.value = selectedMode;
+        defaultEmbed.dispatchEvent(new Event("change", { bubbles: true }));
+      }
     });
   });
   setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "identity");
