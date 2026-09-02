@@ -1,0 +1,17 @@
+{
+  "name": "discord-presence-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Discord presence sync bot for sqezen Supabase presence widgets.",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.2",
+    "discord.js": "^14.21.0"
+  }
+}
