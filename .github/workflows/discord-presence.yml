@@ -37,6 +37,10 @@ jobs:
           SUPABASE_URL: https://wzdxgmzwxzfhegelqugy.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          if [ -z "$DISCORD_BOT_TOKEN" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::warning::Set DISCORD_BOT_TOKEN and SUPABASE_SERVICE_ROLE_KEY repository secrets to enable presence sync."
+            exit 0
+          fi
           set +e
           timeout --signal=TERM --kill-after=30s 4h50m npm start
           status=$?
