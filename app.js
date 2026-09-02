@@ -279,6 +279,127 @@ const BADGE_GLYPHS = {
 function badgeIcon(badge) { return `<span class="badge-symbol badge-${escapeHtml(badge.id)}" aria-hidden="true">${BADGE_GLYPHS[badge.id] || escapeHtml(badge.symbol)}</span>`; }
 function badgePills(badges = []) { return badges.map((id) => BADGE_DEFINITIONS.find((badge) => badge.id === id)).filter(Boolean).map((badge) => `<span class="profile-badge" title="${escapeHtml(badge.name)}" aria-label="${escapeHtml(badge.name)}">${badgeIcon(badge)}</span>`).join(""); }
 function dynamicBadgeItems(badges = []) { return badges.map((id) => BADGE_DEFINITIONS.find((badge) => badge.id === id)).filter(Boolean).map((badge) => `<span class="embed-badge" title="${escapeHtml(badge.name)}" aria-label="${escapeHtml(badge.name)}">${badgeIcon(badge)}</span>`).join(""); }
+const DISCORD_STATUS_DEFINITIONS = Object.freeze({
+  online: { label: "Online", className: "online" },
+  idle: { label: "Idle", className: "idle" },
+  dnd: { label: "Do not disturb", className: "dnd" },
+  offline: { label: "Offline", className: "offline" }
+});
+const DISCORD_PUBLIC_BADGE_DEFINITIONS = Object.freeze([
+  { bit: 1, label: "Discord Staff", short: "STAFF" },
+  { bit: 2, label: "Discord Partner", short: "PARTNER" },
+  { bit: 4, label: "HypeSquad Events", short: "EVENTS" },
+  { bit: 8, label: "Bug Hunter", short: "BUG HUNTER" },
+  { bit: 64, label: "HypeSquad Bravery", short: "BRAVERY" },
+  { bit: 128, label: "HypeSquad Brilliance", short: "BRILLIANCE" },
+  { bit: 256, label: "HypeSquad Balance", short: "BALANCE" },
+  { bit: 512, label: "Early Nitro Supporter", short: "EARLY NITRO" },
+  { bit: 16384, label: "Bug Hunter", short: "BUG HUNTER" },
+  { bit: 65536, label: "Verified Bot", short: "VERIFIED BOT" },
+  { bit: 131072, label: "Early Verified Bot Developer", short: "EARLY DEV" },
+  { bit: 262144, label: "Certified Moderator", short: "MODERATOR" },
+  { bit: 4194304, label: "Active Developer", short: "ACTIVE DEV" }
+]);
+function sanitizeDiscordConnection(raw = {}) {
+  const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const discordId = String(value.discord_id || "").trim();
+  const username = String(value.username || "").trim().slice(0, 32);
+  const avatarValue = String(value.avatar || value.avatar_url || value.discord_avatar_url || "").trim();
+  const avatarUrl = /^https:\/\/cdn\.discordapp\.com\/avatars\/\d{16,22}\/[a-zA-Z0-9_]+\.(?:png|jpe?g|gif|webp)(?:\?[^"'<>]*)?$/i.test(avatarValue) ? avatarValue : "";
+  return {
+    profile_id: String(value.profile_id || "").trim(),
+    discord_id: /^\d{16,22}$/.test(discordId) ? discordId : "",
+    username,
+    global_name: String(value.global_name || "").trim().slice(0, 32),
+    avatar: avatarValue.match(/^[a-zA-Z0-9_]+$/)?.[0] || "",
+    avatar_url: avatarUrl,
+    banner: String(value.banner || "").trim().match(/^[a-zA-Z0-9_]+$/)?.[0] || "",
+    public_flags: safeNumber(value.public_flags, 0, 2147483647, 0),
+    primary_guild_tag: String(value.primary_guild_tag || "").trim().slice(0, 16),
+    show_widget: bool(value.show_widget, true),
+    show_status: bool(value.show_status, true),
+    show_activity: bool(value.show_activity, true),
+    show_badges: bool(value.show_badges, true),
+    show_guild_tag: bool(value.show_guild_tag, true),
+    custom_idle_text: String(value.custom_idle_text || "").trim().slice(0, 80)
+  };
+}
+function sanitizeDiscordPresence(raw = {}) {
+  const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const status = String(value.status || "").toLowerCase();
+  const activities = Array.isArray(value.activities) ? value.activities.map((activity) => ({
+    type: Number.isFinite(Number(activity?.type)) ? Number(activity.type) : 0,
+    name: String(activity?.name || "").trim().slice(0, 128),
+    details: String(activity?.details || "").trim().slice(0, 128),
+    state: String(activity?.state || "").trim().slice(0, 128)
+  })).filter((activity) => activity.name).slice(0, 5) : [];
+  return {
+    status: DISCORD_STATUS_DEFINITIONS[status] ? status : "offline",
+    custom_status: String(value.custom_status || "").trim().slice(0, 128),
+    custom_status_emoji: String(value.custom_status_emoji || "").trim().slice(0, 32),
+    activities
+  };
+}
+function discordStatusInfo(status) {
+  const normalized = String(status || "").toLowerCase();
+  return DISCORD_STATUS_DEFINITIONS[normalized] || DISCORD_STATUS_DEFINITIONS.offline;
+}
+function discordAvatarUrl(connection) {
+  const value = sanitizeDiscordConnection(connection);
+  if (value.avatar_url) return value.avatar_url;
+  if (!value.discord_id || !value.avatar) return "";
+  const extension = value.avatar.startsWith("a_") ? "gif" : "png";
+  return `https://cdn.discordapp.com/avatars/${value.discord_id}/${value.avatar}.${extension}?size=128`;
+}
+function discordPublicBadgeMarkup(flags, visible = true) {
+  if (!visible) return "";
+  const numericFlags = Number(flags) || 0;
+  return DISCORD_PUBLIC_BADGE_DEFINITIONS
+    .filter((badge) => (numericFlags & badge.bit) === badge.bit)
+    .map((badge) => `<span class="discord-badge" title="${escapeHtml(badge.label)}">${escapeHtml(badge.short)}</span>`)
+    .join("");
+}
+function discordActivityMarkup(presence, visible = true) {
+  if (!visible) return '<div class="discord-widget-activity" data-discord-activity hidden></div>';
+  const activity = sanitizeDiscordPresence(presence).activities.find((item) => item.type !== 4);
+  if (!activity) return '<div class="discord-widget-activity" data-discord-activity hidden></div>';
+  const prefix = { 0: "Playing", 1: "Streaming", 2: "Listening to", 3: "Watching", 5: "Competing in" }[activity.type] || "Active on";
+  const detail = activity.details || activity.state;
+  return `<div class="discord-widget-activity" data-discord-activity><span>${escapeHtml(prefix)}</span><strong>${escapeHtml(activity.name)}</strong>${detail ? `<small>${escapeHtml(detail)}</small>` : ""}</div>`;
+}
+function discordCustomStatusEmojiMarkup(value) {
+  const emoji = String(value || "").trim();
+  const match = emoji.match(/^<a?:([a-zA-Z0-9_]{1,32}):(\d{16,22})>$/);
+  if (match) return `<img src="https://cdn.discordapp.com/emojis/${match[2]}.png?size=64" alt="${escapeHtml(match[1])}">`;
+  return emoji ? `<span>${escapeHtml(emoji)}</span>` : "";
+}
+function discordCustomStatusMarkup(connection, presence) {
+  const value = sanitizeDiscordConnection(connection);
+  const current = sanitizeDiscordPresence(presence);
+  const text = value.custom_idle_text || current.custom_status;
+  if (!text) return '<p class="discord-widget-custom-status" data-discord-custom-status hidden></p>';
+  return `<p class="discord-widget-custom-status" data-discord-custom-status>${discordCustomStatusEmojiMarkup(current.custom_status_emoji)}${escapeHtml(text)}</p>`;
+}
+function discordAvatarMarkup(connection, className = "", currentStatus = "offline") {
+  const value = sanitizeDiscordConnection(connection);
+  const image = discordAvatarUrl(value);
+  const initial = (value.global_name || value.username || "D").slice(0, 1).toUpperCase();
+  const status = discordStatusInfo(currentStatus);
+  return `<span class="discord-avatar ${escapeHtml(className)}">${image ? `<img src="${escapeHtml(image)}" alt="">` : `<span>${escapeHtml(initial)}</span>`}<i class="discord-status-dot ${status.className}" data-discord-status-dot></i></span>`;
+}
+function discordWidgetMarkup(connection, presence = {}) {
+  const value = sanitizeDiscordConnection(connection);
+  if (!value.discord_id || !value.show_widget) return "";
+  const current = sanitizeDiscordPresence(presence);
+  const status = value.show_status ? discordStatusInfo(current.status) : discordStatusInfo("offline");
+  const displayName = value.global_name || value.username || "Discord user";
+  const badges = discordPublicBadgeMarkup(value.public_flags, value.show_badges);
+  const guildTag = value.show_guild_tag && value.primary_guild_tag ? `<span class="discord-guild-tag">${icon("discord")}${escapeHtml(value.primary_guild_tag)}</span>` : "";
+  return `<section class="discord-profile-widget" data-discord-widget data-discord-id="${escapeHtml(value.discord_id)}" data-discord-show-status="${value.show_status}" data-discord-show-activity="${value.show_activity}" data-discord-custom-idle="${escapeHtml(value.custom_idle_text)}"><div class="discord-widget-top"><a class="discord-widget-identity" href="https://discord.com/users/${escapeHtml(value.discord_id)}" target="_blank" rel="noopener noreferrer">${discordAvatarMarkup(value, "discord-widget-avatar", status.className)}<span><strong>${escapeHtml(displayName)}</strong><small>@${escapeHtml(value.username || value.discord_id)}</small></span></a>${guildTag}</div>${value.show_status ? `<p class="discord-widget-status" data-discord-status><i class="discord-status-dot ${status.className}" data-discord-status-dot></i><span data-discord-status-label>${escapeHtml(status.label)}</span></p>` : ""}${discordActivityMarkup(current, value.show_activity)}${discordCustomStatusMarkup(value, current)}${badges ? `<div class="discord-widget-badges" data-discord-badges>${badges}</div>` : ""}</section>`;
+}
+function discordDashboardPanel() {
+  return `<section data-tab-panel="discord" hidden><div class="panel-heading"><div><span class="panel-index">DISCORD</span><h2>Discord profile</h2><p>Connect Discord to show your identity, live presence and activity.</p></div><span class="discord-panel-badge">LIVE</span></div><div class="discord-connect-state" data-discord-connect-state><div class="discord-connect-card"><div class="discord-connect-icon">${icon("discord")}</div><div><strong>Show your Discord profile</strong><p>Presence is synced by the sqezen Discord bot after you join the community server.</p></div><button class="button button-small button-primary" data-discord-connect type="button">${icon("discord")} Connect Discord</button></div></div><div class="discord-account-state" data-discord-account-state hidden></div><p class="discord-panel-status" data-discord-panel-status role="status" aria-live="polite"></p></section>`;
+}
 function badgeAdminPanel() {
   return `<section data-tab-panel="badge-admin" data-badge-admin-panel hidden><div class="panel-heading"><div><span class="panel-index">ADMIN / BADGES</span><h2>Manage profile badges</h2><p>Find a profile by username and grant or revoke badges.</p></div><span class="badge-admin-role">ADMIN</span></div><div class="badge-admin-search"><label class="field-label">Username<input data-badge-admin-username type="text" inputmode="text" autocomplete="off" maxlength="24" pattern="[a-z0-9_]{3,24}" placeholder="e.g. sqezen"></label><button class="button button-small button-primary" data-badge-admin-search type="button">Search profile</button></div><p class="badge-admin-status" data-badge-admin-status role="status" aria-live="polite">Search for a username to manage its badges.</p><div class="badge-admin-result" data-badge-admin-result hidden></div></section>`;
 }
@@ -497,6 +618,8 @@ dashboard = () => {
 };
 const baseDashboardWithoutIntroDecoration = dashboard;
 dashboard = () => baseDashboardWithoutIntroDecoration().replace(/<span class="intro-orb">[\s\S]*?<\/span>/, "");
+const baseDashboardWithDiscordPanel = dashboard;
+dashboard = () => baseDashboardWithDiscordPanel().replace('<section data-tab-panel="account" hidden>', `${discordDashboardPanel()}<section data-tab-panel="account" hidden>`);
 function workspaceTabButton(tab, label, iconName) {
   const linkCount = tab === "links" ? '<span id="links-count" hidden aria-hidden="true"></span>' : "";
   return `<button class="sidebar-item${tab === "identity" ? " is-active" : ""}" data-dashboard-tab="${tab}" role="tab" type="button" aria-selected="${tab === "identity"}" aria-controls="dashboard-panel-${tab}">${icon(iconName)}<span>${label}</span>${linkCount}</button>`;
@@ -534,6 +657,7 @@ dashboard = () => {
       workspaceTabButton("assets", "Twoja strona", "sparkle"),
       workspaceTabButton("embed-builder", "Kreator embedu", "link"),
       workspaceTabButton("cursor-effects", "Personalizacja kursora", "sparkle"),
+      workspaceTabButton("discord", "Profil Discord", "discord"),
       workspaceTabButton("account", "Konto", "settings"),
       '<button class="sidebar-item" data-dashboard-tab="profile" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
       '<button class="sidebar-item" data-dashboard-tab="appearance" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
@@ -1467,10 +1591,11 @@ const DASHBOARD_WORKSPACE_TABS = Object.freeze({
   assets: { panel: "assets", label: "Twoja strona", eyebrow: "SQEZEN / YOUR SITE", title: "Dopracuj swoją stronę.", subtitle: "Zarządzaj tłem, audio, avatarem i własnym kursorem." },
   "embed-builder": { panel: "embed", label: "Kreator embedu", eyebrow: "SQEZEN / EMBED BUILDER", title: "Zbuduj swój embed.", subtitle: "Wybierz zwykły albo dynamiczny wariant i ustaw jego wygląd." },
   "cursor-effects": { panel: "cursor-effects", label: "Personalizacja kursora", eyebrow: "SQEZEN / CURSOR PERSONALIZATION", title: "Spersonalizuj swój kursor.", subtitle: "Wybierz cząsteczki i ich kolor dla odwiedzających Twój profil." },
+  discord: { panel: "discord", label: "Profil Discord", eyebrow: "SQEZEN / DISCORD PROFILE", title: "Pokaż swój Discord.", subtitle: "Połącz konto, aby wyświetlać status i aktywność na profilu." },
   account: { panel: "account", label: "Konto", eyebrow: "SQEZEN / ACCOUNT", title: "Konto i adres.", subtitle: "Sprawdź e-mail i skopiuj publiczny adres profilu." },
   "badge-admin": { panel: "badge-admin", label: "Odznaki", eyebrow: "SQEZEN / BADGES", title: "Zarządzaj odznakami.", subtitle: "Przyznawaj i porządkuj odznaki profili." }
 });
-const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "embed-builder", "standard-embed": "embed-builder", "dynamic-embed": "embed-builder", "color-tone": "profile-card", "layout-details": "profile-card", "cursor-color": "cursor-effects" });
+const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "embed-builder", "standard-embed": "embed-builder", "dynamic-embed": "embed-builder", "color-tone": "profile-card", "layout-details": "profile-card", "cursor-color": "cursor-effects", "discord-profile": "discord" });
 const baseWireDashboardWithWorkspaceTabs = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboardWithWorkspaceTabs();
@@ -1554,6 +1679,201 @@ wireDashboard = async function () {
     });
   });
   setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "identity");
+};
+function discordFunctionErrorText(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  if (message.includes("not configured") || message.includes("function not found") || message.includes("404")) return "Discord integration is not configured yet.";
+  if (message.includes("already linked") || message.includes("already connected")) return "This Discord account is already connected to another sqezen profile.";
+  if (message.includes("cancel")) return "Discord connection was cancelled.";
+  if (message.includes("expired") || message.includes("invalid state")) return "The Discord connection expired. Please try again.";
+  if (message.includes("join") || message.includes("guild")) return "Join the sqezen Discord server to enable live presence.";
+  return "Could not connect to Discord. Try again in a moment.";
+}
+async function invokeDiscordFunction(action, payload = {}) {
+  if (!supabaseClient?.functions) throw new Error("Discord integration is not configured yet.");
+  const { data, error } = await supabaseClient.functions.invoke("discord-oauth", { body: { action, ...payload } });
+  if (error) {
+    let details = data?.error && typeof data.error === "object" ? data.error : {};
+    const response = error.context;
+    if (!details.message && response && typeof response.clone === "function") {
+      const responseData = await response.clone().json().catch(() => null);
+      details = responseData?.error && typeof responseData.error === "object" ? responseData.error : details;
+    }
+    const failure = new Error(String(details.message || error.message || "Discord request failed"));
+    failure.code = details.code;
+    throw failure;
+  }
+  if (!data || data.error) {
+    const details = data?.error && typeof data.error === "object" ? data.error : {};
+    const failure = new Error(String(details.message || data?.error || "Discord request failed"));
+    failure.code = details.code || data?.code;
+    throw failure;
+  }
+  return data;
+}
+function discordDashboardAccountMarkup(connection, presence) {
+  const value = sanitizeDiscordConnection(connection);
+  const current = sanitizeDiscordPresence(presence);
+  const status = value.show_status ? discordStatusInfo(current.status) : discordStatusInfo("offline");
+  const displayName = value.global_name || value.username || "Discord user";
+  const avatar = discordAvatarMarkup(value, "discord-dashboard-avatar", status.className);
+  const guildTag = value.primary_guild_tag ? `<span class="discord-guild-tag">${icon("discord")}${escapeHtml(value.primary_guild_tag)}</span>` : "";
+  return `<div class="discord-account-card"><div class="discord-account-head"><div class="discord-dashboard-identity">${avatar}<div><strong>${escapeHtml(displayName)}</strong><small>@${escapeHtml(value.username || value.discord_id)}</small></div></div>${guildTag}</div>${value.show_status ? `<p class="discord-widget-status discord-dashboard-status"><i class="discord-status-dot ${status.className}" data-discord-status-dot></i><span>${escapeHtml(status.label)}</span></p>` : `<p class="discord-dashboard-muted">Presence is hidden from your public profile.</p>`}${discordActivityMarkup(current, value.show_activity)}${discordCustomStatusMarkup(value, current)}<div class="discord-settings-grid"><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_widget"${value.show_widget ? " checked" : ""}><span class="toggle"></span><span><b>Show Discord widget</b><small>Display this card on your public profile.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_status"${value.show_status ? " checked" : ""}><span class="toggle"></span><span><b>Show presence</b><small>Online, idle or do not disturb.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_activity"${value.show_activity ? " checked" : ""}><span class="toggle"></span><span><b>Show activity</b><small>Playing, listening or watching.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_badges"${value.show_badges ? " checked" : ""}><span class="toggle"></span><span><b>Show badges</b><small>Public Discord account badges.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_guild_tag"${value.show_guild_tag ? " checked" : ""}><span class="toggle"></span><span><b>Show guild tag</b><small>Display your primary Discord tag.</small></span></label></div><label class="field-label discord-custom-idle-field">Custom idle text<input type="text" maxlength="80" data-discord-setting="custom_idle_text" value="${escapeHtml(value.custom_idle_text)}" placeholder="e.g. He is a god of his universum"><small>This is a sqezen label. Discord custom status is read-only.</small></label><div class="discord-action-row"><button class="button button-small button-dark" data-discord-refresh type="button">Refresh presence</button><button class="button button-small button-dark" data-discord-disconnect type="button">Disconnect Discord</button></div></div>`;
+}
+async function wireDiscordDashboard() {
+  const panel = document.querySelector('[data-tab-panel="discord"]');
+  const connectState = panel?.querySelector("[data-discord-connect-state]");
+  const accountState = panel?.querySelector("[data-discord-account-state]");
+  const connectButton = panel?.querySelector("[data-discord-connect]");
+  const status = panel?.querySelector("[data-discord-panel-status]");
+  if (!panel || !connectState || !accountState || !connectButton || panel.dataset.discordBound === "true") return;
+  panel.dataset.discordBound = "true";
+  let currentConnection = null;
+  let requestId = 0;
+  let settingsTimer = 0;
+  const setStatus = (message, error = false) => {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle("is-error", error);
+  };
+  const render = (payload = {}) => {
+    currentConnection = payload.connection ? sanitizeDiscordConnection(payload.connection) : null;
+    if (!currentConnection?.discord_id) {
+      connectState.hidden = false;
+      accountState.hidden = true;
+      accountState.innerHTML = "";
+      return;
+    }
+    connectState.hidden = true;
+    accountState.hidden = false;
+    accountState.innerHTML = discordDashboardAccountMarkup(currentConnection, payload.presence);
+  };
+  const load = async (quiet = false) => {
+    const request = ++requestId;
+    if (!quiet) setStatus("Checking Discord connection...");
+    try {
+      const payload = await invokeDiscordFunction("get");
+      if (request !== requestId) return;
+      render(payload);
+      if (!quiet) setStatus(currentConnection ? "Discord connected." : "Connect Discord to start.");
+      return true;
+    } catch (error) {
+      if (request !== requestId) return;
+      console.error("Discord connection lookup failed", error);
+      render();
+      setStatus(discordFunctionErrorText(error), true);
+      return false;
+    }
+  };
+  const saveSettings = async () => {
+    if (!currentConnection) return;
+    const payload = {};
+    accountState.querySelectorAll("[data-discord-setting]").forEach((field) => {
+      payload[field.dataset.discordSetting] = field.type === "checkbox" ? field.checked : field.value;
+    });
+    setStatus("Saving Discord settings...");
+    try {
+      const result = await invokeDiscordFunction("settings", payload);
+      render(result);
+      setStatus("Discord settings saved.");
+    } catch (error) {
+      console.error("Discord settings update failed", error);
+      setStatus(discordFunctionErrorText(error), true);
+    }
+  };
+  connectButton.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    busy(connectButton, true, "Connecting...");
+    setStatus("Opening Discord...");
+    try {
+      const result = await invokeDiscordFunction("authorize");
+      const target = new URL(String(result.url || result.authorize_url || ""));
+      if (target.origin !== "https://discord.com" || target.pathname !== "/oauth2/authorize") throw new Error("Invalid Discord authorization URL");
+      window.location.assign(target.href);
+    } catch (error) {
+      console.error("Discord authorization failed", error);
+      busy(connectButton, false);
+      setStatus(discordFunctionErrorText(error), true);
+    }
+  });
+  accountState.addEventListener("input", (event) => {
+    const field = event.target.closest?.("[data-discord-setting]");
+    if (!field || field.type === "checkbox") return;
+    event.stopPropagation();
+    window.clearTimeout(settingsTimer);
+    settingsTimer = window.setTimeout(saveSettings, 500);
+  });
+  accountState.addEventListener("change", (event) => {
+    const field = event.target.closest?.("[data-discord-setting]");
+    if (!field) return;
+    event.stopPropagation();
+    if (field.type === "checkbox") saveSettings();
+  });
+  accountState.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    if (event.target.closest("[data-discord-refresh]")) return load();
+    const disconnectButton = event.target.closest("[data-discord-disconnect]");
+    if (!disconnectButton || !window.confirm("Disconnect your Discord profile from sqezen?")) return;
+    busy(disconnectButton, true, "Disconnecting...");
+    setStatus("Disconnecting Discord...");
+    try {
+      await invokeDiscordFunction("disconnect");
+      render();
+      setStatus("Discord disconnected.");
+    } catch (error) {
+      console.error("Discord disconnect failed", error);
+      busy(disconnectButton, false);
+      setStatus(discordFunctionErrorText(error), true);
+    }
+  });
+  const callbackParams = new URLSearchParams(location.search);
+  const callbackState = callbackParams.get("discord");
+  const oauthCode = callbackParams.get("code");
+  const oauthState = callbackParams.get("state");
+  const oauthError = callbackParams.get("error");
+  let callbackMessage = "";
+  let callbackFailed = false;
+  if (callbackState || oauthCode || oauthState || oauthError) {
+    history.replaceState(null, "", location.pathname || "/dashboard");
+    document.querySelector('[data-dashboard-tab="discord"]')?.click();
+    if (oauthError) {
+      callbackMessage = "Discord connection was cancelled.";
+      callbackFailed = true;
+    } else if (oauthCode || oauthState) {
+      if (!oauthCode || !oauthState) {
+        callbackMessage = "Discord connection failed. Please try again.";
+        callbackFailed = true;
+      } else {
+        setStatus("Finishing Discord connection...");
+        try {
+          const result = await invokeDiscordFunction("authorize", { code: oauthCode, state: oauthState });
+          render(result);
+          callbackMessage = "Discord connected. Waiting for the first presence update...";
+        } catch (error) {
+          console.error("Discord callback failed", error);
+          callbackMessage = discordFunctionErrorText(error);
+          callbackFailed = true;
+        }
+      }
+    } else {
+      callbackMessage = callbackState === "connected"
+        ? "Discord connected. Waiting for the first presence update..."
+        : "Discord connection failed. Please try again.";
+      callbackFailed = callbackState !== "connected";
+    }
+  }
+  const loaded = await load(true);
+  if (callbackMessage && (loaded || callbackFailed)) setStatus(callbackMessage, callbackFailed);
+  window.setInterval(() => {
+    if (!document.contains(panel)) return;
+    if (currentConnection) load(true);
+  }, 30000);
+}
+const baseWireDashboardWithDiscord = wireDashboard;
+wireDashboard = async function () {
+  await baseWireDashboardWithDiscord();
+  await wireDiscordDashboard();
 };
 const baseWirePublic = wirePublic;
 wirePublic = function () {
@@ -2257,6 +2577,63 @@ publicProfile = async function (username) {
     .replace('class="public-page ', 'class="public-page standard-embed-editor-page is-embed-editor ')
     .replace(' style="', ` data-embed-editor="true" data-embed-username="${escapeHtml(username)}" style="`)
     .replace('<div class="public-shade"></div>', `${dynamicEmbedEditorToolbar().replace("Arrange your embed", "Arrange your standard embed").replace("Drag or resize profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.", "Drag or resize the profile card to place it anywhere on the page.")}<div class="public-shade"></div>`);
+};
+const basePublicProfileWithDiscord = publicProfile;
+publicProfile = async function (username) {
+  const markup = await basePublicProfileWithDiscord(username);
+  const params = new URLSearchParams(location.search);
+  if (!markup.includes('class="public-page ') || params.get("edit") === "1") return markup;
+  const { data: profile, error: profileError } = await supabaseClient.from("profiles").select("id").eq("username", username).maybeSingle();
+  if (profileError || !profile?.id) return markup;
+  const { data: connection, error: connectionError } = await supabaseClient.from("discord_connections").select("discord_id,username,global_name,avatar,public_flags,primary_guild_tag,show_widget,show_status,show_activity,show_badges,show_guild_tag,custom_idle_text").eq("profile_id", profile.id).maybeSingle();
+  if (connectionError || !connection) return markup;
+  const value = sanitizeDiscordConnection(connection);
+  if (!value.discord_id || !value.show_widget) return markup;
+  const { data: presence } = await supabaseClient.from("discord_presence").select("status,custom_status,custom_status_emoji,activities").eq("discord_id", value.discord_id).maybeSingle();
+  const widget = discordWidgetMarkup(value, presence);
+  return widget ? markup.replace("</main>", `${widget}</main>`) : markup;
+};
+const baseWirePublicWithDiscord = wirePublic;
+wirePublic = function () {
+  baseWirePublicWithDiscord();
+  const widget = document.querySelector("[data-discord-widget]");
+  if (!widget || widget.dataset.discordBound === "true") return;
+  widget.dataset.discordBound = "true";
+  const discordId = widget.dataset.discordId;
+  const showStatus = widget.dataset.discordShowStatus === "true";
+  const showActivity = widget.dataset.discordShowActivity === "true";
+  const refresh = async () => {
+    if (!discordId) return;
+    const { data, error } = await supabaseClient.from("discord_presence").select("status,custom_status,custom_status_emoji,activities").eq("discord_id", discordId).maybeSingle();
+    if (error) {
+      console.error("Discord presence refresh failed", error);
+      return;
+    }
+    const presence = sanitizeDiscordPresence(data);
+    const status = showStatus ? discordStatusInfo(presence.status) : discordStatusInfo("offline");
+    widget.querySelectorAll("[data-discord-status-dot]").forEach((dot) => {
+      dot.classList.remove("online", "idle", "dnd", "offline");
+      dot.classList.add(status.className);
+    });
+    const label = widget.querySelector("[data-discord-status-label]");
+    if (label) label.textContent = status.label;
+    const activityNode = widget.querySelector("[data-discord-activity]");
+    if (activityNode) activityNode.outerHTML = discordActivityMarkup(presence, showActivity);
+    const customNode = widget.querySelector("[data-discord-custom-status]");
+    if (customNode) {
+      const customText = widget.dataset.discordCustomIdle || presence.custom_status;
+      customNode.hidden = !customText;
+      customNode.innerHTML = customText ? `${discordCustomStatusEmojiMarkup(presence.custom_status_emoji)}${escapeHtml(customText)}` : "";
+    }
+  };
+  refresh();
+  const timer = window.setInterval(() => {
+    if (!document.contains(widget)) {
+      window.clearInterval(timer);
+      return;
+    }
+    refresh();
+  }, 30000);
 };
 const baseRender = render;
 render = async function () { const path = currentPath(); if (!["/login", "/register", "/register/code"].includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; document.title = `${path === "/login" ? "Sign in" : path === "/register" ? "Create an account" : "Confirm your email"} — sqezen`; const app = document.querySelector("#app"); const kind = path === "/register/code" ? "code" : path.slice(1); app.innerHTML = typeof window.auth === "function" ? window.auth(kind) : auth(kind); await wireAuth(); };
