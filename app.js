@@ -31,7 +31,7 @@ const icons = {
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
 
-const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioTitle: "", audioArtist: "", audioLyrics: "", cursorUrl: "", cursorGlowColor: "#626262", cursorEffect: "none", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", defaultEmbed: "standard", dynamicEmbedPositions: { profile: { x: 50, y: 35, free: true }, connections: { x: 78, y: 55, free: true }, badges: { x: 75, y: 82, free: true }, audio: { x: 25, y: 82, free: true }, lyrics: { x: 76, y: 27, free: true } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#626262", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
+const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioTitle: "", audioArtist: "", audioLyrics: "", cursorUrl: "", cursorGlowColor: "#626262", cursorEffect: "none", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", defaultEmbed: "standard", standardEmbedPosition: { x: 50, y: 50, free: true }, dynamicEmbedPositions: { profile: { x: 50, y: 35, free: true }, connections: { x: 78, y: 55, free: true }, badges: { x: 75, y: 82, free: true }, audio: { x: 25, y: 82, free: true }, lyrics: { x: 76, y: 27, free: true } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#626262", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
 
 function icon(name) { return icons[name] || icons.link; }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char])); }
@@ -90,6 +90,7 @@ function bool(value, fallback) { return typeof value === "boolean" ? value : fal
 function hexRgb(value) { const hex = safeColor(value).slice(1); return `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`; }
 function brandMarkup(className = "brand-wordmark") { return `<img class="${escapeHtml(className)}" src="/sqezen-logo-chrome.png" alt="sqezen">`; }
 function sanitizeDynamicEmbedPositions(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; const defaults = { profile: { x: 50, y: 35 }, connections: { x: 78, y: 55 }, badges: { x: 75, y: 82 }, audio: { x: 25, y: 82 }, lyrics: { x: 76, y: 27 } }; const legacyScale = { profile: { x: 0.5, y: 0.5 }, connections: { x: 0.5, y: 0.5 }, badges: { x: 0.5, y: 0.5 }, audio: { x: 0.5, y: 0.4 }, lyrics: { x: 0.5, y: 0.5 } }; const position = (candidate, key) => { const fallback = defaults[key]; if (candidate?.free === true) return { x: safeNumber(candidate.x, 0, 100, fallback.x), y: safeNumber(candidate.y, 0, 100, fallback.y), free: true }; const scale = legacyScale[key]; return { x: safeNumber(fallback.x + safeNumber(candidate?.x, -35, 35, 0) * scale.x, 0, 100, fallback.x), y: safeNumber(fallback.y + safeNumber(candidate?.y, -30, 30, 0) * scale.y, 0, 100, fallback.y), free: true }; }; return { profile: position(value.profile, "profile"), connections: position(value.connections, "connections"), badges: position(value.badges, "badges"), audio: position(value.audio, "audio"), lyrics: position(value.lyrics, "lyrics") }; }
+function sanitizeStandardEmbedPosition(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { x: safeNumber(value.x, 0, 100, 50), y: safeNumber(value.y, 0, 100, 50), free: true }; }
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), audioTitle: String(value.audioTitle || "").trim().slice(0, 80), audioArtist: String(value.audioArtist || "").trim().slice(0, 60), audioLyrics: String(value.audioLyrics || "").trim().slice(0, 12000), cursorUrl: safeMediaUrl(value.cursorUrl), cursorGlowColor: profileAccentColor(themeColor(value.cursorGlowColor)), cursorEffect: choice(value.cursorEffect, CURSOR_EFFECT_VALUES, "none"), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: profileAccentColor(migrateColor(value.buttonColor, "#ffffff", "#626262")), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
@@ -187,7 +188,7 @@ sanitizeCustomization = (raw = {}) => {
   lastProfileParticles = NAME_PARTICLE_VALUES.includes(nameParticles) ? nameParticles : "none";
   lastProfileBadges = [];
   const defaultEmbed = String(raw?.defaultEmbed || "");
-  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, defaultEmbed: choice(defaultEmbed, ["standard", "dynamic"], "standard"), dynamicEmbedPositions: sanitizeDynamicEmbedPositions(raw?.dynamicEmbedPositions) };
+  return { ...value, usernameEffect: NAME_EFFECT_VALUES.includes(normalizedUsernameEffect) ? normalizedUsernameEffect : value.usernameEffect, nameParticles: lastProfileParticles, defaultEmbed: choice(defaultEmbed, ["standard", "dynamic"], "standard"), standardEmbedPosition: sanitizeStandardEmbedPosition(raw?.standardEmbedPosition), dynamicEmbedPositions: sanitizeDynamicEmbedPositions(raw?.dynamicEmbedPositions) };
 };
 const baseReadCustomization = readCustomization;
 readCustomization = (form) => {
@@ -213,6 +214,10 @@ const baseReadDynamicEmbedCustomization = readCustomization;
 readCustomization = (form) => { let positions = {}; try { positions = JSON.parse(String(form?.elements.dynamic_embed_positions?.value || "{}")); } catch {} return { ...baseReadDynamicEmbedCustomization(form), dynamicEmbedPositions: sanitizeDynamicEmbedPositions(positions) }; };
 const baseSetDynamicEmbedCustomization = setCustomization;
 setCustomization = (form, raw) => { const config = baseSetDynamicEmbedCustomization(form, raw); if (form?.elements.dynamic_embed_positions) form.elements.dynamic_embed_positions.value = JSON.stringify(config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions()); return config; };
+const baseReadStandardEmbedCustomization = readCustomization;
+readCustomization = (form) => { let position = {}; try { position = JSON.parse(String(form?.elements.standard_embed_position?.value || "{}")); } catch {} return { ...baseReadStandardEmbedCustomization(form), standardEmbedPosition: sanitizeStandardEmbedPosition(position) }; };
+const baseSetStandardEmbedCustomization = setCustomization;
+setCustomization = (form, raw) => { const config = baseSetStandardEmbedCustomization(form, raw); if (form?.elements.standard_embed_position) form.elements.standard_embed_position.value = JSON.stringify(config.standardEmbedPosition || sanitizeStandardEmbedPosition()); return config; };
 function feedback(message, error = false) { const node = document.querySelector("#form-feedback"); if (!node) return; node.textContent = message; node.className = `form-feedback ${message ? error ? "is-error" : "is-success" : ""}`; }
 function busy(button, value, label = "Pracuję…") { if (!button) return; if (value) { button.dataset.original = button.innerHTML; button.disabled = true; button.innerHTML = `<span class="button-spinner"></span>${escapeHtml(label)}`; } else { button.disabled = false; button.innerHTML = button.dataset.original || button.innerHTML; } }
 function errorText(error) { const message = String(error?.message || error || "").toLowerCase(); if (message.includes("invalid login")) return "Nieprawidłowy e-mail lub hasło."; if (message.includes("already registered")) return "To konto już istnieje. Zaloguj się."; if (message.includes("rate limit")) return "Za dużo prób. Odczekaj chwilę."; if (message.includes("expired")) return "Kod wygasł. Wyślij nowy."; if (message.includes("invalid token") || message.includes("otp is invalid")) return "Kod jest nieprawidłowy."; if (message.includes("duplicate") || message.includes("unique")) return "Ta nazwa użytkownika jest już zajęta."; if (message.includes("fetch") || message.includes("network")) return "Nie udało się połączyć z serwerem."; return "Coś poszło nie tak. Spróbuj ponownie."; }
@@ -380,7 +385,7 @@ async function wireDashboard() { const form = document.querySelector("#profile-f
 function updateLinkNumbers() { document.querySelectorAll("[data-link-item]").forEach((item, index) => { item.querySelector(".link-number").textContent = String(index + 1).padStart(2, "0"); item.querySelector(".link-item-name").textContent = `Link ${index + 1}`; }); }
 document.addEventListener("input", (event) => { const field = event.target; if (!field.matches?.("#profile-form input[type=range]")) return; const output = document.querySelector(`[data-output-for="${field.name}"]`); if (output) output.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; if (syncPreviewRange(field)) return; renderPreview(); });
 function publicLink(link) { const href = safeUrl(link.url); if (!href) return ""; return `<a class="profile-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"><span class="profile-link-icon">${icon(profileIcon(link))}</span><span class="profile-link-title">${escapeHtml(String(link.title || "Link").trim() || "Link")}</span><span class="profile-link-arrow">${icon("arrowUp")}</span></a>`; }
-async function publicProfile(username) { const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle(); if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Nie udało się wczytać profilu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`); if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true }); const config = sanitizeCustomization(data.customization); const media = config.backgroundMediaUrl; const mediaMarkup = media ? (/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : ""; const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary; const style = [`--profile-accent:${profileAccentColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";"); const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`; return `<div class="public-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div>${config.showBranding ? `<a class="public-brand" href="/">${brandMarkup("public-brand-logo")}</a>` : ""}<main class="public-main"><section class="public-card"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><div class="public-tools">${config.audioUrl ? `<button class="icon-button audio-toggle" data-audio-toggle type="button" aria-label="Odtwórz audio">${icon("sparkle")}</button><audio data-profile-audio preload="none" src="${escapeHtml(config.audioUrl)}"></audio>` : ""}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div></div>${avatar(data)}${config.showHandle ? `<p class="public-handle">@${escapeHtml(data.username)}</p>` : ""}<h1>${escapeHtml(data.display_name || data.username)}</h1>${config.location ? `<p class="public-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links">${(links || []).map(publicLink).filter(Boolean).join("") || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`}</div>${config.showBranding ? `<div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <b>sqezen</b></span></div>` : ""}</section>${config.showBranding ? `<a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a>` : ""}</main></div>`; }
+async function publicProfile(username) { const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle(); if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Nie udało się wczytać profilu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`); if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true }); const config = sanitizeCustomization(data.customization); const media = config.backgroundMediaUrl; const mediaMarkup = media ? (/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : ""; const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary; const style = [`--profile-accent:${profileAccentColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";"); const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`; return `<div class="public-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div>${config.showBranding ? `<a class="public-brand" href="/">${brandMarkup("public-brand-logo")}</a>` : ""}<main class="public-main"><section class="public-card" data-standard-tile="profile" style="--standard-x:${config.standardEmbedPosition.x};--standard-y:${config.standardEmbedPosition.y}"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><div class="public-tools">${config.audioUrl ? `<button class="icon-button audio-toggle" data-audio-toggle type="button" aria-label="Odtwórz audio">${icon("sparkle")}</button><audio data-profile-audio preload="none" src="${escapeHtml(config.audioUrl)}"></audio>` : ""}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div></div>${avatar(data)}${config.showHandle ? `<p class="public-handle">@${escapeHtml(data.username)}</p>` : ""}<h1>${escapeHtml(data.display_name || data.username)}</h1>${config.location ? `<p class="public-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links">${(links || []).map(publicLink).filter(Boolean).join("") || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`}</div>${config.showBranding ? `<div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <b>sqezen</b></span></div>` : ""}</section>${config.showBranding ? `<a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a>` : ""}</main></div>`; }
 function wirePublic() { const copy = document.querySelector("[data-copy-profile]"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(copy.dataset.copyProfile); copy.innerHTML = icon("check"); setTimeout(() => { copy.innerHTML = icon("copy"); }, 1400); } catch {} }); const page = document.querySelector(".public-page"); const cursor = page?.dataset.customCursor; if (cursor) page.style.cursor = `url("${cursor.replace(/["\\\n\r]/g, "")}"),auto`; const audio = document.querySelector("[data-profile-audio]"); const toggle = document.querySelector("[data-audio-toggle]"); const volume = document.querySelector("[data-audio-volume]"); const label = document.querySelector("[data-audio-label]"); if (audio && toggle) { const updateAudioUi = () => { const playing = !audio.paused; toggle.classList.toggle("is-playing", playing); toggle.setAttribute("aria-label", playing ? "Sound on" : "Sound off"); if (label) label.textContent = playing ? "SOUND ON" : "SOUND OFF"; if (volume && document.activeElement !== volume) volume.value = String(audio.volume); }; audio.volume = Number(volume?.value || 0.72); toggle.addEventListener("click", async () => { try { if (audio.paused) await audio.play(); else audio.pause(); } catch {} updateAudioUi(); }); volume?.addEventListener("input", () => { audio.volume = Number(volume.value); updateAudioUi(); }); audio.addEventListener("play", updateAudioUi); audio.addEventListener("pause", updateAudioUi); audio.addEventListener("volumechange", updateAudioUi); updateAudioUi(); audio.play().then(updateAudioUi).catch(updateAudioUi); } }
 async function render() { if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } const path = currentPath(); document.body.dataset.route = path; document.title = path === "/" ? "sqezen — your space online" : `${path.slice(1).split("/")[0] || "sqezen"} — sqezen`; const app = document.querySelector("#app"); try { if (path === "/") app.innerHTML = landingMinimal(); else if (path === "/login") app.innerHTML = auth("login"); else if (path === "/register") app.innerHTML = auth("register"); else if (path === "/register/code") app.innerHTML = auth("code"); else if (path === "/dashboard") app.innerHTML = dashboard(); else app.innerHTML = await publicProfile(path.slice(1).split("/")[0].toLowerCase()); await wireAuth(); await wireDashboard(); setupCustomizationCarousel(); wirePublic(); } catch (error) { console.error(error); app.innerHTML = layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Coś poszło nie tak.</h1><p>Odśwież stronę i spróbuj ponownie.</p></main>`); } }
 const baseDashboardMarkup = dashboard;
@@ -400,9 +405,9 @@ dashboard = () => baseDashboardWithEmbedBuilder().replace('<span>Embed</span><kb
 const baseDashboardWithoutEmbedCode = dashboard;
 dashboard = () => baseDashboardWithoutEmbedCode().replace('<label class="field-label">Kod iframe<textarea id="embed-code" rows="3" readonly></textarea><small>Wybierz wariant powyżej, a potem wklej ten kod na swoją stronę.</small></label>', '<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>').replace('<div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">', '<div class="embed-mode-heading"><span>Rodzaj embedu</span><small>Wybierz, jak ma wyglądać osadzony profil.</small></div><div class="embed-mode-picker" role="group" aria-label="Wybierz typ embedu">');
 const baseDashboardWithEmbedDefaults = dashboard;
-dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><input id="dynamic-embed-positions" name="dynamic_embed_positions" type="hidden" value="{}"><div class="embed-mode-heading">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
+dashboard = () => baseDashboardWithEmbedDefaults().replace('<button class="button button-small button-ghost" id="copy-embed-code" type="button">Kopiuj kod</button>', '').replace('<textarea id="embed-code" class="embed-code-value" aria-hidden="true" tabindex="-1" readonly></textarea>', '').replace('<div class="embed-mode-heading">', '<input id="default-embed" name="default_embed" type="hidden" value="standard"><input id="standard-embed-position" name="standard_embed_position" type="hidden" value="{}"><input id="dynamic-embed-positions" name="dynamic_embed_positions" type="hidden" value="{}"><div class="embed-mode-heading">').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i skopiuj gotowy kod.</p>', '<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>');
 const baseDashboardWithoutLiveEmbedPreview = dashboard;
-dashboard = () => baseDashboardWithoutLiveEmbedPreview().replace('<div class="embed-code-card"><div class="embed-preview-shell"><iframe id="embed-preview" title="Podgląd dynamicznego embedu" loading="lazy"></iframe></div></div>', '').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>', '<h2>Embed Builder</h2><p>Wybierz wariant embedu i ustaw jego układ.</p>');
+dashboard = () => baseDashboardWithoutLiveEmbedPreview().replace('<div class="embed-code-card"><div class="embed-preview-shell"><iframe id="embed-preview" title="Podgląd dynamicznego embedu" loading="lazy"></iframe></div></div>', '').replace('<h2>Embed Builder</h2><p>Wybierz zwykły albo dynamiczny wariant i zobacz podgląd.</p>', '<h2>Embed Builder</h2><p>Wybierz wariant embedu i ustaw jego układ.</p>').replace('</button></div></section><section data-tab-panel="account"', '</button></div><div class="embed-position-action"><div><strong>Pozycja embedu</strong><small data-embed-position-label>Otwórz edytor w pełnym rozmiarze i przeciągnij wybrany wariant.</small></div><button class="button button-small button-primary" data-embed-fullscreen-position type="button">Edytuj pozycję</button></div></section><section data-tab-panel="account"');
 const baseDashboardWithFlatSidebar = dashboard;
 dashboard = () => baseDashboardWithFlatSidebar().replace(/<div class="sidebar-brand">[\s\S]*?<\/div>/, '').replace('</nav><div class="sidebar-rule"></div><span class="sidebar-label">ACCOUNT</span>', '').replace('</button><div class="sidebar-account">', '</button></nav><div class="sidebar-account">');
 function profileAssetPreview() {
@@ -970,32 +975,35 @@ const baseWireDashboardWithFullscreenPositionEditor = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboardWithFullscreenPositionEditor();
   const form = document.querySelector("#profile-form");
-  const positionButton = document.querySelector("[data-embed-position-toggle]");
+  const positionButton = document.querySelector("[data-embed-fullscreen-position]");
   const positionLabel = document.querySelector("[data-embed-position-label]");
-  const positionInput = form?.elements.dynamic_embed_positions;
-  if (!form || !positionButton || !positionInput || positionButton.dataset.fullscreenBound === "true") return;
+  const dynamicPositionInput = form?.elements.dynamic_embed_positions;
+  const standardPositionInput = form?.elements.standard_embed_position;
+  if (!form || !positionButton || positionButton.dataset.fullscreenBound === "true") return;
   const replacement = positionButton.cloneNode(true);
   positionButton.replaceWith(replacement);
   replacement.dataset.fullscreenBound = "true";
   const currentMode = () => document.querySelector("[data-embed-mode].is-active")?.dataset.embedMode || "standard";
   const syncButton = () => {
     const dynamic = currentMode() === "dynamic";
-    replacement.disabled = !dynamic;
-    replacement.textContent = dynamic ? "Edytuj pozycje w pełnym wymiarze" : "Wybierz Dynamic embed";
-    if (positionLabel) positionLabel.textContent = dynamic ? "Otwórz pełnoekranowy edytor, aby ustawić układ elementów." : "Wybierz Dynamic embed, aby edytować pozycje elementów.";
+    replacement.disabled = false;
+    replacement.textContent = dynamic ? "Edytuj Dynamic w pełnym wymiarze" : "Edytuj Standard w pełnym wymiarze";
+    if (positionLabel) positionLabel.textContent = dynamic ? "Otwórz pełnoekranowy edytor, aby ustawić układ elementów." : "Otwórz pełnoekranowy edytor, aby ustawić pozycję karty profilu.";
   };
   const syncSavedPositions = () => {
     try {
-      const payload = JSON.parse(localStorage.getItem("sqezen_dynamic_embed_positions") || "null");
       const username = String(form.elements.username?.value || "").trim().toLowerCase();
-      if (payload?.username === username && payload.positions) positionInput.value = JSON.stringify(sanitizeDynamicEmbedPositions(payload.positions));
+      const dynamicPayload = JSON.parse(localStorage.getItem("sqezen_dynamic_embed_positions") || "null");
+      const standardPayload = JSON.parse(localStorage.getItem("sqezen_standard_embed_position") || "null");
+      if (dynamicPayload?.username === username && dynamicPayload.positions && dynamicPositionInput) dynamicPositionInput.value = JSON.stringify(sanitizeDynamicEmbedPositions(dynamicPayload.positions));
+      if (standardPayload?.username === username && standardPayload.position && standardPositionInput) standardPositionInput.value = JSON.stringify(sanitizeStandardEmbedPosition(standardPayload.position));
     } catch {}
   };
   replacement.addEventListener("click", () => {
-    if (currentMode() !== "dynamic") return feedback("Najpierw wybierz Dynamic embed.", true);
     const username = String(form.elements.username?.value || "").trim().toLowerCase();
     if (!username) return feedback("Najpierw ustaw nazwę użytkownika.", true);
-    const editorUrl = `${location.origin}/${encodeURIComponent(username)}?embed=1&edit=1`;
+    const embedMode = currentMode() === "dynamic" ? "1" : "0";
+    const editorUrl = `${location.origin}/${encodeURIComponent(username)}?embed=${embedMode}&edit=1`;
     const editorWindow = window.open(editorUrl, "_blank", "noopener,noreferrer");
     if (!editorWindow) window.location.href = editorUrl;
   });
@@ -1733,6 +1741,14 @@ function clampDynamicEmbedTilePosition(tile, main, position = {}) {
   const halfHeight = Math.min(50, (rect.height / Math.max(frame.height, 1)) * 50);
   return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true };
 }
+function clampStandardEmbedPosition(tile, main, position = {}) {
+  const frame = main?.getBoundingClientRect();
+  if (!frame) return sanitizeStandardEmbedPosition(position);
+  const rect = tile.getBoundingClientRect();
+  const halfWidth = Math.min(50, (rect.width / Math.max(frame.width, 1)) * 50);
+  const halfHeight = Math.min(50, (rect.height / Math.max(frame.height, 1)) * 50);
+  return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true };
+}
 function clampDynamicEmbedTiles(main) {
   if (!main) return;
   main.querySelectorAll("[data-dynamic-tile]").forEach((tile) => {
@@ -1865,6 +1881,104 @@ wirePublic = function () {
   main.addEventListener("pointercancel", (event) => {
     if (event.target.closest("[data-dynamic-tile]") && dirty) schedule();
   }, true);
+};
+const baseWirePublicWithStandardEmbedEditor = wirePublic;
+wirePublic = function () {
+  baseWirePublicWithStandardEmbedEditor();
+  const page = document.querySelector(".standard-embed-editor-page.is-embed-editor");
+  const main = page?.querySelector(".public-main");
+  const tile = main?.querySelector("[data-standard-tile]");
+  const saveButton = page?.querySelector("[data-embed-editor-save]");
+  const status = page?.querySelector("[data-embed-editor-status]");
+  if (!page || !main || !tile || !saveButton || page.dataset.standardEditorBound === "true") return;
+  page.dataset.standardEditorBound = "true";
+  const readPosition = () => sanitizeStandardEmbedPosition({
+    x: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--standard-x")),
+    y: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--standard-y"))
+  });
+  const applyPosition = (position) => {
+    tile.style.setProperty("--standard-x", String(position.x));
+    tile.style.setProperty("--standard-y", String(position.y));
+  };
+  const setStatus = (message, error = false) => {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle("is-error", error);
+  };
+  const clampPosition = (position) => clampStandardEmbedPosition(tile, main, position);
+  const clampTile = () => applyPosition(clampPosition(readPosition()));
+  let timer = 0;
+  let dirty = false;
+  const scheduleSave = () => {
+    window.clearTimeout(timer);
+    setStatus("Changes save automatically");
+    timer = window.setTimeout(() => {
+      timer = 0;
+      if (dirty) saveButton.click();
+      dirty = false;
+    }, 700);
+  };
+  tile.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || event.target.closest("button,input,a,select,textarea")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const start = readPosition();
+    const frame = main.getBoundingClientRect();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    let moved = false;
+    tile.classList.add("is-dragging");
+    const onPointerMove = (moveEvent) => {
+      moved = true;
+      dirty = true;
+      const position = clampPosition({
+        x: start.x + ((moveEvent.clientX - startX) / Math.max(frame.width, 1)) * 100,
+        y: start.y + ((moveEvent.clientY - startY) / Math.max(frame.height, 1)) * 100
+      });
+      applyPosition(position);
+      setStatus("Unsaved layout");
+    };
+    const finish = () => {
+      tile.classList.remove("is-dragging");
+      tile.removeEventListener("pointermove", onPointerMove);
+      tile.removeEventListener("pointerup", finish);
+      tile.removeEventListener("pointercancel", finish);
+      document.removeEventListener("pointerup", finish);
+      document.removeEventListener("pointercancel", finish);
+      try { tile.releasePointerCapture?.(event.pointerId); } catch {}
+      if (moved) scheduleSave();
+    };
+    tile.addEventListener("pointermove", onPointerMove);
+    tile.addEventListener("pointerup", finish);
+    tile.addEventListener("pointercancel", finish);
+    document.addEventListener("pointerup", finish);
+    document.addEventListener("pointercancel", finish);
+    try { tile.setPointerCapture?.(event.pointerId); } catch {}
+  });
+  saveButton.addEventListener("click", async () => {
+    const username = page.dataset.embedUsername;
+    if (!username) return;
+    busy(saveButton, true, "Saving…");
+    setStatus("Saving…");
+    try {
+      const { data: profile, error: fetchError } = await supabaseClient.from("profiles").select("id,customization").eq("username", username).maybeSingle();
+      if (fetchError || !profile) throw fetchError || new Error("Profile not found");
+      const customization = sanitizeCustomization(profile.customization);
+      customization.standardEmbedPosition = readPosition();
+      const { error: updateError } = await supabaseClient.from("profiles").update({ customization }).eq("id", profile.id);
+      if (updateError) throw updateError;
+      try { localStorage.setItem("sqezen_standard_embed_position", JSON.stringify({ username, position: customization.standardEmbedPosition, timestamp: Date.now() })); } catch {}
+      setStatus("Layout saved");
+    } catch (error) {
+      console.error("Standard embed layout save failed", error);
+      setStatus("Could not save layout.", true);
+    } finally {
+      busy(saveButton, false);
+    }
+  });
+  clampTile();
+  window.addEventListener("resize", clampTile);
+  setStatus("Drag the profile card to arrange it");
 };
 function wireAdaptiveBackgroundMedia() {
   document.querySelectorAll(".public-media").forEach((media) => {
@@ -2001,6 +2115,16 @@ const basePublicProfileWithLocalVideo = publicProfile;
 publicProfile = async function (username) {
   const markup = await basePublicProfileWithLocalVideo(username);
   return markup.replace(/<div class="public-media" style="background-image:url\('((?:data:video\/)[^']+)'\)"><\/div>/i, (_, src) => `<video class="public-media" autoplay muted loop playsinline src="${src}"></video>`);
+};
+const basePublicProfileWithStandardEditor = publicProfile;
+publicProfile = async function (username) {
+  const markup = await basePublicProfileWithStandardEditor(username);
+  const params = new URLSearchParams(location.search);
+  if (params.get("embed") !== "0" || params.get("edit") !== "1" || !markup.includes('class="public-page ') || !markup.includes('class="public-card"')) return markup;
+  return markup
+    .replace('class="public-page ', 'class="public-page standard-embed-editor-page is-embed-editor ')
+    .replace(' style="', ` data-embed-editor="true" data-embed-username="${escapeHtml(username)}" style="`)
+    .replace('<div class="public-shade"></div>', `${dynamicEmbedEditorToolbar().replace("Arrange your embed", "Arrange your standard embed").replace("Drag profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.", "Drag the profile card to place it anywhere on the page.")}<div class="public-shade"></div>`);
 };
 const baseRender = render;
 render = async function () { const path = currentPath(); if (!["/login", "/register", "/register/code"].includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; document.title = `${path === "/login" ? "Sign in" : path === "/register" ? "Create an account" : "Confirm your email"} — sqezen`; const app = document.querySelector("#app"); const kind = path === "/register/code" ? "code" : path.slice(1); app.innerHTML = typeof window.auth === "function" ? window.auth(kind) : auth(kind); await wireAuth(); };
