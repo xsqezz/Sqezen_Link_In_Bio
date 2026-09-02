@@ -276,3 +276,5 @@ html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enha
 .dynamic-embed-page .embed-kicker{color:var(--profile-text,var(--text))}
 .dynamic-embed-page.is-position-editing [data-dynamic-tile]{outline-color:rgba(98,98,98,.9)}
 .dynamic-embed-page.is-embed-editor [data-dynamic-tile]{outline-color:rgba(98,98,98,.9)}
+.embed-position-action{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:17px;padding:14px 15px;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px}.embed-position-action>div{display:grid;gap:4px;min-width:0}.embed-position-action strong{color:var(--text);font-size:.7rem}.embed-position-action small{color:var(--dim);font-size:.6rem;line-height:1.45}.embed-position-action .button{flex:0 0 auto}
+@media(max-width:560px){.embed-position-action{align-items:stretch;flex-direction:column}.embed-position-action .button{width:100%}}
