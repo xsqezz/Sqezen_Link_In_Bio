@@ -30,6 +30,11 @@
    - `npm start`
 7. Invite the bot to the central Discord server and have linked users join that same server.
 
+For unattended hosting, the repository includes `.github/workflows/discord-presence.yml`.
+Add `DISCORD_BOT_TOKEN` and `SUPABASE_SERVICE_ROLE_KEY` as repository Actions secrets.
+The workflow starts the bot automatically every five hours and keeps each run below the
+GitHub-hosted runner limit. The bot must still be installed in the Discord server.
+
 Notes:
 - Preferred flow: frontend POSTs `{ "action": "authorize" }`, receives `{ "url": "..." }`, sends the browser there, Discord calls the Edge Function with GET, and the function 303 redirects to the dashboard with `?discord=connected` or `?discord=error`.
 - `authorize` returns `{ "url": "..." }` for the Discord consent URL.
