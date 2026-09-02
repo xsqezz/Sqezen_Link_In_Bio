@@ -89,8 +89,39 @@ function choice(value, list, fallback) { return list.includes(value) ? value : f
 function bool(value, fallback) { return typeof value === "boolean" ? value : fallback; }
 function hexRgb(value) { const hex = safeColor(value).slice(1); return `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`; }
 function brandMarkup(className = "brand-wordmark") { return `<img class="${escapeHtml(className)}" src="/sqezen-logo-chrome.png" alt="sqezen">`; }
-function sanitizeDynamicEmbedPositions(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; const defaults = { profile: { x: 50, y: 35 }, connections: { x: 78, y: 55 }, badges: { x: 75, y: 82 }, audio: { x: 25, y: 82 }, lyrics: { x: 76, y: 27 } }; const legacyScale = { profile: { x: 0.5, y: 0.5 }, connections: { x: 0.5, y: 0.5 }, badges: { x: 0.5, y: 0.5 }, audio: { x: 0.5, y: 0.4 }, lyrics: { x: 0.5, y: 0.5 } }; const position = (candidate, key) => { const fallback = defaults[key]; if (candidate?.free === true) return { x: safeNumber(candidate.x, 0, 100, fallback.x), y: safeNumber(candidate.y, 0, 100, fallback.y), free: true }; const scale = legacyScale[key]; return { x: safeNumber(fallback.x + safeNumber(candidate?.x, -35, 35, 0) * scale.x, 0, 100, fallback.x), y: safeNumber(fallback.y + safeNumber(candidate?.y, -30, 30, 0) * scale.y, 0, 100, fallback.y), free: true }; }; return { profile: position(value.profile, "profile"), connections: position(value.connections, "connections"), badges: position(value.badges, "badges"), audio: position(value.audio, "audio"), lyrics: position(value.lyrics, "lyrics") }; }
-function sanitizeStandardEmbedPosition(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { x: safeNumber(value.x, 0, 100, 50), y: safeNumber(value.y, 0, 100, 50), free: true }; }
+const EMBED_TILE_MIN_WIDTH = 120;
+const EMBED_TILE_MIN_HEIGHT = 72;
+const EMBED_TILE_MAX_WIDTH = 2400;
+const EMBED_TILE_MAX_HEIGHT = 1800;
+function sanitizeEmbedTileSize(candidate = {}) {
+  const size = {};
+  const width = Number(candidate?.width);
+  const height = Number(candidate?.height);
+  if (Number.isFinite(width)) size.width = safeNumber(width, EMBED_TILE_MIN_WIDTH, EMBED_TILE_MAX_WIDTH, EMBED_TILE_MIN_WIDTH);
+  if (Number.isFinite(height)) size.height = safeNumber(height, EMBED_TILE_MIN_HEIGHT, EMBED_TILE_MAX_HEIGHT, EMBED_TILE_MIN_HEIGHT);
+  return size;
+}
+function embedTileSizeStyle(position = {}, prefix = "dynamic") {
+  const size = sanitizeEmbedTileSize(position);
+  return `${Number.isFinite(size.width) ? `;--${prefix}-width:${size.width}px` : ""}${Number.isFinite(size.height) ? `;--${prefix}-height:${size.height}px;--${prefix}-min-height:0px;--${prefix}-overflow:hidden` : ""}`;
+}
+function sanitizeDynamicEmbedPositions(raw = {}) {
+  const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const defaults = { profile: { x: 50, y: 35 }, connections: { x: 78, y: 55 }, badges: { x: 75, y: 82 }, audio: { x: 25, y: 82 }, lyrics: { x: 76, y: 27 } };
+  const legacyScale = { profile: { x: 0.5, y: 0.5 }, connections: { x: 0.5, y: 0.5 }, badges: { x: 0.5, y: 0.5 }, audio: { x: 0.5, y: 0.4 }, lyrics: { x: 0.5, y: 0.5 } };
+  const position = (candidate, key) => {
+    const fallback = defaults[key];
+    const size = sanitizeEmbedTileSize(candidate);
+    if (candidate?.free === true) return { x: safeNumber(candidate.x, 0, 100, fallback.x), y: safeNumber(candidate.y, 0, 100, fallback.y), free: true, ...size };
+    const scale = legacyScale[key];
+    return { x: safeNumber(fallback.x + safeNumber(candidate?.x, -35, 35, 0) * scale.x, 0, 100, fallback.x), y: safeNumber(fallback.y + safeNumber(candidate?.y, -30, 30, 0) * scale.y, 0, 100, fallback.y), free: true, ...size };
+  };
+  return { profile: position(value.profile, "profile"), connections: position(value.connections, "connections"), badges: position(value.badges, "badges"), audio: position(value.audio, "audio"), lyrics: position(value.lyrics, "lyrics") };
+}
+function sanitizeStandardEmbedPosition(raw = {}) {
+  const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return { x: safeNumber(value.x, 0, 100, 50), y: safeNumber(value.y, 0, 100, 50), free: true, ...sanitizeEmbedTileSize(value) };
+}
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), audioTitle: String(value.audioTitle || "").trim().slice(0, 80), audioArtist: String(value.audioArtist || "").trim().slice(0, 60), audioLyrics: String(value.audioLyrics || "").trim().slice(0, 12000), cursorUrl: safeMediaUrl(value.cursorUrl), cursorGlowColor: profileAccentColor(themeColor(value.cursorGlowColor)), cursorEffect: choice(value.cursorEffect, CURSOR_EFFECT_VALUES, "none"), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: profileAccentColor(migrateColor(value.buttonColor, "#ffffff", "#626262")), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
@@ -385,7 +416,7 @@ async function wireDashboard() { const form = document.querySelector("#profile-f
 function updateLinkNumbers() { document.querySelectorAll("[data-link-item]").forEach((item, index) => { item.querySelector(".link-number").textContent = String(index + 1).padStart(2, "0"); item.querySelector(".link-item-name").textContent = `Link ${index + 1}`; }); }
 document.addEventListener("input", (event) => { const field = event.target; if (!field.matches?.("#profile-form input[type=range]")) return; const output = document.querySelector(`[data-output-for="${field.name}"]`); if (output) output.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; if (syncPreviewRange(field)) return; renderPreview(); });
 function publicLink(link) { const href = safeUrl(link.url); if (!href) return ""; return `<a class="profile-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"><span class="profile-link-icon">${icon(profileIcon(link))}</span><span class="profile-link-title">${escapeHtml(String(link.title || "Link").trim() || "Link")}</span><span class="profile-link-arrow">${icon("arrowUp")}</span></a>`; }
-async function publicProfile(username) { const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle(); if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Nie udało się wczytać profilu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`); if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true }); const config = sanitizeCustomization(data.customization); const media = config.backgroundMediaUrl; const mediaMarkup = media ? (/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : ""; const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary; const style = [`--profile-accent:${profileAccentColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";"); const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`; return `<div class="public-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div>${config.showBranding ? `<a class="public-brand" href="/">${brandMarkup("public-brand-logo")}</a>` : ""}<main class="public-main"><section class="public-card" data-standard-tile="profile" style="--standard-x:${config.standardEmbedPosition.x};--standard-y:${config.standardEmbedPosition.y}"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><div class="public-tools">${config.audioUrl ? `<button class="icon-button audio-toggle" data-audio-toggle type="button" aria-label="Odtwórz audio">${icon("sparkle")}</button><audio data-profile-audio preload="none" src="${escapeHtml(config.audioUrl)}"></audio>` : ""}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div></div>${avatar(data)}${config.showHandle ? `<p class="public-handle">@${escapeHtml(data.username)}</p>` : ""}<h1>${escapeHtml(data.display_name || data.username)}</h1>${config.location ? `<p class="public-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links">${(links || []).map(publicLink).filter(Boolean).join("") || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`}</div>${config.showBranding ? `<div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <b>sqezen</b></span></div>` : ""}</section>${config.showBranding ? `<a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a>` : ""}</main></div>`; }
+async function publicProfile(username) { const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle(); if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Nie udało się wczytać profilu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`); if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true }); const config = sanitizeCustomization(data.customization); const media = config.backgroundMediaUrl; const mediaMarkup = media ? (/\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : ""; const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary; const style = [`--profile-accent:${profileAccentColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";"); const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`; return `<div class="public-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div>${config.showBranding ? `<a class="public-brand" href="/">${brandMarkup("public-brand-logo")}</a>` : ""}<main class="public-main"><section class="public-card" data-standard-tile="profile" style="--standard-x:${config.standardEmbedPosition.x};--standard-y:${config.standardEmbedPosition.y}${embedTileSizeStyle(config.standardEmbedPosition, "standard")}"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><div class="public-tools">${config.audioUrl ? `<button class="icon-button audio-toggle" data-audio-toggle type="button" aria-label="Odtwórz audio">${icon("sparkle")}</button><audio data-profile-audio preload="none" src="${escapeHtml(config.audioUrl)}"></audio>` : ""}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div></div>${avatar(data)}${config.showHandle ? `<p class="public-handle">@${escapeHtml(data.username)}</p>` : ""}<h1>${escapeHtml(data.display_name || data.username)}</h1>${config.location ? `<p class="public-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links">${(links || []).map(publicLink).filter(Boolean).join("") || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`}</div>${config.showBranding ? `<div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <b>sqezen</b></span></div>` : ""}</section>${config.showBranding ? `<a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a>` : ""}</main></div>`; }
 function wirePublic() { const copy = document.querySelector("[data-copy-profile]"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(copy.dataset.copyProfile); copy.innerHTML = icon("check"); setTimeout(() => { copy.innerHTML = icon("copy"); }, 1400); } catch {} }); const page = document.querySelector(".public-page"); const cursor = page?.dataset.customCursor; if (cursor) page.style.cursor = `url("${cursor.replace(/["\\\n\r]/g, "")}"),auto`; const audio = document.querySelector("[data-profile-audio]"); const toggle = document.querySelector("[data-audio-toggle]"); const volume = document.querySelector("[data-audio-volume]"); const label = document.querySelector("[data-audio-label]"); if (audio && toggle) { const updateAudioUi = () => { const playing = !audio.paused; toggle.classList.toggle("is-playing", playing); toggle.setAttribute("aria-label", playing ? "Sound on" : "Sound off"); if (label) label.textContent = playing ? "SOUND ON" : "SOUND OFF"; if (volume && document.activeElement !== volume) volume.value = String(audio.volume); }; audio.volume = Number(volume?.value || 0.72); toggle.addEventListener("click", async () => { try { if (audio.paused) await audio.play(); else audio.pause(); } catch {} updateAudioUi(); }); volume?.addEventListener("input", () => { audio.volume = Number(volume.value); updateAudioUi(); }); audio.addEventListener("play", updateAudioUi); audio.addEventListener("pause", updateAudioUi); audio.addEventListener("volumechange", updateAudioUi); updateAudioUi(); audio.play().then(updateAudioUi).catch(updateAudioUi); } }
 async function render() { if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } const path = currentPath(); document.body.dataset.route = path; document.title = path === "/" ? "sqezen — your space online" : `${path.slice(1).split("/")[0] || "sqezen"} — sqezen`; const app = document.querySelector("#app"); try { if (path === "/") app.innerHTML = landingMinimal(); else if (path === "/login") app.innerHTML = auth("login"); else if (path === "/register") app.innerHTML = auth("register"); else if (path === "/register/code") app.innerHTML = auth("code"); else if (path === "/dashboard") app.innerHTML = dashboard(); else app.innerHTML = await publicProfile(path.slice(1).split("/")[0].toLowerCase()); await wireAuth(); await wireDashboard(); setupCustomizationCarousel(); wirePublic(); } catch (error) { console.error(error); app.innerHTML = layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Coś poszło nie tak.</h1><p>Odśwież stronę i spróbuj ponownie.</p></main>`); } }
 const baseDashboardMarkup = dashboard;
@@ -1735,19 +1766,105 @@ wirePublic = function () {
 };
 function clampDynamicEmbedTilePosition(tile, main, position = {}) {
   const frame = main?.getBoundingClientRect();
-  if (!frame) return { x: safeNumber(position.x, 0, 100, 50), y: safeNumber(position.y, 0, 100, 50), free: true };
+  const size = sanitizeEmbedTileSize(position);
+  if (!frame) return { x: safeNumber(position.x, 0, 100, 50), y: safeNumber(position.y, 0, 100, 50), free: true, ...size };
   const rect = tile.getBoundingClientRect();
   const halfWidth = Math.min(50, (rect.width / Math.max(frame.width, 1)) * 50);
   const halfHeight = Math.min(50, (rect.height / Math.max(frame.height, 1)) * 50);
-  return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true };
+  return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true, ...size };
 }
 function clampStandardEmbedPosition(tile, main, position = {}) {
   const frame = main?.getBoundingClientRect();
-  if (!frame) return sanitizeStandardEmbedPosition(position);
+  const size = sanitizeEmbedTileSize(position);
+  if (!frame) return { ...sanitizeStandardEmbedPosition(position), ...size };
   const rect = tile.getBoundingClientRect();
   const halfWidth = Math.min(50, (rect.width / Math.max(frame.width, 1)) * 50);
   const halfHeight = Math.min(50, (rect.height / Math.max(frame.height, 1)) * 50);
-  return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true };
+  return { x: Math.round(safeNumber(position.x, halfWidth, 100 - halfWidth, 50) * 10) / 10, y: Math.round(safeNumber(position.y, halfHeight, 100 - halfHeight, 50) * 10) / 10, free: true, ...size };
+}
+function readEmbedTileSize(tile, prefix) {
+  const styles = getComputedStyle(tile);
+  const rect = tile.getBoundingClientRect();
+  const width = Number.parseFloat(styles.getPropertyValue(`--${prefix}-width`));
+  const height = Number.parseFloat(styles.getPropertyValue(`--${prefix}-height`));
+  return sanitizeEmbedTileSize({ width: Number.isFinite(width) ? width : rect.width, height: Number.isFinite(height) ? height : rect.height });
+}
+function applyEmbedTileSize(tile, position, prefix) {
+  const size = sanitizeEmbedTileSize(position);
+  if (Number.isFinite(size.width)) tile.style.setProperty(`--${prefix}-width`, `${size.width}px`);
+  if (Number.isFinite(size.height)) {
+    tile.style.setProperty(`--${prefix}-height`, `${size.height}px`);
+    tile.style.setProperty(`--${prefix}-min-height`, "0px");
+    tile.style.setProperty(`--${prefix}-overflow`, "hidden");
+  }
+}
+function bindEmbedTileResizeHandles(tile, options = {}) {
+  const { prefix, main, readPosition, applyPosition, clampPosition, onMove, onFinish } = options;
+  if (!tile || !main || !prefix || !readPosition || !applyPosition || !clampPosition || tile.dataset.resizeHandlesBound === "true") return;
+  tile.dataset.resizeHandlesBound = "true";
+  const directions = ["n", "ne", "e", "se", "s", "sw", "w", "nw"];
+  directions.forEach((direction) => {
+    const handle = document.createElement("span");
+    handle.className = `embed-resize-handle is-${direction}`;
+    handle.dataset.resizeHandle = direction;
+    handle.setAttribute("aria-hidden", "true");
+    tile.appendChild(handle);
+    handle.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const frame = main.getBoundingClientRect();
+      const startPosition = readPosition();
+      const startSize = readEmbedTileSize(tile, prefix);
+      const startWidth = startSize.width;
+      const startHeight = startSize.height;
+      const horizontal = direction.includes("e") ? 1 : direction.includes("w") ? -1 : 0;
+      const vertical = direction.includes("s") ? 1 : direction.includes("n") ? -1 : 0;
+      let moved = false;
+      let finished = false;
+      tile.classList.add("is-resizing");
+      const update = (moveEvent) => {
+        const deltaX = moveEvent.clientX - event.clientX;
+        const deltaY = moveEvent.clientY - event.clientY;
+        const minWidth = Math.min(EMBED_TILE_MIN_WIDTH, Math.max(frame.width - 16, 1));
+        const minHeight = Math.min(EMBED_TILE_MIN_HEIGHT, Math.max(frame.height - 16, 1));
+        const maxWidth = Math.max(minWidth, Math.min(EMBED_TILE_MAX_WIDTH, Math.max(frame.width - 16, 1)));
+        const maxHeight = Math.max(minHeight, Math.min(EMBED_TILE_MAX_HEIGHT, Math.max(frame.height - 16, 1)));
+        const width = Math.min(maxWidth, Math.max(minWidth, startWidth + horizontal * deltaX));
+        const height = Math.min(maxHeight, Math.max(minHeight, startHeight + vertical * deltaY));
+        const proposed = {
+          ...startPosition,
+          x: startPosition.x + (horizontal ? (horizontal * (width - startWidth) / Math.max(frame.width, 1)) * 50 : 0),
+          y: startPosition.y + (vertical ? (vertical * (height - startHeight) / Math.max(frame.height, 1)) * 50 : 0),
+          width,
+          height
+        };
+        applyPosition(proposed);
+        const next = clampPosition(proposed);
+        applyPosition(next);
+        moved = true;
+        onMove?.(next);
+      };
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        tile.classList.remove("is-resizing");
+        tile.removeEventListener("pointermove", update);
+        tile.removeEventListener("pointerup", finish);
+        tile.removeEventListener("pointercancel", finish);
+        document.removeEventListener("pointerup", finish);
+        document.removeEventListener("pointercancel", finish);
+        try { tile.releasePointerCapture?.(event.pointerId); } catch {}
+        if (moved) onFinish?.();
+      };
+      tile.addEventListener("pointermove", update);
+      tile.addEventListener("pointerup", finish);
+      tile.addEventListener("pointercancel", finish);
+      document.addEventListener("pointerup", finish);
+      document.addEventListener("pointercancel", finish);
+      try { tile.setPointerCapture?.(event.pointerId); } catch {}
+    });
+  });
 }
 function clampDynamicEmbedTiles(main) {
   if (!main) return;
@@ -1759,7 +1876,7 @@ function clampDynamicEmbedTiles(main) {
   });
 }
 function dynamicEmbedEditorToolbar() {
-  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
+  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag or resize profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
 }
 const baseDynamicEmbedEditorToolbarWithAutoSave = dynamicEmbedEditorToolbar;
 dynamicEmbedEditorToolbar = () => baseDynamicEmbedEditorToolbarWithAutoSave().replace(
@@ -1785,18 +1902,27 @@ wirePublic = function () {
   if (!page || !main || !saveButton || page.dataset.editorBound === "true") return;
   page.dataset.editorBound = "true";
   const tiles = Array.from(main.querySelectorAll("[data-dynamic-tile]"));
-  const readPositions = () => sanitizeDynamicEmbedPositions(Object.fromEntries(tiles.map((tile) => [tile.dataset.dynamicTile, { x: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-x")) || 0, y: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--dynamic-y")) || 0, free: true }])));
-  const applyPosition = (tile, position) => { tile.style.setProperty("--dynamic-x", String(position.x)); tile.style.setProperty("--dynamic-y", String(position.y)); };
+  const readPositions = () => sanitizeDynamicEmbedPositions(Object.fromEntries(tiles.map((tile) => {
+    const styles = getComputedStyle(tile);
+    return [tile.dataset.dynamicTile, { x: Number.parseFloat(styles.getPropertyValue("--dynamic-x")) || 0, y: Number.parseFloat(styles.getPropertyValue("--dynamic-y")) || 0, ...readEmbedTileSize(tile, "dynamic"), free: true }];
+  })));
+  const applyPosition = (tile, position) => {
+    tile.style.setProperty("--dynamic-x", String(position.x));
+    tile.style.setProperty("--dynamic-y", String(position.y));
+    applyEmbedTileSize(tile, position, "dynamic");
+  };
   const setStatus = (message, error = false) => { if (status) { status.textContent = message; status.classList.toggle("is-error", error); } };
   const clampTilePosition = (tile, position) => clampDynamicEmbedTilePosition(tile, main, position);
   const clampTiles = () => { const positions = readPositions(); tiles.forEach((tile) => applyPosition(tile, clampTilePosition(tile, positions[tile.dataset.dynamicTile] || { x: 50, y: 50 }))); };
   tiles.forEach((tile) => {
+    const key = tile.dataset.dynamicTile;
+    const readTilePosition = () => readPositions()[key] || { x: 50, y: 50, ...readEmbedTileSize(tile, "dynamic"), free: true };
+    bindEmbedTileResizeHandles(tile, { prefix: "dynamic", main, readPosition: readTilePosition, applyPosition: (position) => applyPosition(tile, position), clampPosition: (position) => clampTilePosition(tile, position), onMove: () => setStatus("Unsaved layout") });
     const onPointerDown = (event) => {
       if (event.button !== 0 || event.target.closest("button,input,a,select,textarea")) return;
       event.preventDefault();
       event.stopPropagation();
-      const key = tile.dataset.dynamicTile;
-      const start = readPositions()[key] || { x: 50, y: 50 };
+      const start = readTilePosition();
       const frame = main.getBoundingClientRect();
       const startX = event.clientX;
       const startY = event.clientY;
@@ -1847,7 +1973,7 @@ wirePublic = function () {
       busy(saveButton, false);
     }
   });
-  setStatus("Drag any element to arrange it");
+  setStatus("Drag or resize any element to arrange it");
 };
 const baseWirePublicWithEmbedAutoSave = wirePublic;
 wirePublic = function () {
@@ -1892,13 +2018,18 @@ wirePublic = function () {
   const status = page?.querySelector("[data-embed-editor-status]");
   if (!page || !main || !tile || !saveButton || page.dataset.standardEditorBound === "true") return;
   page.dataset.standardEditorBound = "true";
-  const readPosition = () => sanitizeStandardEmbedPosition({
-    x: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--standard-x")),
-    y: Number.parseFloat(getComputedStyle(tile).getPropertyValue("--standard-y"))
-  });
+  const readPosition = () => {
+    const styles = getComputedStyle(tile);
+    return sanitizeStandardEmbedPosition({
+      x: Number.parseFloat(styles.getPropertyValue("--standard-x")),
+      y: Number.parseFloat(styles.getPropertyValue("--standard-y")),
+      ...readEmbedTileSize(tile, "standard")
+    });
+  };
   const applyPosition = (position) => {
     tile.style.setProperty("--standard-x", String(position.x));
     tile.style.setProperty("--standard-y", String(position.y));
+    applyEmbedTileSize(tile, position, "standard");
   };
   const setStatus = (message, error = false) => {
     if (!status) return;
@@ -1918,6 +2049,7 @@ wirePublic = function () {
       dirty = false;
     }, 700);
   };
+  bindEmbedTileResizeHandles(tile, { prefix: "standard", main, readPosition, applyPosition, clampPosition, onMove: () => { dirty = true; setStatus("Unsaved layout"); }, onFinish: scheduleSave });
   tile.addEventListener("pointerdown", (event) => {
     if (event.button !== 0 || event.target.closest("button,input,a,select,textarea")) return;
     event.preventDefault();
@@ -1978,7 +2110,7 @@ wirePublic = function () {
   });
   clampTile();
   window.addEventListener("resize", clampTile);
-  setStatus("Drag the profile card to arrange it");
+  setStatus("Drag or resize the profile card to arrange it");
 };
 function wireAdaptiveBackgroundMedia() {
   document.querySelectorAll(".public-media").forEach((media) => {
@@ -2026,7 +2158,7 @@ function dynamicLyricsWidget(lyrics, position = { x: 76, y: 27 }, showEmptyState
   const content = entries.length
     ? `<div class="dynamic-lyrics-lines">${dynamicLyricsLineMarkup(entries)}</div>`
     : `<div class="dynamic-lyrics-auto-message" data-lyrics-message><strong>LOOKING FOR LYRICS</strong><p>${description}</p>${trackTitle ? `<code>${escapeHtml(trackTitle)}${trackArtist ? ` · ${escapeHtml(trackArtist)}` : ""}</code>` : ""}</div>`;
-  return `<section class="dynamic-lyrics-widget" data-dynamic-tile="lyrics" data-lyrics-widget data-lyrics-auto="${automatic}" data-lyrics-track-title="${escapeHtml(trackTitle)}" data-lyrics-track-artist="${escapeHtml(trackArtist)}" aria-label="Live lyrics" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-lyrics-heading"><span class="dynamic-lyrics-label">LIVE LYRICS</span><span class="dynamic-lyrics-state" data-lyrics-state>${automatic ? "LOOKING UP" : "READY"}</span></div><div class="dynamic-lyrics-visualizer" aria-hidden="true">${Array.from({ length: 6 }, () => "<i></i>").join("")}</div><div class="dynamic-lyrics-viewport" data-lyrics-viewport>${content}</div><div class="dynamic-lyrics-footer"><span>${automatic ? "AUTO SYNC" : "SYNCED TO AUDIO"}</span><time data-lyrics-time-label>0:00</time></div></section>`;
+  return `<section class="dynamic-lyrics-widget" data-dynamic-tile="lyrics" data-lyrics-widget data-lyrics-auto="${automatic}" data-lyrics-track-title="${escapeHtml(trackTitle)}" data-lyrics-track-artist="${escapeHtml(trackArtist)}" aria-label="Live lyrics" style="--dynamic-x:${x};--dynamic-y:${y}${embedTileSizeStyle(position)}"><div class="dynamic-lyrics-heading"><span class="dynamic-lyrics-label">LIVE LYRICS</span><span class="dynamic-lyrics-state" data-lyrics-state>${automatic ? "LOOKING UP" : "READY"}</span></div><div class="dynamic-lyrics-visualizer" aria-hidden="true">${Array.from({ length: 6 }, () => "<i></i>").join("")}</div><div class="dynamic-lyrics-viewport" data-lyrics-viewport>${content}</div><div class="dynamic-lyrics-footer"><span>${automatic ? "AUTO SYNC" : "SYNCED TO AUDIO"}</span><time data-lyrics-time-label>0:00</time></div></section>`;
 }
 function dynamicAudioFilenameTitle(value) {
   const source = String(value || "");
@@ -2046,13 +2178,13 @@ function dynamicBadgeWidget(badges = [], position = { x: 75, y: 82 }) {
   if (!items) return "";
   const x = safeNumber(position?.x, 0, 100, 75);
   const y = safeNumber(position?.y, 0, 100, 82);
-  return `<section class="embed-badges-card" data-dynamic-tile="badges" aria-label="Odznaki" style="--dynamic-x:${x};--dynamic-y:${y}"><span class="embed-kicker">BADGES</span><div class="embed-badges">${items}</div></section>`;
+  return `<section class="embed-badges-card" data-dynamic-tile="badges" aria-label="Odznaki" style="--dynamic-x:${x};--dynamic-y:${y}${embedTileSizeStyle(position)}"><span class="embed-kicker">BADGES</span><div class="embed-badges">${items}</div></section>`;
 }
 function dynamicAudioWidget(audioUrl, position = { x: 25, y: 82 }, metadata = {}, fallbackArtist = "sqezen") {
   const x = safeNumber(position?.x, 0, 100, 25);
   const y = safeNumber(position?.y, 0, 100, 82);
   const track = dynamicAudioTrackMeta(audioUrl, metadata, fallbackArtist);
-  return `<div class="profile-audio-widget dynamic-audio-widget" data-audio-widget data-dynamic-tile="audio" style="--dynamic-x:${x};--dynamic-y:${y}"><div class="dynamic-audio-track"><div class="dynamic-audio-copy"><strong class="dynamic-audio-title">${escapeHtml(track.title)}</strong><span class="dynamic-audio-artist">${escapeHtml(track.artist)}</span></div></div><div class="dynamic-audio-controls" role="group" aria-label="Sterowanie muzyką"><button class="dynamic-audio-control" data-audio-rewind type="button" aria-label="Cofnij 10 sekund" title="Cofnij 10 sekund">${icon("rewind")}</button><button class="dynamic-audio-control dynamic-audio-play" data-audio-toggle type="button" aria-label="Odtwórz audio"><span data-audio-icon>${icon("play")}</span></button><button class="dynamic-audio-control" data-audio-forward type="button" aria-label="Przewiń 10 sekund" title="Przewiń 10 sekund">${icon("forward")}</button></div><div class="dynamic-audio-progress-row"><time data-audio-current>0:00</time><input class="dynamic-audio-progress" data-audio-progress type="range" min="0" max="0" step="0.1" value="0" aria-label="Pozycja utworu"><time data-audio-duration>0:00</time></div><audio data-profile-audio preload="auto" src="${escapeHtml(audioUrl)}"></audio></div>`;
+  return `<div class="profile-audio-widget dynamic-audio-widget" data-audio-widget data-dynamic-tile="audio" style="--dynamic-x:${x};--dynamic-y:${y}${embedTileSizeStyle(position)}"><div class="dynamic-audio-track"><div class="dynamic-audio-copy"><strong class="dynamic-audio-title">${escapeHtml(track.title)}</strong><span class="dynamic-audio-artist">${escapeHtml(track.artist)}</span></div></div><div class="dynamic-audio-controls" role="group" aria-label="Sterowanie muzyką"><button class="dynamic-audio-control" data-audio-rewind type="button" aria-label="Cofnij 10 sekund" title="Cofnij 10 sekund">${icon("rewind")}</button><button class="dynamic-audio-control dynamic-audio-play" data-audio-toggle type="button" aria-label="Odtwórz audio"><span data-audio-icon>${icon("play")}</span></button><button class="dynamic-audio-control" data-audio-forward type="button" aria-label="Przewiń 10 sekund" title="Przewiń 10 sekund">${icon("forward")}</button></div><div class="dynamic-audio-progress-row"><time data-audio-current>0:00</time><input class="dynamic-audio-progress" data-audio-progress type="range" min="0" max="0" step="0.1" value="0" aria-label="Pozycja utworu"><time data-audio-duration>0:00</time></div><audio data-profile-audio preload="auto" src="${escapeHtml(audioUrl)}"></audio></div>`;
 }
 async function dynamicEmbedProfile(username) {
   const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle();
@@ -2074,7 +2206,7 @@ async function dynamicEmbedProfile(username) {
   const audioTrack = dynamicAudioTrackMeta(config.audioUrl, { title: config.audioTitle, artist: config.audioArtist }, display);
   const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl, positions.audio, audioTrack, display) : "";
   const lyricsMarkup = config.audioUrl ? dynamicLyricsWidget(config.audioLyrics, positions.lyrics, new URLSearchParams(location.search).get("edit") === "1", { title: audioTrack.title, artist: config.audioArtist }) : "";
-  return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section>${badgesMarkup}${audioMarkup}${lyricsMarkup}</main></div>`;
+  return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}${embedTileSizeStyle(positions.profile)}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}${embedTileSizeStyle(positions.connections)}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections">${connections}</div></section>${badgesMarkup}${audioMarkup}${lyricsMarkup}</main></div>`;
 }
 const baseDynamicEmbedProfileForEditor = dynamicEmbedProfile;
 dynamicEmbedProfile = async function (username) {
@@ -2124,7 +2256,7 @@ publicProfile = async function (username) {
   return markup
     .replace('class="public-page ', 'class="public-page standard-embed-editor-page is-embed-editor ')
     .replace(' style="', ` data-embed-editor="true" data-embed-username="${escapeHtml(username)}" style="`)
-    .replace('<div class="public-shade"></div>', `${dynamicEmbedEditorToolbar().replace("Arrange your embed", "Arrange your standard embed").replace("Drag profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.", "Drag the profile card to place it anywhere on the page.")}<div class="public-shade"></div>`);
+    .replace('<div class="public-shade"></div>', `${dynamicEmbedEditorToolbar().replace("Arrange your embed", "Arrange your standard embed").replace("Drag or resize profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.", "Drag or resize the profile card to place it anywhere on the page.")}<div class="public-shade"></div>`);
 };
 const baseRender = render;
 render = async function () { const path = currentPath(); if (!["/login", "/register", "/register/code"].includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; document.title = `${path === "/login" ? "Sign in" : path === "/register" ? "Create an account" : "Confirm your email"} — sqezen`; const app = document.querySelector("#app"); const kind = path === "/register/code" ? "code" : path.slice(1); app.innerHTML = typeof window.auth === "function" ? window.auth(kind) : auth(kind); await wireAuth(); };
