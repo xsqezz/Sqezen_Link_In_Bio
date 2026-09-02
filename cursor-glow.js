@@ -12,7 +12,7 @@
   const cleanCursorUrl = (value) => String(value || "").replace(/["\\\n\r]/g, "").trim();
   const cleanColor = (value) => /^#[0-9a-f]{6}$/i.test(String(value || "").trim()) ? String(value).trim().toLowerCase() : "";
   const colorRgb = (value) => {
-    const color = cleanColor(value) || "#5865ee";
+    const color = cleanColor(value) || "#626262";
     return [0, 2, 4].map((offset) => Number.parseInt(color.slice(offset + 1, offset + 3), 16)).join(",");
   };
   const cleanCursorEffect = (value) => CURSOR_EFFECTS.has(String(value || "").trim()) ? String(value).trim() : "none";
@@ -96,7 +96,7 @@
       particle.style.top = `${y}px`;
       particle.style.color = effect === "confetti"
         ? CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]
-        : FIXED_EFFECT_COLORS[effect] || appliedGlow || "#5865ee";
+        : FIXED_EFFECT_COLORS[effect] || appliedGlow || "#626262";
       particle.style.setProperty("--particle-x", `${offsetX}px`);
       particle.style.setProperty("--particle-y", `${offsetY}px`);
       particle.style.setProperty("--particle-duration", `${duration}ms`);
@@ -162,7 +162,7 @@
 
     const syncCursor = () => {
       const cursorUrl = cleanCursorUrl(getCursorUrl());
-      const glowColor = cleanColor(getGlowColor()) || "#5865ee";
+      const glowColor = cleanColor(getGlowColor()) || "#626262";
       const cursorEffect = cleanCursorEffect(getCursorEffect());
       const isDashboard = document.body.dataset.route === "/dashboard";
       if (cursorUrl === appliedCursor && glowColor === appliedGlow && cursorEffect === appliedEffect && isDashboard === appliedDashboard) return;
