@@ -20,6 +20,7 @@
    - Discord callback GET requests need `verify_jwt = false`
    - POST actions still enforce Supabase auth in the function code via Bearer token lookup
 5. Bot env vars:
+   - Node.js 22 or newer
    - `DISCORD_BOT_TOKEN`
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`

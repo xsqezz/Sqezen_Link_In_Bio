@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Discord presence sync bot for sqezen Supabase presence widgets.",
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "start": "node index.js"
