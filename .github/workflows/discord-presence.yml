@@ -42,7 +42,7 @@ jobs:
             exit 0
           fi
           set +e
-          timeout --signal=TERM --kill-after=30s 4h50m npm start
+          timeout --signal=TERM --kill-after=30s 17400s npm start
           status=$?
           if [ "$status" -eq 124 ]; then
             exit 0
