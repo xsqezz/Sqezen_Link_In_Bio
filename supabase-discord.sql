@@ -302,6 +302,7 @@ revoke all on table public.discord_presence from anon, authenticated;
 revoke all on table public.discord_oauth_states from anon, authenticated;
 
 grant select (
+  profile_id,
   discord_id,
   username,
   global_name,

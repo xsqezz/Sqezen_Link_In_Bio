@@ -1,9 +1,16 @@
 -- Fix: public Discord widget returns 42501 "permission denied for table discord_connections".
 --
--- Cause: the anon/authenticated Postgres roles never received the column-level
+-- Cause #1: the anon/authenticated Postgres roles never received the column-level
 -- GRANT SELECT statements from supabase-discord.sql (lines ~300-337), even though
 -- the RLS policies for public reads exist. Postgres checks table/column privileges
 -- BEFORE row-level security policies, so RLS alone is not enough.
+--
+-- Cause #2 (found after re-running the fix live): app.js filters the public widget
+-- query with .eq("profile_id", ...). Postgres requires SELECT privilege on any
+-- column referenced in a WHERE filter, not just on the columns being returned, so
+-- the original grant list -- which omitted profile_id -- still failed with the
+-- same 42501 error once the rest of the grants were applied. profile_id is now
+-- included below (this file matches what was verified live on sqezen.lol/sqz).
 --
 -- How to apply: open the Supabase SQL Editor for this project
 -- (https://supabase.com/dashboard/project/wzdxgmzwxzfhegelqugy/sql/new),
@@ -15,6 +22,7 @@ revoke all on table public.discord_presence from anon, authenticated;
 revoke all on table public.discord_oauth_states from anon, authenticated;
 
 grant select (
+  profile_id,
   discord_id,
   username,
   global_name,
