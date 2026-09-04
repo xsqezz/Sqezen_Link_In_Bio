@@ -1391,7 +1391,7 @@ wireDashboard = async function () {
 const baseWireDashboardWithBadgeAdmin = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboardWithBadgeAdmin();
-  await wireBadgeAdmin(document.querySelector("#profile-form"), dashboardCurrentUserId);
+  void wireBadgeAdmin(document.querySelector("#profile-form"), dashboardCurrentUserId);
 };
 const baseWireDashboardWithCursorEffects = wireDashboard;
 wireDashboard = async function () {
@@ -1597,6 +1597,40 @@ const DASHBOARD_WORKSPACE_TABS = Object.freeze({
   "badge-admin": { panel: "badge-admin", label: "Odznaki", eyebrow: "SQEZEN / BADGES", title: "Zarządzaj odznakami.", subtitle: "Przyznawaj i porządkuj odznaki profili." }
 });
 const DASHBOARD_TAB_ALIASES = Object.freeze({ profile: "identity", appearance: "assets", embed: "embed-builder", "standard-embed": "embed-builder", "dynamic-embed": "embed-builder", "color-tone": "profile-card", "layout-details": "profile-card", "cursor-color": "cursor-effects", "discord-profile": "discord" });
+function primeDashboardWorkspaceTabs() {
+  const form = document.querySelector("#profile-form");
+  const nav = document.querySelector(".dashboard-nav-list");
+  const sidebar = document.querySelector("#dashboard-sidebar");
+  const editor = form?.querySelector(".editor-panel");
+  if (!form || !nav || !editor || form.dataset.quickTabsBound === "true") return;
+
+  const setTab = (requested) => {
+    const selected = DASHBOARD_TAB_ALIASES[requested] || requested;
+    const copy = DASHBOARD_WORKSPACE_TABS[selected] || DASHBOARD_WORKSPACE_TABS.identity;
+    const target = editor.querySelector(`[data-tab-panel="${copy.panel}"]`);
+    if (!target) return;
+
+    editor.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+      panel.hidden = panel !== target;
+    });
+    nav.querySelectorAll("[data-dashboard-tab]").forEach((button) => {
+      button.classList.toggle("is-active", (DASHBOARD_TAB_ALIASES[button.dataset.dashboardTab] || button.dataset.dashboardTab) === selected);
+    });
+    document.querySelector("#topbar-section").textContent = copy.label;
+    document.querySelector("#dashboard-eyebrow").textContent = copy.eyebrow;
+    document.querySelector("#dashboard-title").textContent = copy.title;
+    document.querySelector("#dashboard-subtitle").textContent = copy.subtitle;
+    sidebar?.classList.remove("is-open");
+    sessionStorage.setItem("sqezen_dashboard_tab", selected);
+  };
+
+  form.dataset.quickTabsBound = "true";
+  nav.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-dashboard-tab]");
+    if (button) setTab(button.dataset.dashboardTab);
+  });
+  setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "identity");
+}
 const baseWireDashboardWithWorkspaceTabs = wireDashboard;
 wireDashboard = async function () {
   await baseWireDashboardWithWorkspaceTabs();
@@ -1873,8 +1907,9 @@ async function wireDiscordDashboard() {
 }
 const baseWireDashboardWithDiscord = wireDashboard;
 wireDashboard = async function () {
+  primeDashboardWorkspaceTabs();
   await baseWireDashboardWithDiscord();
-  await wireDiscordDashboard();
+  void wireDiscordDashboard();
 };
 const baseWirePublic = wirePublic;
 wirePublic = function () {
