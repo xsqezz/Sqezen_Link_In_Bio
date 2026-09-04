@@ -2,6 +2,33 @@ const SUPABASE_URL = "https://wzdxgmzwxzfhegelqugy.supabase.co";
 const SUPABASE_KEY = "sb_publishable_63IpIFewxY0qJ3Cx532LQA_vEwXoSwP";
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 const state = { resendTimer: null, dashboard: null };
+const publicProfileSummaryRequests = new Map();
+const publicProfileRequests = new Map();
+const publicProfileLinkRequests = new Map();
+
+function getPublicProfileSummary(username) {
+  const key = String(username || "").trim().toLowerCase();
+  if (!publicProfileSummaryRequests.has(key)) {
+    publicProfileSummaryRequests.set(key, Promise.resolve(supabaseClient.from("profiles").select("id,username,display_name,bio,avatar_url,background_color").eq("username", key).maybeSingle()));
+  }
+  return publicProfileSummaryRequests.get(key);
+}
+
+function getPublicProfileData(username) {
+  const key = String(username || "").trim().toLowerCase();
+  if (!publicProfileRequests.has(key)) {
+    publicProfileRequests.set(key, Promise.resolve(supabaseClient.from("profiles").select("*").eq("username", key).maybeSingle()));
+  }
+  return publicProfileRequests.get(key);
+}
+
+function getPublicProfileLinks(profileId) {
+  const key = String(profileId || "");
+  if (!publicProfileLinkRequests.has(key)) {
+    publicProfileLinkRequests.set(key, Promise.resolve(supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", key).order("position", { ascending: true })));
+  }
+  return publicProfileLinkRequests.get(key);
+}
 
 const icons = {
   arrow: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>',
@@ -2637,6 +2664,57 @@ const baseWirePublicWithDiscord = wirePublic;
 wirePublic = function () {
   baseWirePublicWithDiscord();
   const widget = document.querySelector("[data-discord-widget]");
+  bindFastDiscordWidget(widget);
+};
+function fastStandardProfileMarkup(data, config) {
+  const media = config.backgroundMediaUrl;
+  const mediaMarkup = media ? (isVideoMedia(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : "";
+  const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary;
+  const style = [`--profile-accent:${profileAccentColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";");
+  const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
+  const cursorAttributes = ` data-cursor-glow="${escapeHtml(config.cursorGlowColor)}" data-cursor-effect="${escapeHtml(config.cursorEffect)}"`;
+  const audio = config.audioUrl ? `<button class="icon-button audio-toggle" data-audio-toggle type="button" aria-label="Odtwórz audio">${icon("sparkle")}</button><audio data-profile-audio preload="none" src="${escapeHtml(config.audioUrl)}"></audio>` : "";
+  const markup = `<div class="public-page ${classes}" style="${style}"${cursorAttributes}${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div>${config.showBranding ? `<a class="public-brand" href="/">${brandMarkup("public-brand-logo")}</a>` : ""}<main class="public-main"><section class="public-card" data-standard-tile="profile" style="--standard-x:${config.standardEmbedPosition.x};--standard-y:${config.standardEmbedPosition.y}${embedTileSizeStyle(config.standardEmbedPosition, "standard")}"><div class="public-card-top"><span class="public-live"><i></i> public profile</span><div class="public-tools">${audio}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div></div>${avatar(data)}${config.showHandle ? `<p class="public-handle">@${escapeHtml(data.username)}</p>` : ""}<h1>${escapeHtml(data.display_name || data.username)}</h1>${config.location ? `<p class="public-location">${icon("globe")} ${escapeHtml(config.location)}</p>` : ""}${data.bio ? `<p class="public-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="profile-links" data-profile-links aria-live="polite"></div>${config.showBranding ? `<div class="public-card-footer"><span>sqezen.lol/${escapeHtml(data.username)}</span><span>made with <b>sqezen</b></span></div>` : ""}</section>${config.showBranding ? `<a class="claim-link" href="/register">Stwórz własny profil ${icon("arrow")}</a>` : ""}</main></div>`;
+  if (!audio) return markup;
+  const audioMarkup = markup.match(/<audio data-profile-audio[^>]*><\/audio>/)?.[0];
+  if (!audioMarkup) return markup;
+  const audioControl = /<button class="icon-button audio-toggle"[\s\S]*?<\/button><audio data-profile-audio[^>]*><\/audio>/;
+  const audioWidget = `<div class="profile-audio-widget" data-audio-widget><button class="profile-audio-toggle" data-audio-toggle type="button" aria-label="Sound off"><span>${icon("volume")}</span><span data-audio-label>SOUND OFF</span></button><label class="profile-audio-volume"><span class="sr-only">Volume</span><input data-audio-volume type="range" min="0" max="1" step="0.01" value="0.72" aria-label="Profile volume"></label>${audioMarkup.replace('preload="none"', 'preload="auto"')}</div>`;
+  return markup.replace(audioControl, "").replace('<div class="public-shade"></div>', `<div class="public-shade"></div>${audioWidget}`);
+}
+
+function fastDynamicProfileMarkup(data, config) {
+  const display = String(data.display_name || data.username || "").trim() || "Profile";
+  const media = config.backgroundMediaUrl;
+  const mediaMarkup = media ? (isVideoMedia(media) ? `<video class="public-media" autoplay muted loop playsinline src="${escapeHtml(media)}"></video>` : `<div class="public-media" style="background-image:url('${escapeHtml(media).replace(/&#039;/g, "%27")}')"></div>`) : "";
+  const pageBg = config.useGradient ? `radial-gradient(circle at top,${config.gradientPrimary} 0%,${config.gradientSecondary} 74%)` : config.gradientSecondary;
+  const style = [`--profile-accent:${profileAccentColor(data.background_color)}`, `--profile-text:${config.textColor}`, `--profile-card-rgb:${hexRgb(config.cardColor)}`, `--profile-button-rgb:${hexRgb(config.buttonColor)}`, `--profile-button-text:${config.buttonTextColor}`, `--profile-opacity:${config.profileOpacity / 100}`, `--profile-blur:${config.profileBlur}px`, `--profile-width:${config.cardWidth}px`, `--profile-avatar:${config.avatarSize}px`, `--profile-radius:${config.buttonRadius}px`, `--profile-background:${pageBg}`].join(";");
+  const classes = `align-${config.alignment} spacing-${config.spacing} buttons-${config.buttonStyle} effect-${config.backgroundEffect} name-${config.usernameEffect} font-${config.fontFamily}`;
+  const positions = config.dynamicEmbedPositions || sanitizeDynamicEmbedPositions();
+  const audioTrack = dynamicAudioTrackMeta(config.audioUrl, { title: config.audioTitle, artist: config.audioArtist }, display);
+  const audioMarkup = config.audioUrl ? dynamicAudioWidget(config.audioUrl, positions.audio, audioTrack, display) : "";
+  const lyricsMarkup = config.audioUrl ? dynamicLyricsWidget(config.audioLyrics, positions.lyrics, false, { title: audioTrack.title, artist: config.audioArtist }) : "";
+  const cursorAttributes = ` data-cursor-glow="${escapeHtml(config.cursorGlowColor)}" data-cursor-effect="${escapeHtml(config.cursorEffect)}"`;
+  return `<div class="public-page dynamic-embed-page ${classes}" style="${style}"${cursorAttributes}${config.cursorUrl ? ` data-custom-cursor="${escapeHtml(config.cursorUrl)}"` : ""}>${mediaMarkup}<div class="public-shade"></div><main class="dynamic-embed-main"><section class="embed-profile-card" data-dynamic-tile="profile" style="--dynamic-x:${positions.profile.x};--dynamic-y:${positions.profile.y}${embedTileSizeStyle(positions.profile)}"><div class="embed-profile-top">${avatar(data, "embed-profile-avatar")}<button class="icon-button" data-copy-profile="${escapeHtml(location.href)}" type="button" aria-label="Skopiuj link">${icon("copy")}</button></div><p class="embed-profile-handle">@${escapeHtml(data.username)}</p><h1 data-name="${escapeHtml(display)}">${escapeHtml(display)}</h1>${data.bio ? `<p class="embed-profile-bio">${escapeHtml(data.bio)}</p>` : ""}<div class="embed-profile-meta"><span><i></i> online</span><span>sqezen.lol/${escapeHtml(data.username)}</span></div></section><section class="embed-connections-card" data-dynamic-tile="connections" style="--dynamic-x:${positions.connections.x};--dynamic-y:${positions.connections.y}${embedTileSizeStyle(positions.connections)}"><span class="embed-kicker">CONNECTIONS</span><div class="embed-connections" data-fast-dynamic-connections><span class="embed-connection embed-connection-empty">${icon("globe")}</span></div></section>${audioMarkup}${lyricsMarkup}</main></div>`;
+}
+
+function insertFastProfileBadges(page, badges) {
+  if (page.classList.contains("dynamic-embed-page")) {
+    const main = page.querySelector(".dynamic-embed-main");
+    if (!main || main.querySelector("[data-fast-profile-badges]")) return;
+    const position = state.fastPublicProfile?.positions?.badges;
+    const markup = dynamicBadgeWidget(badges, position);
+    if (markup) main.insertAdjacentHTML("beforeend", markup.replace("<section ", '<section data-fast-profile-badges '));
+    return;
+  }
+  const title = page.querySelector(".public-card h1");
+  if (!title) return;
+  title.nextElementSibling?.classList.contains("profile-badges") && title.nextElementSibling.remove();
+  const markup = badgePills(badges);
+  if (markup) title.insertAdjacentHTML("afterend", `<div class="profile-badges">${markup}</div>`);
+}
+
+function bindFastDiscordWidget(widget, refreshNow = true) {
   if (!widget || widget.dataset.discordBound === "true") return;
   widget.dataset.discordBound = "true";
   const discordId = widget.dataset.discordId;
@@ -2666,14 +2744,131 @@ wirePublic = function () {
       customNode.innerHTML = customText ? `${discordCustomStatusEmojiMarkup(presence.custom_status_emoji)}${escapeHtml(customText)}` : "";
     }
   };
-  refresh();
+  if (refreshNow) void refresh();
   const timer = window.setInterval(() => {
     if (!document.contains(widget)) {
       window.clearInterval(timer);
       return;
     }
-    refresh();
+    void refresh();
   }, 30000);
+}
+
+async function hydrateFastDiscord(profile) {
+  const page = document.querySelector(".public-page");
+  if (!page || state.fastPublicProfile !== profile || new URLSearchParams(location.search).get("edit") === "1") return;
+  const { data: connection, error: connectionError } = await supabaseClient.from("discord_connections").select("discord_id,username,global_name,avatar,public_flags,primary_guild_tag,show_widget,show_status,show_activity,show_badges,show_guild_tag,custom_idle_text").eq("profile_id", profile.id).maybeSingle();
+  if (connectionError) {
+    console.error("Discord connection could not be loaded", connectionError);
+    return;
+  }
+  const value = sanitizeDiscordConnection(connection);
+  if (!value.discord_id || !value.show_widget) return;
+  const { data: presence, error: presenceError } = await supabaseClient.from("discord_presence").select("status,custom_status,custom_status_emoji,activities").eq("discord_id", value.discord_id).maybeSingle();
+  if (presenceError) console.error("Discord presence could not be loaded", presenceError);
+  const widgetMarkup = discordWidgetMarkup(value, presence);
+  const host = page.querySelector(".public-main,.dynamic-embed-main");
+  if (!widgetMarkup || !host || host.querySelector("[data-discord-widget]") || state.fastPublicProfile !== profile) return;
+  host.insertAdjacentHTML("beforeend", widgetMarkup);
+  bindFastDiscordWidget(host.querySelector("[data-discord-widget]"), false);
+}
+
+function hydrateFastPublicProfile(profile) {
+  const page = document.querySelector(".public-page");
+  if (!page || state.fastPublicProfile !== profile) return;
+  if (profile.fullPromise && !profile.hydrated) {
+    void profile.fullPromise.then(({ data, error }) => {
+      if (error || !data || state.fastPublicProfile !== profile || !document.contains(page)) {
+        if (error) console.error("Full public profile data could not be loaded", error);
+        return;
+      }
+      const config = sanitizeCustomization(data.customization);
+      const params = new URLSearchParams(location.search);
+      const mode = params.get("embed") === "1" || (params.get("embed") !== "0" && config.defaultEmbed === "dynamic") ? "dynamic" : "standard";
+      const nextProfile = { username: data.username, id: data.id, mode, positions: config.dynamicEmbedPositions, linksPromise: getPublicProfileLinks(data.id), hydrated: true, fullPromise: null };
+      state.lastPublicProfile = { username: data.username, id: data.id };
+      state.fastPublicProfile = nextProfile;
+      const app = document.querySelector("#app");
+      if (!app) return;
+      app.innerHTML = mode === "dynamic" ? fastDynamicProfileMarkup(data, config) : fastStandardProfileMarkup(data, config);
+      wirePublic();
+    }).catch((error) => console.error("Full public profile data could not be loaded", error));
+  }
+  void profile.linksPromise.then(({ data, error }) => {
+    if (error) {
+      console.error("Public profile links could not be loaded", error);
+      return;
+    }
+    if (state.fastPublicProfile !== profile || !document.contains(page)) return;
+    if (profile.mode === "dynamic") {
+      const connections = (data || []).map((link) => {
+        const href = safeUrl(link.url);
+        if (!href) return "";
+        const title = String(link.title || "Link").trim() || "Link";
+        return `<a class="embed-connection" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${icon(profileIcon(link))}</a>`;
+      }).filter(Boolean).slice(0, 5).join("") || `<span class="embed-connection embed-connection-empty">${icon("globe")}</span>`;
+      const target = page.querySelector("[data-fast-dynamic-connections]");
+      if (target) target.innerHTML = connections;
+      return;
+    }
+    const links = (data || []).map(publicLink).filter(Boolean).join("");
+    const target = page.querySelector("[data-profile-links]");
+    if (target) target.innerHTML = links || `<p class="empty-links">Ten profil nie ma jeszcze linków.</p>`;
+  }).catch((error) => console.error("Public profile links could not be loaded", error));
+  void loadProfileBadges(profile.id).then((badges) => {
+    if (state.fastPublicProfile !== profile || !document.contains(page)) return;
+    lastProfileBadges = badges;
+    insertFastProfileBadges(page, badges);
+  });
+  void hydrateFastDiscord(profile).catch((error) => console.error("Discord widget could not be loaded", error));
+}
+
+const basePublicProfileForFastPath = publicProfile;
+publicProfile = async function (username) {
+  const params = new URLSearchParams(location.search);
+  if (params.get("edit") === "1") {
+    state.fastPublicProfile = null;
+    return basePublicProfileForFastPath(username);
+  }
+  const summaryPromise = getPublicProfileSummary(username);
+  const fullPromise = getPublicProfileData(username);
+  const { data, error } = await summaryPromise;
+  if (error) {
+    state.fastPublicProfile = null;
+    return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / ERROR</p><h1>Nie udało się wczytać profilu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`);
+  }
+  if (!data) {
+    state.fastPublicProfile = null;
+    return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`);
+  }
+  const config = sanitizeCustomization(DEFAULT_CUSTOMIZATION);
+  state.lastPublicProfile = { username: data.username, id: data.id };
+  const mode = params.get("embed") === "1" ? "dynamic" : "standard";
+  const profile = { username, id: data.id, mode, positions: config.dynamicEmbedPositions, linksPromise: getPublicProfileLinks(data.id), fullPromise, hydrated: false };
+  state.fastPublicProfile = profile;
+  return mode === "dynamic" ? fastDynamicProfileMarkup(data, config) : fastStandardProfileMarkup(data, config);
+};
+
+const baseWirePublicForFastPath = wirePublic;
+wirePublic = function () {
+  baseWirePublicForFastPath();
+  if (state.fastPublicProfile) hydrateFastPublicProfile(state.fastPublicProfile);
+};
+function fastPublicProfileBootMarkup(username) {
+  const value = String(username || "profile").trim().toLowerCase();
+  const initial = escapeHtml(value.slice(0, 1).toUpperCase() || "S");
+  return `<div class="public-page public-profile-boot align-center spacing-comfortable buttons-glass effect-none name-none font-inter" style="--profile-accent:#626262;--profile-text:#f5f6fb;--profile-card-rgb:17,17,22;--profile-button-rgb:98,98,98;--profile-button-text:#ffffff;--profile-opacity:.92;--profile-blur:18px;--profile-width:520px;--profile-avatar:104px;--profile-radius:13px;--profile-background:#08090d"><div class="public-shade"></div><main class="public-main"><section class="public-card"><div class="public-card-top"><span class="public-live"><i></i> public profile</span></div><span class="profile-avatar avatar-fallback">${initial}</span><p class="public-handle">@${escapeHtml(value)}</p><h1>${escapeHtml(value)}</h1></section></main></div>`;
+}
+
+const baseRenderWithPublicShell = render;
+render = async function () {
+  const path = currentPath();
+  const isPublicPath = path !== "/" && !["/login", "/register", "/register/code", "/dashboard"].includes(path);
+  if (isPublicPath) {
+    const app = document.querySelector("#app");
+    if (app) app.innerHTML = fastPublicProfileBootMarkup(path.slice(1).split("/")[0]);
+  }
+  return baseRenderWithPublicShell();
 };
 const baseRender = render;
 render = async function () { const path = currentPath(); if (!["/login", "/register", "/register/code"].includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; document.title = `${path === "/login" ? "Sign in" : path === "/register" ? "Create an account" : "Confirm your email"} — sqezen`; const app = document.querySelector("#app"); const kind = path === "/register/code" ? "code" : path.slice(1); app.innerHTML = typeof window.auth === "function" ? window.auth(kind) : auth(kind); await wireAuth(); };
