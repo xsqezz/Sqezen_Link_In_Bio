@@ -58,7 +58,7 @@ const icons = {
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="m10 10 5 2-5 2v-4Z"/></svg>'
 };
 
-const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioTitle: "", audioArtist: "", audioLyrics: "", cursorUrl: "", cursorGlowColor: "#626262", cursorEffect: "none", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", defaultEmbed: "standard", standardEmbedPosition: { x: 50, y: 50, free: true }, dynamicEmbedPositions: { profile: { x: 50, y: 35, free: true }, connections: { x: 78, y: 55, free: true }, badges: { x: 75, y: 82, free: true }, audio: { x: 25, y: 82, free: true }, lyrics: { x: 76, y: 27, free: true } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#626262", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
+const DEFAULT_CUSTOMIZATION = Object.freeze({ backgroundMediaUrl: "", audioUrl: "", audioTitle: "", audioArtist: "", audioLyrics: "", cursorUrl: "", cursorGlowColor: "#626262", cursorEffect: "none", location: "", profileOpacity: 92, profileBlur: 18, cardWidth: 520, avatarSize: 104, backgroundEffect: "none", usernameEffect: "none", nameParticles: "none", defaultEmbed: "standard", standardEmbedPosition: { x: 50, y: 50, free: true }, dynamicEmbedPositions: { profile: { x: 50, y: 35, free: true }, connections: { x: 78, y: 55, free: true }, discord: { x: 25, y: 55, free: true }, badges: { x: 75, y: 82, free: true }, audio: { x: 25, y: 82, free: true }, lyrics: { x: 76, y: 27, free: true } }, textColor: "#f5f6fb", cardColor: "#111116", buttonColor: "#626262", buttonTextColor: "#ffffff", gradientPrimary: "#000000", gradientSecondary: "#000000", useGradient: false, alignment: "center", spacing: "comfortable", buttonStyle: "glass", buttonRadius: 13, fontFamily: "inter", showHandle: true, showBranding: true });
 
 function icon(name) { return icons[name] || icons.link; }
 function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char])); }
@@ -134,8 +134,8 @@ function embedTileSizeStyle(position = {}, prefix = "dynamic") {
 }
 function sanitizeDynamicEmbedPositions(raw = {}) {
   const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
-  const defaults = { profile: { x: 50, y: 35 }, connections: { x: 78, y: 55 }, badges: { x: 75, y: 82 }, audio: { x: 25, y: 82 }, lyrics: { x: 76, y: 27 } };
-  const legacyScale = { profile: { x: 0.5, y: 0.5 }, connections: { x: 0.5, y: 0.5 }, badges: { x: 0.5, y: 0.5 }, audio: { x: 0.5, y: 0.4 }, lyrics: { x: 0.5, y: 0.5 } };
+  const defaults = { profile: { x: 50, y: 35 }, connections: { x: 78, y: 55 }, discord: { x: 25, y: 55 }, badges: { x: 75, y: 82 }, audio: { x: 25, y: 82 }, lyrics: { x: 76, y: 27 } };
+  const legacyScale = { profile: { x: 0.5, y: 0.5 }, connections: { x: 0.5, y: 0.5 }, discord: { x: 0.5, y: 0.5 }, badges: { x: 0.5, y: 0.5 }, audio: { x: 0.5, y: 0.4 }, lyrics: { x: 0.5, y: 0.5 } };
   const position = (candidate, key) => {
     const fallback = defaults[key];
     const size = sanitizeEmbedTileSize(candidate);
@@ -143,7 +143,7 @@ function sanitizeDynamicEmbedPositions(raw = {}) {
     const scale = legacyScale[key];
     return { x: safeNumber(fallback.x + safeNumber(candidate?.x, -35, 35, 0) * scale.x, 0, 100, fallback.x), y: safeNumber(fallback.y + safeNumber(candidate?.y, -30, 30, 0) * scale.y, 0, 100, fallback.y), free: true, ...size };
   };
-  return { profile: position(value.profile, "profile"), connections: position(value.connections, "connections"), badges: position(value.badges, "badges"), audio: position(value.audio, "audio"), lyrics: position(value.lyrics, "lyrics") };
+  return { profile: position(value.profile, "profile"), connections: position(value.connections, "connections"), discord: position(value.discord, "discord"), badges: position(value.badges, "badges"), audio: position(value.audio, "audio"), lyrics: position(value.lyrics, "lyrics") };
 }
 function sanitizeStandardEmbedPosition(raw = {}) {
   const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
@@ -423,6 +423,13 @@ function discordWidgetMarkup(connection, presence = {}) {
   const badges = discordPublicBadgeMarkup(value.public_flags, value.show_badges);
   const guildTag = value.show_guild_tag && value.primary_guild_tag ? `<span class="discord-guild-tag">${icon("discord")}${escapeHtml(value.primary_guild_tag)}</span>` : "";
   return `<section class="discord-profile-widget" data-discord-widget data-discord-id="${escapeHtml(value.discord_id)}" data-discord-show-status="${value.show_status}" data-discord-show-activity="${value.show_activity}" data-discord-custom-idle="${escapeHtml(value.custom_idle_text)}"><div class="discord-widget-top"><a class="discord-widget-identity" href="https://discord.com/users/${escapeHtml(value.discord_id)}" target="_blank" rel="noopener noreferrer">${discordAvatarMarkup(value, "discord-widget-avatar", status.className)}<span><strong>${escapeHtml(displayName)}</strong><small>@${escapeHtml(value.username || value.discord_id)}</small></span></a>${guildTag}</div>${value.show_status ? `<p class="discord-widget-status" data-discord-status><i class="discord-status-dot ${status.className}" data-discord-status-dot></i><span data-discord-status-label>${escapeHtml(status.label)}</span></p>` : ""}${discordActivityMarkup(current, value.show_activity)}${discordCustomStatusMarkup(value, current)}${badges ? `<div class="discord-widget-badges" data-discord-badges>${badges}</div>` : ""}</section>`;
+}
+function dynamicDiscordWidgetMarkup(connection, presence, position) {
+  const markup = discordWidgetMarkup(connection, presence);
+  if (!markup) return "";
+  const x = safeNumber(position?.x, 0, 100, 25);
+  const y = safeNumber(position?.y, 0, 100, 55);
+  return markup.replace('<section class="discord-profile-widget"', `<section class="discord-profile-widget dynamic-discord-profile-widget" data-dynamic-tile="discord" style="--dynamic-x:${x};--dynamic-y:${y}${embedTileSizeStyle(position)}"`);
 }
 function discordDashboardPanel() {
   return `<section data-tab-panel="discord" hidden><div class="panel-heading"><div><span class="panel-index">DISCORD</span><h2>Discord profile</h2><p>Connect Discord to show your identity, live presence and activity.</p></div><span class="discord-panel-badge">LIVE</span></div><div class="discord-connect-state" data-discord-connect-state><div class="discord-connect-card"><div class="discord-connect-icon">${icon("discord")}</div><div><strong>Show your Discord profile</strong><p>Presence is synced by the sqezen Discord bot after you join the community server.</p></div><button class="button button-small button-primary" data-discord-connect type="button">${icon("discord")} Connect Discord</button></div></div><div class="discord-account-state" data-discord-account-state hidden></div><p class="discord-panel-status" data-discord-panel-status role="status" aria-live="polite"></p></section>`;
@@ -1101,7 +1108,7 @@ wireDashboard = async function () {
     page.classList.add("is-position-editing");
     positionButton.disabled = false;
     positionButton.textContent = "Zakończ edycję pozycji";
-    if (positionLabel) positionLabel.textContent = "Przeciągnij kartę profilu, Connections, odtwarzacz lub Live lyrics. Zapisz profil, aby opublikować układ.";
+    if (positionLabel) positionLabel.textContent = "Przeciągnij kartę profilu, Connections, Discord presence, odtwarzacz lub Live lyrics. Zapisz profil, aby opublikować układ.";
     const cleanups = [];
     const previousUserSelect = doc.body?.style.userSelect || "";
     if (doc.body) doc.body.style.userSelect = "none";
@@ -2259,7 +2266,7 @@ function clampDynamicEmbedTiles(main) {
   });
 }
 function dynamicEmbedEditorToolbar() {
-  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag or resize profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
+  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag or resize profile, Connections, Discord presence, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
 }
 const baseDynamicEmbedEditorToolbarWithAutoSave = dynamicEmbedEditorToolbar;
 dynamicEmbedEditorToolbar = () => baseDynamicEmbedEditorToolbarWithAutoSave().replace(
@@ -2573,6 +2580,7 @@ async function dynamicEmbedProfile(username) {
   const { data, error } = await supabaseClient.from("profiles").select("*").eq("username", username).maybeSingle();
   if (error) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / EMBED</p><h1>Nie udało się wczytać embedu.</h1><p>Spróbuj ponownie za chwilę.</p></main>`);
   if (!data) return layout(`<main class="empty-page"><p class="eyebrow">SQEZEN / PROFILE</p><h1>Nie znaleziono profilu.</h1><p>Nazwa <strong>${escapeHtml(username)}</strong> nie jest jeszcze zajęta.</p>${button("/register", "Zarezerwuj nazwę", true)}</main>`);
+  state.lastPublicProfile = { username: data.username, id: data.id, customization: data.customization };
   const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", data.id).order("position", { ascending: true });
   const config = sanitizeCustomization(data.customization);
   const assignedBadges = await loadProfileBadges(data.id);
@@ -2645,19 +2653,23 @@ const basePublicProfileWithDiscord = publicProfile;
 publicProfile = async function (username) {
   const markup = await basePublicProfileWithDiscord(username);
   const params = new URLSearchParams(location.search);
-  if (!markup.includes('class="public-page ') || params.get("edit") === "1") return markup;
-  let profileId = state.lastPublicProfile?.username === username ? state.lastPublicProfile.id : null;
-  if (!profileId) {
-    const { data: profile, error: profileError } = await supabaseClient.from("profiles").select("id").eq("username", username).maybeSingle();
-    if (profileError || !profile?.id) return markup;
-    profileId = profile.id;
+  const isDynamicEmbed = markup.includes('class="public-page dynamic-embed-page ');
+  if (!markup.includes('class="public-page ') || (params.get("edit") === "1" && !isDynamicEmbed)) return markup;
+  let profile = state.lastPublicProfile?.username === username ? state.lastPublicProfile : null;
+  if (!profile) {
+    const { data, error: profileError } = await supabaseClient.from("profiles").select("id,customization").eq("username", username).maybeSingle();
+    if (profileError || !data?.id) return markup;
+    profile = data;
+    state.lastPublicProfile = { username, id: data.id, customization: data.customization };
   }
+  const profileId = profile.id;
   const { data: connection, error: connectionError } = await supabaseClient.from("discord_connections").select("discord_id,username,global_name,avatar,public_flags,primary_guild_tag,show_widget,show_status,show_activity,show_badges,show_guild_tag,custom_idle_text").eq("profile_id", profileId).maybeSingle();
   if (connectionError || !connection) return markup;
   const value = sanitizeDiscordConnection(connection);
   if (!value.discord_id || !value.show_widget) return markup;
   const { data: presence } = await supabaseClient.from("discord_presence").select("status,custom_status,custom_status_emoji,activities").eq("discord_id", value.discord_id).maybeSingle();
-  const widget = discordWidgetMarkup(value, presence);
+  const positions = sanitizeCustomization(profile.customization).dynamicEmbedPositions;
+  const widget = isDynamicEmbed ? dynamicDiscordWidgetMarkup(value, presence, positions.discord) : discordWidgetMarkup(value, presence);
   return widget ? markup.replace("</main>", `${widget}</main>`) : markup;
 };
 const baseWirePublicWithDiscord = wirePublic;
@@ -2766,7 +2778,9 @@ async function hydrateFastDiscord(profile) {
   if (!value.discord_id || !value.show_widget) return;
   const { data: presence, error: presenceError } = await supabaseClient.from("discord_presence").select("status,custom_status,custom_status_emoji,activities").eq("discord_id", value.discord_id).maybeSingle();
   if (presenceError) console.error("Discord presence could not be loaded", presenceError);
-  const widgetMarkup = discordWidgetMarkup(value, presence);
+  const widgetMarkup = profile.mode === "dynamic"
+    ? dynamicDiscordWidgetMarkup(value, presence, profile.positions?.discord)
+    : discordWidgetMarkup(value, presence);
   const host = page.querySelector(".public-main,.dynamic-embed-main");
   if (!widgetMarkup || !host || host.querySelector("[data-discord-widget]") || state.fastPublicProfile !== profile) return;
   host.insertAdjacentHTML("beforeend", widgetMarkup);

@@ -326,6 +326,7 @@ html.cursor-enhanced:has(#dashboard-preview:hover) .cursor-glow,html.cursor-enha
 .discord-widget-avatar{width:43px;height:43px;flex-basis:43px;font-size:.85rem}
 .discord-widget-avatar .discord-status-dot{width:12px;height:12px;border-width:2px}
 .dynamic-embed-main>.discord-profile-widget{margin:18px auto 24px}
+.dynamic-embed-main>.dynamic-discord-profile-widget[data-dynamic-tile]{width:min(440px,calc(100vw - 32px));margin:0}
 .public-main>.discord-profile-widget{align-self:end}
 @media(max-width:720px){.discord-connect-card{grid-template-columns:auto minmax(0,1fr)}.discord-connect-card .button{grid-column:1/-1;width:100%}.discord-settings-grid{grid-template-columns:1fr}}
 @media(max-width:480px){.discord-account-card{padding:14px}.discord-account-head{align-items:flex-start;flex-direction:column}.discord-action-row{align-items:stretch;flex-direction:column}.discord-action-row .button{width:100%}.discord-profile-widget{padding:13px}.discord-profile-widget .discord-guild-tag{max-width:110px}}
