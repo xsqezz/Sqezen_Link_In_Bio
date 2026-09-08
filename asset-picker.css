@@ -10,6 +10,13 @@ body.asset-picker-open{overflow:hidden}
 .asset-picker-close{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:#17171c;color:#aeb4c5;font-size:22px;line-height:1;cursor:pointer;transition:border-color .2s ease,color .2s ease,background .2s ease}
 .asset-picker-close:hover{border-color:rgba(98,98,98,.7);background:#1c1d26;color:#fff}
 .asset-picker-choice{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:#141419}
+.asset-picker-dropzone{position:relative;flex-wrap:wrap;border-style:dashed;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.asset-picker-dropzone.is-dragging{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.42);transform:translateY(-1px)}
+.asset-picker-dropzone.has-file{border-style:solid;border-color:rgba(104,211,145,.35)}
+.asset-picker-file-preview{width:100%;height:146px;overflow:hidden;background:#09090c;border:1px solid rgba(255,255,255,.1);border-radius:13px}
+.asset-picker-file-preview img,.asset-picker-file-preview video{display:block;width:100%;height:100%;object-fit:cover}
+.asset-picker-preview-audio{display:flex;height:100%;align-items:center;justify-content:center;gap:10px;padding:16px;color:#dce0e9}
+.asset-picker-preview-audio svg{width:22px;height:22px}.asset-picker-preview-audio strong{max-width:80%;overflow:hidden;font-size:13px;text-overflow:ellipsis;white-space:nowrap}
 .asset-picker-choice>div{display:grid;gap:5px;min-width:0}
 .asset-picker-choice strong{font-size:14px}
 .asset-picker-choice small,.asset-picker-url small{color:#72798b;font-size:12px;line-height:1.45}

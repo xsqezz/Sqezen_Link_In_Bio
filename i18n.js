@@ -209,30 +209,211 @@
     "Tworzenie konta…": "Creating your account…",
     "Logowanie…": "Signing in…",
     "Zapisywanie…": "Saving…",
-    "Pracuję…": "Working…"
+    "Pracuję…": "Working…",
+    "Zrób to po swojemu.": "Make it yours.",
+    "Zrób to po swojemu": "Make it yours",
+    "online teraz": "online now",
+    "Witaj": "Welcome",
+    "z powrotem.": "back.",
+    "Zbuduj swoją": "Build your",
+    "przestrzeń.": "space.",
+    "Potwierdź swój": "Confirm your",
+    "e-mail.": "email.",
+    "Zaloguj się, aby zarządzać profilem, linkami i swoją przestrzenią.": "Sign in to manage your profile, links and personal space.",
+    "Stwórz profil, który jest naprawdę Twój. Jeden prosty adres do wszystkiego, co robisz online.": "Create a profile that feels like you. One clean address for everything you do online.",
+    "Jeszcze jeden krok i nowy profil będzie gotowy do udostępnienia.": "One quick step and your new profile is ready to share.",
+    "Wpisz dane, aby kontynuować.": "Enter your details to continue.",
+    "Wpisz 8-cyfrowy kod wysłany po rejestracji.": "Enter the 8-digit code we sent after registration.",
+    "Hasło": "Password",
+    "Kontynuuj": "Continue",
+    "Utwórz konto": "Create an account",
+    "Utwórz je": "Create one",
+    "Potwierdź e-mail": "Confirm email",
+    "Zmień dane rejestracji": "Change registration details",
+    "SQEZEN / LOGOWANIE": "SQEZEN / SIGN IN",
+    "DOSTĘP DO KONTA": "ACCOUNT ACCESS",
+    "SQEZEN / UTWÓRZ": "SQEZEN / CREATE",
+    "01 / UTWÓRZ": "01 / CREATE",
+    "SQEZEN / WERYFIKACJA": "SQEZEN / VERIFY",
+    "02 / WERYFIKACJA": "02 / VERIFY",
+    "Twoja przestrzeń online": "your space online",
+    "Upuść plik tutaj": "Drop a file here",
+    "lub wybierz plik lokalny. Tymczasowy podgląd powstanie bez konwersji do Base64.": "or choose a local file. A temporary preview is created without converting it to Base64.",
+    "Wybierz plik": "Choose file",
+    "albo": "or",
+    "Wklej bezpośredni URL": "Paste a direct URL",
+    "Adres musi prowadzić bezpośrednio do pliku. Linki z Discorda mogą wymagać wybrania pliku lokalnego.": "The URL must point directly to a file. Discord links can require choosing a local file instead.",
+    "Nie wybrano jeszcze assetu.": "No asset selected yet.",
+    "Obecnie wybrano plik lokalny.": "A local file is currently selected.",
+    "Obecnie wybrano bezpośredni URL.": "A direct URL is currently selected.",
+    "Anuluj": "Cancel",
+    "Użyj assetu": "Use asset",
+    "Wybierz plik lokalny zamiast wklejać dane Base64.": "Choose a local file instead of pasting Base64 data.",
+    "Gotowe": "Ready",
+    "Zmiany zapisują się automatycznie.": "Changes save automatically.",
+    "Przeciągaj lub skaluj profil, połączenia, Discord presence, odtwarzacz muzyki albo Live lyrics. Zsynchronizowane wersy dodasz w ustawieniach audio.": "Drag or resize profile, Connections, Discord presence, music player or Live lyrics. Add synced lines in Audio settings.",
+    "Przeciągaj lub skaluj kartę profilu, aby umieścić ją w dowolnym miejscu strony.": "Drag or resize the profile card to place it anywhere on the page."
   }));
-  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["Nie udało się", "Could not"]];
-  const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Nazwa utworu", "Track name"], ["Nazwa wykonawcy", "Artist name"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"]]);
-  const translate = (root = document) => {
+  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["Nie udało się", "Could not"], [" — gotowy do użycia.", " — ready to use."]];
+  const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Nazwa utworu", "Track name"], ["Nazwa wykonawcy", "Artist name"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"], ["Twoje hasło", "Your password"], ["minimum 6 znaków", "minimum 6 characters"], ["ty@example.com", "you@example.com"]]);
+  const dictionaries = Object.freeze({
+    en: Object.freeze({
+      "nav.profile": "Profile",
+      "nav.links": "Links",
+      "nav.appearance": "Appearance",
+      "nav.account": "Account",
+      "actions.openProfile": "Open profile",
+      "actions.signOut": "Sign out",
+      "editor.arrange": "Arrange your embed",
+      "editor.arrangeStandard": "Arrange your standard embed",
+      "editor.back": "Back to builder",
+      "save.ready": "Ready",
+      "save.pending": "Pending changes",
+      "save.syncing": "Saving changes",
+      "save.saved": "All changes saved",
+      "save.error": "Changes could not be saved"
+    }),
+    pl: Object.freeze({
+      "nav.profile": "Profil",
+      "nav.links": "Linki",
+      "nav.appearance": "Wygląd",
+      "nav.account": "Konto",
+      "actions.openProfile": "Otwórz profil",
+      "actions.signOut": "Wyloguj",
+      "editor.arrange": "Ustaw swój embed",
+      "editor.arrangeStandard": "Ustaw standardowy embed",
+      "editor.back": "Wróć do kreatora",
+      "save.ready": "Gotowe",
+      "save.pending": "Zmiany oczekują na zapis",
+      "save.syncing": "Zapisywanie zmian",
+      "save.saved": "Wszystkie zmiany zapisane",
+      "save.error": "Nie udało się zapisać zmian"
+    })
+  });
+  const reverseTextMap = new Map(Array.from(textMap, ([polish, english]) => [english, polish]));
+  const reversePartMap = partMap.map(([polish, english]) => [english, polish]);
+  const reverseAttrMap = new Map(Array.from(attrMap, ([polish, english]) => [english, polish]));
+  const originalText = new WeakMap();
+  const lastAppliedText = new WeakMap();
+  const originalAttributes = new WeakMap();
+  const originalValues = new WeakMap();
+  const storageKey = "sqezen_locale";
+  const supportedLocales = new Set(["en", "pl"]);
+  let locale = "en";
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (supportedLocales.has(saved)) locale = saved;
+  } catch {}
+
+  const translateLegacyText = (value, targetLocale = locale) => {
+    const original = String(value || "");
+    const trimmed = original.trim();
+    if (!trimmed) return original;
+    const exactMap = targetLocale === "en" ? textMap : reverseTextMap;
+    const parts = targetLocale === "en" ? partMap : reversePartMap;
+    const exact = exactMap.get(trimmed);
+    return exact ? original.replace(trimmed, exact) : parts.reduce((result, [from, to]) => result.replaceAll(from, to), original);
+  };
+
+  const getElements = (root, selector) => {
+    const elements = [];
+    if (root instanceof Element && root.matches(selector)) elements.push(root);
+    root.querySelectorAll?.(selector).forEach((element) => elements.push(element));
+    return elements;
+  };
+
+  const t = (key, values = {}) => {
+    const template = dictionaries[locale]?.[key] ?? dictionaries.en[key] ?? key;
+    return template.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? `{${name}}`));
+  };
+
+  const ensureLocaleControl = () => {
+    const allowed = new Set(["/", "/login", "/register", "/register/code", "/dashboard"]);
+    const route = document.body?.dataset.route || location.pathname.replace(/\/+$/, "") || "/";
+    let control = document.querySelector("[data-locale-toggle]");
+    if (!allowed.has(route)) {
+      control?.remove();
+      return;
+    }
+    if (!control) {
+      control = document.createElement("button");
+      control.type = "button";
+      control.className = "locale-toggle";
+      control.dataset.localeToggle = "true";
+      control.addEventListener("click", () => setLocale(locale === "en" ? "pl" : "en"));
+    }
+    const inlineHost = route === "/dashboard"
+      ? document.querySelector(".dashboard-topbar-actions")
+      : route.startsWith("/login") || route.startsWith("/register")
+        ? document.querySelector(".auth-reference-header")
+        : null;
+    const host = inlineHost || document.body;
+    if (control.parentElement !== host) host.prepend(control);
+    control.classList.toggle("is-inline", Boolean(inlineHost));
+    const label = locale === "en" ? "EN / PL" : "PL / EN";
+    const ariaLabel = locale === "en" ? "Switch language to Polish" : "Zmień język na angielski";
+    if (control.textContent !== label) control.textContent = label;
+    if (control.getAttribute("aria-label") !== ariaLabel) control.setAttribute("aria-label", ariaLabel);
+    if (control.title !== ariaLabel) control.title = ariaLabel;
+  };
+
+  const apply = (root = document) => {
+    [[".dashboard-nav-list [data-dashboard-tab='identity'] > span", "nav.profile"], [".dashboard-nav-list [data-dashboard-tab='links'] > span", "nav.links"], [".dashboard-nav-list [data-dashboard-tab='profile-card'] > span", "nav.appearance"], [".dashboard-nav-list [data-dashboard-tab='account'] > span", "nav.account"]].forEach(([selector, key]) => {
+      getElements(root, selector).forEach((element) => element.dataset.i18n = key);
+    });
+    getElements(root, ".public-handle,.public-card h1,.public-bio,.profile-link-title,.embed-profile-handle,.embed-profile-card h1,.embed-profile-bio,.dynamic-lyrics-line,.discord-profile-identity,.discord-activity-copy").forEach((element) => {
+      element.dataset.userContent = "true";
+    });
+    getElements(root, "[data-i18n]").forEach((element) => {
+      const value = t(element.dataset.i18n);
+      if (element.textContent !== value) element.textContent = value;
+    });
+    [["data-i18n-placeholder", "placeholder"], ["data-i18n-aria-label", "aria-label"], ["data-i18n-title", "title"]].forEach(([dataName, attribute]) => {
+      getElements(root, `[${dataName}]`).forEach((element) => {
+        const value = t(element.getAttribute(dataName));
+        if (element.getAttribute(attribute) !== value) element.setAttribute(attribute, value);
+      });
+    });
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach((node) => {
-      if (node.parentElement?.closest("[data-user-content]")) return;
-      const original = node.nodeValue;
-      const trimmed = original.trim();
-      if (!trimmed) return;
-      const translated = textMap.get(trimmed);
-      const nextValue = translated
-        ? original.replace(trimmed, translated)
-        : partMap.reduce((value, [from, to]) => value.replaceAll(from, to), original);
-      if (nextValue !== original) node.nodeValue = nextValue;
+      if (node.parentElement?.closest("[data-user-content],[data-i18n],[aria-hidden='true'],.cursor-glow,.site-cursor")) return;
+      if (!originalText.has(node)) originalText.set(node, node.nodeValue);
+      const nextValue = translateLegacyText(originalText.get(node), locale);
+      lastAppliedText.set(node, nextValue);
+      if (node.nodeValue !== nextValue) node.nodeValue = nextValue;
     });
-    root.querySelectorAll?.("input, textarea, select").forEach((field) => {
-      ["placeholder", "aria-label"].forEach((name) => { const value = field.getAttribute(name); if (value && attrMap.has(value)) field.setAttribute(name, attrMap.get(value)); });
-      if (field.readOnly && textMap.has(field.value)) field.value = textMap.get(field.value);
+    getElements(root, "input,textarea,select").forEach((field) => {
+      let originals = originalAttributes.get(field);
+      if (!originals) {
+        originals = new Map();
+        originalAttributes.set(field, originals);
+      }
+      ["placeholder", "aria-label", "title"].forEach((name) => {
+        const current = field.getAttribute(name);
+        if (current != null && !originals.has(name)) originals.set(name, current);
+        const source = originals.get(name);
+        if (source == null) return;
+        const map = locale === "en" ? attrMap : reverseAttrMap;
+        const nextValue = map.get(source) || translateLegacyText(source, locale);
+        if (current !== nextValue) field.setAttribute(name, nextValue);
+      });
+      if (field.readOnly) {
+        if (!originalValues.has(field)) originalValues.set(field, field.value);
+        const nextValue = translateLegacyText(originalValues.get(field), locale);
+        if (field.value !== nextValue) field.value = nextValue;
+      }
     });
-    document.documentElement.lang = "en";
+    document.documentElement.lang = locale;
+    const route = document.body?.dataset.route || location.pathname.replace(/\/+$/, "") || "/";
+    const routeTitles = {
+      en: { "/": "sqezen — your space online", "/login": "Sign in — sqezen", "/register": "Create an account — sqezen", "/register/code": "Confirm your email — sqezen", "/dashboard": "Workspace — sqezen" },
+      pl: { "/": "sqezen — twoja przestrzeń online", "/login": "Logowanie — sqezen", "/register": "Utwórz konto — sqezen", "/register/code": "Potwierdź e-mail — sqezen", "/dashboard": "Panel — sqezen" }
+    };
+    const pageTitle = routeTitles[locale][route];
+    if (pageTitle && document.title !== pageTitle) document.title = pageTitle;
+    ensureLocaleControl();
   };
   let queued = false;
   const pendingRoots = new Set();
@@ -247,20 +428,40 @@
     pendingRoots.clear();
     roots
       .filter((root) => !roots.some((other) => other !== root && other.contains(root)))
-      .forEach((root) => translate(root));
+      .forEach((root) => apply(root));
   };
   const observer = new MutationObserver((records) => {
     records.forEach((record) => {
       if (record.type === "childList" && record.addedNodes.length) {
-        if (record.target === document.body || record.target === document.documentElement) record.addedNodes.forEach(queueRoot);
-        else queueRoot(record.target);
+        record.addedNodes.forEach(queueRoot);
       }
-      if (record.type === "characterData") queueRoot(record.target);
+      if (record.type === "characterData") {
+        const applied = lastAppliedText.get(record.target);
+        if (record.target.nodeValue !== applied) originalText.set(record.target, record.target.nodeValue);
+        queueRoot(record.target);
+      }
     });
     if (!pendingRoots.size || queued) return;
     queued = true;
-    requestAnimationFrame(flushTranslations);
+    queueMicrotask(flushTranslations);
   });
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-  translate();
+  const setLocale = (nextLocale) => {
+    if (!supportedLocales.has(nextLocale)) return false;
+    locale = nextLocale;
+    try { localStorage.setItem(storageKey, locale); } catch {}
+    apply(document);
+    window.dispatchEvent(new CustomEvent("sqezen:localechange", { detail: { locale } }));
+    return true;
+  };
+  window.sqezenI18n = {
+    get locale() { return locale; },
+    t,
+    apply,
+    registerRoot: apply,
+    translateText: (value) => translateLegacyText(value, locale),
+    setLocale,
+    toggle: () => setLocale(locale === "en" ? "pl" : "en")
+  };
+  apply(document);
 })();

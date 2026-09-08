@@ -10,6 +10,35 @@
   ];
   const escape = (value = "") => String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
   const platformByName = (name) => platforms.find(([value]) => value === name) || platforms[platforms.length - 1];
+  const platformDomains = new Map([
+    ["snapchat.com", "snapchat"], ["youtube.com", "youtube"], ["youtu.be", "youtube"], ["discord.gg", "discord"], ["discord.com", "discord"],
+    ["open.spotify.com", "spotify"], ["instagram.com", "instagram"], ["x.com", "x"], ["twitter.com", "x"], ["tiktok.com", "tiktok"],
+    ["t.me", "telegram"], ["soundcloud.com", "soundcloud"], ["paypal.me", "paypal"], ["github.com", "github"], ["roblox.com", "roblox"],
+    ["xbox.com", "xbox"], ["gitlab.com", "gitlab"], ["twitch.tv", "twitch"], ["reddit.com", "reddit"], ["namemc.com", "namemc"],
+    ["steamcommunity.com", "steam"], ["threads.net", "threads"], ["linkedin.com", "linkedin"], ["pinterest.com", "pinterest"], ["facebook.com", "facebook"]
+  ]);
+  const detectPlatform = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return { value: "email", label: "Email", url: `mailto:${raw}` };
+    if (!/[.:/]/.test(raw)) return null;
+    const normalized = /^[a-z][a-z\d+.-]*:/i.test(raw) ? raw : `https://${raw.replace(/^\/\//, "")}`;
+    try {
+      const parsed = new URL(normalized);
+      if (!["http:", "https:", "mailto:"].includes(parsed.protocol)) return null;
+      if (parsed.protocol === "mailto:") return { value: "email", label: "Email", url: parsed.href };
+      const hostname = parsed.hostname.replace(/^www\./, "").toLowerCase();
+      for (const [domain, platformName] of platformDomains) {
+        if (hostname === domain || hostname.endsWith(`.${domain}`)) {
+          const [platformValue, label] = platformByName(platformName);
+          return { value: platformValue, label, url: parsed.href };
+        }
+      }
+      return { value: "website", label: "Website", url: parsed.href };
+    } catch {
+      return null;
+    }
+  };
   const glyph = (name, className = "") => { const [value] = platformByName(name); const markup = window.icon ? window.icon(value) : ""; return `<span class="platform-glyph ${className}" data-platform-glyph="${escape(value)}" aria-hidden="true">${markup}</span>`; };
   const placeholderFor = (name, mode = "link") => mode === "text" ? "Write the text shown on your profile..." : platformByName(name)[2];
   const platformPicker = () => `<section class="link-platform-picker" aria-labelledby="link-platform-title"><div class="link-platform-heading"><span>${window.icon ? window.icon("link") : "↗"}</span><div><h3 id="link-platform-title">Add a social profile</h3><p>Pick a platform to add it to your profile.</p></div></div><div class="link-platform-grid">${platforms.map(([value, label]) => `<button class="platform-button" type="button" data-platform-preset="${escape(value)}" title="Add ${escape(label)}"><span>${glyph(value)}</span><small>${escape(label)}</small></button>`).join("")}</div></section>`;
@@ -46,16 +75,39 @@
     summary.className = "link-card-summary";
     summary.innerHTML = `<span class="link-card-grip" aria-hidden="true">⋮⋮</span><span class="link-card-brand" data-link-brand>${glyph(currentIcon())}</span><span class="link-card-summary-copy"><strong data-link-summary-title>${escape(title?.value || "Untitled link")}</strong><span data-link-summary-url>${escape(url?.value || "Add an address")}</span></span><span class="link-card-summary-actions"><button type="button" data-link-card-edit aria-label="Edit link">✎</button><a data-link-card-open href="#" target="_blank" rel="noopener noreferrer" aria-label="Open link">↗</a><button type="button" data-link-action="remove" aria-label="Remove link">×</button></span>`;
     item.insertBefore(summary, item.firstElementChild);
-    const refresh = () => { const name = title?.value?.trim() || "Untitled link"; const address = url?.value?.trim() || "Add an address"; summary.querySelector("[data-link-summary-title]").textContent = name; summary.querySelector("[data-link-summary-url]").textContent = address; summary.querySelector("[data-link-brand]").innerHTML = glyph(currentIcon()); const open = summary.querySelector("[data-link-card-open]"); const normalized = address && !/^Add an address$/.test(address) ? (/^(https?:|mailto:)/i.test(address) ? address : `https://${address}`) : "#"; open.href = normalized; open.classList.toggle("is-disabled", normalized === "#"); };
+    const refresh = () => { const name = title?.value?.trim() || "Untitled link"; const address = url?.value?.trim() || "Add an address"; summary.querySelector("[data-link-summary-title]").textContent = name; summary.querySelector("[data-link-summary-url]").textContent = address; summary.querySelector("[data-link-brand]").innerHTML = glyph(currentIcon()); const open = summary.querySelector("[data-link-card-open]"); const detected = detectPlatform(address); const normalized = detected?.url || "#"; open.href = normalized; open.classList.toggle("is-disabled", normalized === "#"); };
+    const autoDetect = () => {
+      const detected = detectPlatform(url?.value);
+      if (!detected) return refresh();
+      if (icon && icon.dataset.userSelected !== "true") icon.value = detected.value;
+      if (title && title.dataset.userEdited !== "true" && (!title.value.trim() || title.value === title.dataset.autoLabel)) {
+        title.value = detected.label;
+        title.dataset.autoLabel = detected.label;
+      }
+      item.dataset.detectedPlatform = detected.value;
+      refresh();
+    };
+    title?.addEventListener("input", (event) => { if (event.isTrusted) title.dataset.userEdited = "true"; });
+    icon?.addEventListener("change", (event) => { if (event.isTrusted) icon.dataset.userSelected = "true"; });
+    url?.addEventListener("input", autoDetect);
+    url?.addEventListener("change", autoDetect);
     [title, url, icon].filter(Boolean).forEach((field) => { field.addEventListener("input", refresh); field.addEventListener("change", refresh); });
     summary.querySelector("[data-link-card-edit]").addEventListener("click", () => { item.classList.toggle("is-editing"); if (item.classList.contains("is-editing")) title?.focus(); });
-    refresh();
+    autoDetect();
   };
   const enhance = () => { const panel = document.querySelector('[data-tab-panel="links"]'); const list = document.querySelector("#links-list"); if (!panel || !list) return; if (!panel.querySelector(".link-platform-picker")) { const tip = panel.querySelector(".link-tip"); tip?.insertAdjacentHTML("afterend", platformPicker()); if (tip) tip.style.display = "none"; const add = panel.querySelector("#add-link"); if (add) add.textContent = "Add custom URL"; } list.classList.add("links-editor-enhanced"); list.querySelectorAll("[data-link-item]").forEach(linkCardSummary); };
-  const addPreset = (preset, content = "") => { const list = document.querySelector("#links-list"); if (!list) return; const empty = [...list.querySelectorAll("[data-link-item]")].find((item) => !item.querySelector("[data-link-title]")?.value && !item.querySelector("[data-link-url]")?.value); const fill = (item) => { if (!item) return; const [value, label] = platformByName(preset); const title = item.querySelector("[data-link-title]"); const url = item.querySelector("[data-link-url]"); const icon = item.querySelector("[data-link-icon]"); if (title) title.value = label; if (url) url.value = content; if (icon) { if (![...icon.options].some((option) => option.value === value)) icon.append(new Option(label, value)); icon.value = value; } linkCardSummary(item); item.classList.add("is-editing"); title?.focus(); [title, url, icon].filter(Boolean).forEach((field) => field.dispatchEvent(new Event("input", { bubbles: true }))); }; if (empty) return fill(empty); document.querySelector("#add-link")?.click(); requestAnimationFrame(() => fill(list.lastElementChild)); };
-  document.addEventListener("click", (event) => { const preset = event.target.closest?.("[data-platform-preset]"); if (preset) { event.preventDefault(); openModal(preset.dataset.platformPreset, preset); } });
+  const addPreset = (preset, content = "") => { const list = document.querySelector("#links-list"); if (!list) return; const empty = [...list.querySelectorAll("[data-link-item]")].find((item) => !item.querySelector("[data-link-title]")?.value && !item.querySelector("[data-link-url]")?.value); const fill = (item) => { if (!item) return; const [value, label] = platformByName(preset); const title = item.querySelector("[data-link-title]"); const url = item.querySelector("[data-link-url]"); const icon = item.querySelector("[data-link-icon]"); if (title) { title.value = label; title.dataset.autoLabel = label; } if (url) url.value = content; if (icon) { if (![...icon.options].some((option) => option.value === value)) icon.append(new Option(label, value)); icon.value = value; } linkCardSummary(item); item.classList.add("is-editing"); title?.focus(); [title, url, icon].filter(Boolean).forEach((field) => field.dispatchEvent(new Event("input", { bubbles: true }))); }; if (empty) return fill(empty); document.querySelector("#add-link")?.click(); requestAnimationFrame(() => fill(list.lastElementChild)); };
+  document.addEventListener("click", (event) => {
+    const preset = event.target.closest?.("[data-platform-preset]");
+    if (preset) {
+      event.preventDefault();
+      openModal(preset.dataset.platformPreset, preset);
+      return;
+    }
+    if (event.target.closest?.("#add-link,[data-link-action='duplicate']")) queueMicrotask(enhance);
+  });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && document.querySelector("[data-social-modal]")) closeModal(); });
-  const observer = new MutationObserver(enhance);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
   enhance();
+  window.detectLinkPlatform = detectPlatform;
+  window.SqezenLinks = { enhance, detectPlatform };
 })();

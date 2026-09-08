@@ -276,7 +276,41 @@ const baseReadStandardEmbedCustomization = readCustomization;
 readCustomization = (form) => { let position = {}; try { position = JSON.parse(String(form?.elements.standard_embed_position?.value || "{}")); } catch {} return { ...baseReadStandardEmbedCustomization(form), standardEmbedPosition: sanitizeStandardEmbedPosition(position) }; };
 const baseSetStandardEmbedCustomization = setCustomization;
 setCustomization = (form, raw) => { const config = baseSetStandardEmbedCustomization(form, raw); if (form?.elements.standard_embed_position) form.elements.standard_embed_position.value = JSON.stringify(config.standardEmbedPosition || sanitizeStandardEmbedPosition()); return config; };
-function feedback(message, error = false) { const node = document.querySelector("#form-feedback"); if (!node) return; node.textContent = message; node.className = `form-feedback ${message ? error ? "is-error" : "is-success" : ""}`; }
+function feedback(message, error = false) { const node = document.querySelector("#form-feedback"); if (!node) return; const localized = window.sqezenI18n?.translateText?.(message) || message; node.textContent = localized; node.className = `form-feedback ${localized ? error ? "is-error" : "is-success" : ""}`; }
+function updateSaveIndicator(node, message = "", error = false) {
+  if (!node) return;
+  const source = String(message || "");
+  const normalized = source.toLowerCase();
+  const state = error
+    ? "error"
+    : /saved|zapisano|zapisane/.test(normalized)
+      ? "saved"
+      : /saving|syncing|zapisuj|zapisuję|pobieranie/.test(normalized)
+        ? "syncing"
+        : /unsaved|not saved|pending|oczekuje|automatically|automatycznie/.test(normalized)
+          ? "pending"
+          : "idle";
+  const key = state === "syncing" ? "save.syncing" : state === "saved" ? "save.saved" : state === "error" ? "save.error" : state === "pending" ? "save.pending" : "save.ready";
+  const localized = window.sqezenI18n?.t?.(key) || window.sqezenI18n?.translateText?.(source) || source;
+  window.clearTimeout(node._saveIndicatorTimer);
+  node.dataset.saveState = state;
+  node.title = localized;
+  node.classList.toggle("is-error", state === "error");
+  let announcement = node.querySelector("[data-save-announcement]");
+  if (!announcement) {
+    announcement = document.createElement("span");
+    announcement.className = "sr-only";
+    announcement.dataset.saveAnnouncement = "true";
+    announcement.setAttribute("aria-live", "polite");
+    node.appendChild(announcement);
+  }
+  announcement.textContent = localized;
+  if (state === "saved") {
+    node._saveIndicatorTimer = window.setTimeout(() => {
+      node.dataset.saveState = "idle";
+    }, 1600);
+  }
+}
 function busy(button, value, label = "Pracuję…") { if (!button) return; if (value) { button.dataset.original = button.innerHTML; button.disabled = true; button.innerHTML = `<span class="button-spinner"></span>${escapeHtml(label)}`; } else { button.disabled = false; button.innerHTML = button.dataset.original || button.innerHTML; } }
 function errorText(error) { const message = String(error?.message || error || "").toLowerCase(); if (message.includes("invalid login")) return "Nieprawidłowy e-mail lub hasło."; if (message.includes("already registered")) return "To konto już istnieje. Zaloguj się."; if (message.includes("rate limit")) return "Za dużo prób. Odczekaj chwilę."; if (message.includes("expired")) return "Kod wygasł. Wyślij nowy."; if (message.includes("invalid token") || message.includes("otp is invalid")) return "Kod jest nieprawidłowy."; if (message.includes("duplicate") || message.includes("unique")) return "Ta nazwa użytkownika jest już zajęta."; if (message.includes("fetch") || message.includes("network")) return "Nie udało się połączyć z serwerem."; return "Coś poszło nie tak. Spróbuj ponownie."; }
 function layout(content, pageClass = "site-page") { return `<div class="${pageClass}"><header class="site-nav"><a class="brand" href="/">${brandMarkup()}</a><nav class="nav-actions"><a class="nav-link" href="/">O projekcie</a><a class="button button-small button-ghost" href="/login">Zaloguj się</a><a class="button button-small button-primary" href="/register">Stwórz profil ${icon("arrow")}</a></nav></header>${content}<footer class="site-footer"><span>sqezen.lol</span><span>your space online</span></footer></div>`; }
@@ -551,10 +585,10 @@ function landingMinimal() { return `<div class="landing-minimal-page"><main clas
 function auth(kind) { const isRegister = kind === "register"; const isCode = kind === "code"; const title = isCode ? "Potwierdź swój e-mail" : isRegister ? "Zbuduj swój adres" : "Witaj z powrotem"; const intro = isCode ? "Wpisz 8-cyfrowy kod z wiadomości. Nie używamy linków, więc zawsze wiesz, co potwierdzasz." : isRegister ? "Załóż konto i stwórz profil, który możesz wysłać wszędzie." : "Zaloguj się, aby zarządzać swoim profilem i personalizacją."; const form = isCode ? `<form id="code-form" class="stack-form"><label class="field-label">Kod z wiadomości<input class="code-input" name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" placeholder="00000000" required></label><button class="button button-primary button-wide" type="submit">Potwierdź kod ${icon("arrow")}</button><button class="text-button" id="resend-code" type="button">Wyślij kod ponownie</button><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p></form><p class="form-note">Kod wygasa po kilku minutach. Sprawdź również folder Spam.</p><a class="back-link" href="/register">${icon("arrow")} Zmień dane</a>` : isRegister ? `<form id="register-form" class="stack-form"><label class="field-label">E-mail<input name="email" type="email" autocomplete="email" placeholder="ty@example.com" required></label><label class="field-label">Hasło<input name="password" type="password" minlength="6" autocomplete="new-password" placeholder="minimum 6 znaków" required></label><button class="button button-primary button-wide" type="submit">Dalej ${icon("arrow")}</button><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p></form><p class="form-note">Masz już konto? <a href="/login">Zaloguj się</a></p><a class="back-link" href="/">${icon("arrow")} Wróć na stronę główną</a>` : `<form id="login-form" class="stack-form"><label class="field-label">E-mail<input name="email" type="email" autocomplete="email" placeholder="ty@example.com" required></label><label class="field-label">Hasło<input name="password" type="password" autocomplete="current-password" placeholder="Twoje hasło" required></label><button class="button button-primary button-wide" type="submit">Zaloguj się ${icon("arrow")}</button><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p></form><p class="form-note">Nie masz konta? <a href="/register">Stwórz je za darmo</a></p><a class="back-link" href="/">${icon("arrow")} Wróć na stronę główną</a>`; return `<div class="auth-shell"><header class="site-nav"><a class="brand" href="/">${brandMarkup()}</a><a class="nav-link" href="/">Wróć na stronę główną ${icon("arrowUp")}</a></header><main class="auth-main"><section class="auth-pitch"><p class="eyebrow">SQEZEN / ${isCode ? "VERIFY" : isRegister ? "JOIN" : "SIGN IN"}</p><h1>${title}</h1><p>${intro}</p><div class="auth-perks"><span>${icon("check")} Własny adres profilu</span><span>${icon("check")} Ciemny, lekki interfejs</span><span>${icon("check")} Personalizacja bez limitu pomysłów</span></div></section><section class="auth-card"><div class="auth-card-head"><span class="auth-card-icon">${isCode ? icon("mail") : isRegister ? icon("pencil") : icon("lock")}</span><span class="auth-card-step">${isCode ? "02 / VERIFY" : isRegister ? "01 / CREATE" : "ACCOUNT ACCESS"}</span></div><h2>${isCode ? "Wpisz kod" : isRegister ? "Utwórz konto" : "Zaloguj się"}</h2><p class="form-intro">${isCode ? "Kod znajdziesz w wiadomości wysłanej po rejestracji." : isRegister ? "Zaczniemy od e-maila i hasła." : "Twoje dane są obsługiwane bezpiecznie przez Supabase."}</p>${form}</section></main><footer class="site-footer"><span>sqezen.lol</span><span>private by design</span></footer></div>`; }
 
 function iconOptions(selected = "website") { return [["website", "Strona / link"], ["github", "GitHub"], ["discord", "Discord"], ["youtube", "YouTube"], ["tiktok", "TikTok"]].map(([value, label]) => `<option value="${value}"${selected === value ? " selected" : ""}>${label}</option>`).join(""); }
-function profileIcon(link) { const value = String(link?.icon || "").toLowerCase(); if (["github", "discord", "youtube", "tiktok"].includes(value)) return value; const url = String(link?.url || "").toLowerCase(); if (url.includes("github.com")) return "github"; if (url.includes("discord")) return "discord"; if (url.includes("youtube") || url.includes("youtu.be")) return "youtube"; if (url.includes("tiktok")) return "tiktok"; return "globe"; }
+function profileIcon(link) { const value = String(link?.icon || "").toLowerCase(); if (["github", "discord", "youtube", "tiktok"].includes(value)) return value; const detected = window.detectLinkPlatform?.(link?.url); if (detected) return detected.value === "website" ? "globe" : detected.value; return "globe"; }
 function linkItem(link = {}, index = 0) { const selected = ["website", "github", "discord", "youtube", "tiktok"].includes(link.icon) ? link.icon : "website"; return `<article class="link-item" data-link-item><div class="link-item-top"><span class="link-number">${String(index + 1).padStart(2, "0")}</span><span class="link-item-name">Link ${index + 1}</span><div class="link-item-actions"><button type="button" class="icon-button" data-link-action="up" aria-label="Przesuń link wyżej">↑</button><button type="button" class="icon-button" data-link-action="down" aria-label="Przesuń link niżej">↓</button><button type="button" class="icon-button" data-link-action="duplicate" aria-label="Duplikuj link">＋</button><button type="button" class="icon-button danger-icon" data-link-action="remove" aria-label="Usuń link">${icon("close")}</button></div></div><div class="link-fields"><label class="field-label">Tytuł<input data-link-title maxlength="38" value="${escapeHtml(link.title || "")}" placeholder="np. Mój GitHub"></label><label class="field-label">Adres lub tekst<input data-link-url value="${escapeHtml(link.url || "")}" placeholder="discord.gg/nazwa lub dowolny tekst"><small>Dodaj dowolny tekst — przed otwarciem zamienimy go w adres.</small></label><label class="field-label">Ikona<select data-link-icon>${iconOptions(selected)}</select></label></div></article>`; }
 
-function dashboard() { return `<div class="dashboard-page"><header class="dashboard-topbar"><a class="brand" href="/"><span class="brand-mark">s</span><span>sqezen</span></a><div class="dashboard-topbar-center"><span class="topbar-breadcrumb">Workspace <b>/</b> <strong id="topbar-section">Profil</strong></span><span class="save-status" id="top-status"><i></i> gotowe do edycji</span></div><div class="dashboard-topbar-actions"><a class="button button-small button-ghost" id="view-profile" href="/" target="_blank" rel="noopener noreferrer">Otwórz profil ${icon("arrowUp")}</a><button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="Otwórz menu">☰</button><button class="button button-small button-dark" id="logout-button" type="button">Wyloguj ${icon("logout")}</button></div></header><div class="dashboard-layout"><aside class="dashboard-sidebar" id="dashboard-sidebar"><div class="sidebar-brand"><span class="sidebar-label">WORKSPACE</span><span class="sidebar-caption">Twój panel</span></div><nav class="dashboard-nav-list" aria-label="Panel profilu"><button class="sidebar-item is-active" data-dashboard-tab="profile" type="button">${icon("dashboard")}<span>Profil</span><kbd>01</kbd></button><button class="sidebar-item" data-dashboard-tab="links" type="button">${icon("link")}<span>Linki</span><kbd id="links-count">0</kbd></button><button class="sidebar-item" data-dashboard-tab="appearance" type="button">${icon("palette")}<span>Wygląd</span><kbd>03</kbd></button></nav><div class="sidebar-rule"></div><span class="sidebar-label">ACCOUNT</span><button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button><div class="sidebar-account"><span class="account-avatar" id="account-avatar">S</span><div><strong id="account-name">Twoje konto</strong><small id="account-email">Ładowanie…</small></div></div><div class="sidebar-bottom"><span>${icon("lock")} Supabase auth</span><small>Twoje dane są prywatne</small></div></aside><main class="dashboard-main"><div class="dashboard-intro"><div><p class="eyebrow" id="dashboard-eyebrow">SQEZEN / PROFILE</p><h1 id="dashboard-title">Zbuduj swój profil.</h1><p id="dashboard-subtitle">Ustaw informacje, które zobaczą osoby odwiedzające Twój adres.</p></div><span class="intro-orb">${icon("sparkle")}</span></div><form id="profile-form" class="dashboard-grid"><div class="editor-panel"><section data-tab-panel="profile"><div class="panel-heading"><div><span class="panel-index">01</span><h2>Tożsamość</h2><p>To pojawi się na samej górze Twojego profilu.</p></div></div><div class="field-grid"><label class="field-label">Nazwa użytkownika<input name="username" pattern="[a-z0-9_]{3,24}" minlength="3" maxlength="24" placeholder="np. sqezen" required><small>sqezen.lol/<b>twoja_nazwa</b> · małe litery, cyfry i _</small></label><label class="field-label">Nazwa wyświetlana<input name="display_name" maxlength="40" placeholder="Twoja nazwa" required><small>Może zawierać spacje i wielkie litery.</small></label></div><label class="field-label bio-field">Bio<textarea name="bio" maxlength="160" placeholder="developer · gamer · digital chaos"></textarea><small><span>Krótko i konkretnie.</span><span id="bio-count">0 / 160</span></small></label><div class="panel-divider"></div><div class="panel-heading compact-heading"><div><span class="panel-index">02</span><h2>Avatar</h2><p>Bezpośredni adres do zdjęcia profilowego.</p></div></div><label class="field-label"><span>Avatar URL</span><input name="avatar_url" type="text" inputmode="url" placeholder="https://.../avatar.png"><small>Może być dowolny bezpośredni adres obrazka.</small></label></section><section data-tab-panel="links" hidden><div class="panel-heading"><div><span class="panel-index">LINKS</span><h2>Twoje odnośniki</h2><p>Ułóż miejsca, w których można Cię znaleźć.</p></div><button class="button button-small button-ghost" id="add-link" type="button">${icon("plus")} Dodaj link</button></div><div class="link-tip">W polu adresu możesz wkleić domenę, zaproszenie Discord albo zwykły tekst. Kolejność zmienisz strzałkami.</div><div id="links-list" class="links-editor"></div></section><section data-tab-panel="appearance" hidden><div class="panel-heading"><div><span class="panel-index">CUSTOMIZE</span><h2>Twój klimat</h2><p>Ustaw profil dokładnie tak, jak chcesz go pokazywać.</p></div><button class="button button-small button-dark" id="reset-customization" type="button">Resetuj</button></div><div class="custom-card"><div class="custom-card-title"><span>${icon("sparkle")}</span><div><h3>Materiały</h3><p>Tło, muzyka i dodatkowe detale.</p></div></div><div class="field-grid"><label class="field-label">Tło obrazu / wideo<input name="background_media_url" type="text" placeholder="https://.../background.mp4"><small>JPG, PNG, GIF, WebP, MP4 lub WebM.</small></label><label class="field-label">Audio profilu<input name="audio_url" type="text" placeholder="https://.../track.mp3"><small>Odwiedzający uruchamia je ręcznie.</small></label><label class="field-label">Własny kursor<input name="cursor_url" type="text" placeholder="https://.../cursor.png"><small>Najlepiej obraz 32×32 px.</small></label><label class="field-label">Lokalizacja<input name="location" maxlength="42" placeholder="np. Warszawa"></label></div></div><div class="custom-card"><div class="custom-card-title"><span>${icon("dashboard")}</span><div><h3>Karta profilu</h3><p>Rozmiar i intensywność powierzchni.</p></div></div><div class="range-grid"><label class="range-field"><span>Przezroczystość <output data-output-for="profile_opacity">92%</output></span><input name="profile_opacity" type="range" min="45" max="100" value="92"></label><label class="range-field"><span>Blur <output data-output-for="profile_blur">18px</output></span><input name="profile_blur" type="range" min="0" max="40" value="18"></label><label class="range-field"><span>Szerokość <output data-output-for="card_width">520px</output></span><input name="card_width" type="range" min="360" max="680" step="10" value="520"></label><label class="range-field"><span>Avatar <output data-output-for="avatar_size">104px</output></span><input name="avatar_size" type="range" min="72" max="148" step="4" value="104"></label></div><div class="field-grid"><label class="field-label">Efekt tła<select name="background_effect"><option value="none">Brak</option><option value="noise">Subtelny noise</option><option value="grid">Delikatna siatka</option><option value="spotlight">Miękki spotlight</option></select></label><label class="field-label">Efekt nazwy<select name="username_effect"><option value="none">Brak</option><option value="gradient">Gradient</option><option value="soft-glow">Delikatny glow</option><option value="outline">Kontur</option></select></label></div></div><div class="custom-card"><div class="custom-card-title"><span>${icon("palette")}</span><div><h3>Kolor i ton</h3><p>Stwórz paletę pasującą do Twojej osoby.</p></div></div><div class="color-grid"><label class="color-control">Akcent<input name="background_color" type="color" value="#626262"><b id="color-value">#626262</b></label><label class="color-control">Tekst<input name="text_color" type="color" value="#f5f7fb"><b data-color-label="text_color">#F5F7FB</b></label><label class="color-control">Karta<input name="card_color" type="color" value="#171820"><b data-color-label="card_color">#171820</b></label><label class="color-control">Przyciski<input name="button_color" type="color" value="#ffffff"><b data-color-label="button_color">#FFFFFF</b></label><label class="color-control">Tekst przycisków<input name="button_text_color" type="color" value="#f5f7fb"><b data-color-label="button_text_color">#F5F7FB</b></label><label class="color-control">Gradient 1<input name="gradient_primary" type="color" value="#151521"><b data-color-label="gradient_primary">#151521</b></label><label class="color-control">Gradient 2<input name="gradient_secondary" type="color" value="#07070a"><b data-color-label="gradient_secondary">#07070A</b></label></div><label class="toggle-row"><input name="use_gradient" type="checkbox" checked><span class="toggle"></span><span><b>Włącz gradient tła</b><small>Połącz wybrane kolory w delikatne tło.</small></span></label></div><div class="custom-card"><div class="custom-card-title"><span>${icon("settings")}</span><div><h3>Układ i detale</h3><p>Ostatnie szlify wyglądu strony.</p></div></div><div class="field-grid"><label class="field-label">Wyrównanie<select name="alignment"><option value="center">Wyśrodkowane</option><option value="left">Do lewej</option></select></label><label class="field-label">Odstępy<select name="spacing"><option value="compact">Kompaktowe</option><option value="comfortable">Wygodne</option><option value="airy">Przestronne</option></select></label><label class="field-label">Styl przycisków<select name="button_style"><option value="glass">Glass</option><option value="solid">Pełne</option><option value="outline">Kontur</option></select></label><label class="field-label">Font<select name="font_family"><option value="inter">Inter</option><option value="system">Systemowy</option><option value="mono">Monospace</option><option value="serif">Serif</option></select></label></div><label class="range-field"><span>Zaokrąglenie przycisków <output data-output-for="button_radius">13px</output></span><input name="button_radius" type="range" min="0" max="28" value="13"></label><div class="toggle-grid"><label class="toggle-row"><input name="show_handle" type="checkbox" checked><span class="toggle"></span><span><b>Pokaż @username</b><small>Nick nad nazwą.</small></span></label><label class="toggle-row"><input name="show_branding" type="checkbox" checked><span class="toggle"></span><span><b>Pokaż branding</b><small>Stopka sqezen.</small></span></label></div></div></section><section data-tab-panel="account" hidden><div class="panel-heading"><div><span class="panel-index">ACCOUNT</span><h2>Konto i adres</h2><p>Podstawowe informacje oraz szybkie akcje.</p></div></div><div class="account-grid"><label class="field-label">E-mail<input id="account-email-field" readonly></label><label class="field-label">Publiczny adres<div class="copy-field"><input id="profile-address-field" readonly><button class="icon-button" id="copy-profile-address" type="button" aria-label="Skopiuj adres">${icon("copy")}</button></div></label></div><div class="account-note">${icon("lock")} <div><b>Twoje konto jest chronione</b><p>Sesja i hasło są obsługiwane przez Supabase. sqezen nie przechowuje haseł.</p></div></div></section><div class="editor-footer"><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p><button class="button button-primary save-button" type="submit">Zapisz wszystkie zmiany ${icon("check")}</button></div></div><aside class="preview-column"><div class="preview-sticky"><div class="preview-heading"><div><span class="panel-index">LIVE PREVIEW</span><h2>Tak widzą Cię inni</h2></div><span class="live-pill"><i></i> na żywo</span></div><div id="dashboard-preview" class="dashboard-preview"></div><div class="preview-footnote">${icon("check")} Zmiany są widoczne tutaj od razu. Opublikują się po zapisaniu.</div></div></aside></form></main></div></div>`; }
+function dashboard() { return `<div class="dashboard-page"><header class="dashboard-topbar"><a class="brand" href="/"><span class="brand-mark">s</span><span>sqezen</span></a><div class="dashboard-topbar-center"><span class="topbar-breadcrumb">Workspace <b>/</b> <strong id="topbar-section">Profil</strong></span><span class="save-status" id="top-status" data-save-state="idle" title="Ready"><i aria-hidden="true"></i><span class="sr-only" data-save-announcement aria-live="polite">Ready</span></span></div><div class="dashboard-topbar-actions"><a class="button button-small button-ghost" id="view-profile" href="/" target="_blank" rel="noopener noreferrer">Otwórz profil ${icon("arrowUp")}</a><button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="Otwórz menu">☰</button><button class="button button-small button-dark" id="logout-button" type="button">Wyloguj ${icon("logout")}</button></div></header><div class="dashboard-layout"><aside class="dashboard-sidebar" id="dashboard-sidebar"><div class="sidebar-brand"><span class="sidebar-label">WORKSPACE</span><span class="sidebar-caption">Twój panel</span></div><nav class="dashboard-nav-list" aria-label="Panel profilu"><button class="sidebar-item is-active" data-dashboard-tab="profile" type="button">${icon("dashboard")}<span>Profil</span><kbd>01</kbd></button><button class="sidebar-item" data-dashboard-tab="links" type="button">${icon("link")}<span>Linki</span><kbd id="links-count">0</kbd></button><button class="sidebar-item" data-dashboard-tab="appearance" type="button">${icon("palette")}<span>Wygląd</span><kbd>03</kbd></button></nav><div class="sidebar-rule"></div><span class="sidebar-label">ACCOUNT</span><button class="sidebar-item" data-dashboard-tab="account" type="button">${icon("settings")}<span>Konto</span></button><div class="sidebar-account"><span class="account-avatar" id="account-avatar">S</span><div><strong id="account-name">Twoje konto</strong><small id="account-email">Ładowanie…</small></div></div><div class="sidebar-bottom"><span>${icon("lock")} Supabase auth</span><small>Twoje dane są prywatne</small></div></aside><main class="dashboard-main"><div class="dashboard-intro"><div><p class="eyebrow" id="dashboard-eyebrow">SQEZEN / PROFILE</p><h1 id="dashboard-title">Zbuduj swój profil.</h1><p id="dashboard-subtitle">Ustaw informacje, które zobaczą osoby odwiedzające Twój adres.</p></div><span class="intro-orb">${icon("sparkle")}</span></div><form id="profile-form" class="dashboard-grid"><div class="editor-panel"><section data-tab-panel="profile"><div class="panel-heading"><div><span class="panel-index">01</span><h2>Tożsamość</h2><p>To pojawi się na samej górze Twojego profilu.</p></div></div><div class="field-grid"><label class="field-label">Nazwa użytkownika<input name="username" pattern="[a-z0-9_]{3,24}" minlength="3" maxlength="24" placeholder="np. sqezen" required><small>sqezen.lol/<b>twoja_nazwa</b> · małe litery, cyfry i _</small></label><label class="field-label">Nazwa wyświetlana<input name="display_name" maxlength="40" placeholder="Twoja nazwa" required><small>Może zawierać spacje i wielkie litery.</small></label></div><label class="field-label bio-field">Bio<textarea name="bio" maxlength="160" placeholder="developer · gamer · digital chaos"></textarea><small><span>Krótko i konkretnie.</span><span id="bio-count">0 / 160</span></small></label><div class="panel-divider"></div><div class="panel-heading compact-heading"><div><span class="panel-index">02</span><h2>Avatar</h2><p>Bezpośredni adres do zdjęcia profilowego.</p></div></div><label class="field-label"><span>Avatar URL</span><input name="avatar_url" type="text" inputmode="url" placeholder="https://.../avatar.png"><small>Może być dowolny bezpośredni adres obrazka.</small></label></section><section data-tab-panel="links" hidden><div class="panel-heading"><div><span class="panel-index">LINKS</span><h2>Twoje odnośniki</h2><p>Ułóż miejsca, w których można Cię znaleźć.</p></div><button class="button button-small button-ghost" id="add-link" type="button">${icon("plus")} Dodaj link</button></div><div class="link-tip">W polu adresu możesz wkleić domenę, zaproszenie Discord albo zwykły tekst. Kolejność zmienisz strzałkami.</div><div id="links-list" class="links-editor"></div></section><section data-tab-panel="appearance" hidden><div class="panel-heading"><div><span class="panel-index">CUSTOMIZE</span><h2>Twój klimat</h2><p>Ustaw profil dokładnie tak, jak chcesz go pokazywać.</p></div><button class="button button-small button-dark" id="reset-customization" type="button">Resetuj</button></div><div class="custom-card"><div class="custom-card-title"><span>${icon("sparkle")}</span><div><h3>Materiały</h3><p>Tło, muzyka i dodatkowe detale.</p></div></div><div class="field-grid"><label class="field-label">Tło obrazu / wideo<input name="background_media_url" type="text" placeholder="https://.../background.mp4"><small>JPG, PNG, GIF, WebP, MP4 lub WebM.</small></label><label class="field-label">Audio profilu<input name="audio_url" type="text" placeholder="https://.../track.mp3"><small>Odwiedzający uruchamia je ręcznie.</small></label><label class="field-label">Własny kursor<input name="cursor_url" type="text" placeholder="https://.../cursor.png"><small>Najlepiej obraz 32×32 px.</small></label><label class="field-label">Lokalizacja<input name="location" maxlength="42" placeholder="np. Warszawa"></label></div></div><div class="custom-card"><div class="custom-card-title"><span>${icon("dashboard")}</span><div><h3>Karta profilu</h3><p>Rozmiar i intensywność powierzchni.</p></div></div><div class="range-grid"><label class="range-field"><span>Przezroczystość <output data-output-for="profile_opacity">92%</output></span><input name="profile_opacity" type="range" min="45" max="100" value="92"></label><label class="range-field"><span>Blur <output data-output-for="profile_blur">18px</output></span><input name="profile_blur" type="range" min="0" max="40" value="18"></label><label class="range-field"><span>Szerokość <output data-output-for="card_width">520px</output></span><input name="card_width" type="range" min="360" max="680" step="10" value="520"></label><label class="range-field"><span>Avatar <output data-output-for="avatar_size">104px</output></span><input name="avatar_size" type="range" min="72" max="148" step="4" value="104"></label></div><div class="field-grid"><label class="field-label">Efekt tła<select name="background_effect"><option value="none">Brak</option><option value="noise">Subtelny noise</option><option value="grid">Delikatna siatka</option><option value="spotlight">Miękki spotlight</option></select></label><label class="field-label">Efekt nazwy<select name="username_effect"><option value="none">Brak</option><option value="gradient">Gradient</option><option value="soft-glow">Delikatny glow</option><option value="outline">Kontur</option></select></label></div></div><div class="custom-card"><div class="custom-card-title"><span>${icon("palette")}</span><div><h3>Kolor i ton</h3><p>Stwórz paletę pasującą do Twojej osoby.</p></div></div><div class="color-grid"><label class="color-control">Akcent<input name="background_color" type="color" value="#626262"><b id="color-value">#626262</b></label><label class="color-control">Tekst<input name="text_color" type="color" value="#f5f7fb"><b data-color-label="text_color">#F5F7FB</b></label><label class="color-control">Karta<input name="card_color" type="color" value="#171820"><b data-color-label="card_color">#171820</b></label><label class="color-control">Przyciski<input name="button_color" type="color" value="#ffffff"><b data-color-label="button_color">#FFFFFF</b></label><label class="color-control">Tekst przycisków<input name="button_text_color" type="color" value="#f5f7fb"><b data-color-label="button_text_color">#F5F7FB</b></label><label class="color-control">Gradient 1<input name="gradient_primary" type="color" value="#151521"><b data-color-label="gradient_primary">#151521</b></label><label class="color-control">Gradient 2<input name="gradient_secondary" type="color" value="#07070a"><b data-color-label="gradient_secondary">#07070A</b></label></div><label class="toggle-row"><input name="use_gradient" type="checkbox" checked><span class="toggle"></span><span><b>Włącz gradient tła</b><small>Połącz wybrane kolory w delikatne tło.</small></span></label></div><div class="custom-card"><div class="custom-card-title"><span>${icon("settings")}</span><div><h3>Układ i detale</h3><p>Ostatnie szlify wyglądu strony.</p></div></div><div class="field-grid"><label class="field-label">Wyrównanie<select name="alignment"><option value="center">Wyśrodkowane</option><option value="left">Do lewej</option></select></label><label class="field-label">Odstępy<select name="spacing"><option value="compact">Kompaktowe</option><option value="comfortable">Wygodne</option><option value="airy">Przestronne</option></select></label><label class="field-label">Styl przycisków<select name="button_style"><option value="glass">Glass</option><option value="solid">Pełne</option><option value="outline">Kontur</option></select></label><label class="field-label">Font<select name="font_family"><option value="inter">Inter</option><option value="system">Systemowy</option><option value="mono">Monospace</option><option value="serif">Serif</option></select></label></div><label class="range-field"><span>Zaokrąglenie przycisków <output data-output-for="button_radius">13px</output></span><input name="button_radius" type="range" min="0" max="28" value="13"></label><div class="toggle-grid"><label class="toggle-row"><input name="show_handle" type="checkbox" checked><span class="toggle"></span><span><b>Pokaż @username</b><small>Nick nad nazwą.</small></span></label><label class="toggle-row"><input name="show_branding" type="checkbox" checked><span class="toggle"></span><span><b>Pokaż branding</b><small>Stopka sqezen.</small></span></label></div></div></section><section data-tab-panel="account" hidden><div class="panel-heading"><div><span class="panel-index">ACCOUNT</span><h2>Konto i adres</h2><p>Podstawowe informacje oraz szybkie akcje.</p></div></div><div class="account-grid"><label class="field-label">E-mail<input id="account-email-field" readonly></label><label class="field-label">Publiczny adres<div class="copy-field"><input id="profile-address-field" readonly><button class="icon-button" id="copy-profile-address" type="button" aria-label="Skopiuj adres">${icon("copy")}</button></div></label></div><div class="account-note">${icon("lock")} <div><b>Twoje konto jest chronione</b><p>Sesja i hasło są obsługiwane przez Supabase. sqezen nie przechowuje haseł.</p></div></div></section><div class="editor-footer"><p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p><button class="button button-primary save-button" type="submit">Zapisz wszystkie zmiany ${icon("check")}</button></div></div><aside class="preview-column"><div class="preview-sticky"><div class="preview-heading"><div><span class="panel-index">LIVE PREVIEW</span><h2>Tak widzą Cię inni</h2></div><span class="live-pill"><i></i> na żywo</span></div><div id="dashboard-preview" class="dashboard-preview"></div><div class="preview-footnote">${icon("check")} Zmiany są widoczne tutaj od razu. Opublikują się po zapisaniu.</div></div></aside></form></main></div></div>`; }
 
 function readLinks() { return Array.from(document.querySelectorAll("[data-link-item]")).map((item) => ({ title: String(item.querySelector("[data-link-title]")?.value || "").trim(), url: String(item.querySelector("[data-link-url]")?.value || "").trim(), icon: String(item.querySelector("[data-link-icon]")?.value || "website") })).filter((link) => link.title || link.url); }
 function readCustomization(form) { const values = new FormData(form); return sanitizeCustomization({ backgroundMediaUrl: values.get("background_media_url"), audioUrl: values.get("audio_url"), audioTitle: values.get("audio_title"), audioArtist: values.get("audio_artist"), audioLyrics: values.get("audio_lyrics"), cursorUrl: values.get("cursor_url"), cursorGlowColor: values.get("cursor_glow_color"), cursorEffect: values.get("cursor_effect"), location: values.get("location"), profileOpacity: values.get("profile_opacity"), profileBlur: values.get("profile_blur"), cardWidth: values.get("card_width"), avatarSize: values.get("avatar_size"), backgroundEffect: values.get("background_effect"), usernameEffect: values.get("username_effect"), textColor: values.get("text_color"), cardColor: values.get("card_color"), buttonColor: values.get("button_color"), buttonTextColor: values.get("button_text_color"), gradientPrimary: values.get("gradient_primary"), gradientSecondary: values.get("gradient_secondary"), useGradient: Boolean(form.elements.use_gradient?.checked), alignment: values.get("alignment"), spacing: values.get("spacing"), buttonStyle: values.get("button_style"), buttonRadius: values.get("button_radius"), fontFamily: values.get("font_family"), showHandle: Boolean(form.elements.show_handle?.checked), showBranding: Boolean(form.elements.show_branding?.checked) }); }
@@ -567,7 +601,7 @@ async function wireAuth() { const loginForm = document.querySelector("#login-for
 
 async function wireDashboard() { const form = document.querySelector("#profile-form"); if (!form) return; const session = await supabaseClient.auth.getSession(); const current = session.data?.session; if (!current) return navigate(`/login?redirect=${encodeURIComponent("/dashboard")}`); dashboardCurrentUserId = current.user.id; const linksList = document.querySelector("#links-list"); const profileLink = document.querySelector("#view-profile"); const { data: profileData } = await supabaseClient.from("profiles").select("*").eq("id", current.user.id).maybeSingle(); const { data: links } = await supabaseClient.from("links").select("title,url,icon,position").eq("profile_id", current.user.id).order("position", { ascending: true }); const setValue = (name, value) => { if (form.elements[name]) form.elements[name].value = value || ""; }; setValue("username", profileData?.username); setValue("display_name", profileData?.display_name); setValue("bio", profileData?.bio); setValue("avatar_url", profileData?.avatar_url); form.elements.background_color.value = profileAccentColor(profileData?.background_color); setCustomization(form, profileData?.customization); dashboardAssignedBadges = await loadProfileBadges(current.user.id); linksList.innerHTML = (links?.length ? links : [{}]).map(linkItem).join(""); document.querySelector("#account-email").textContent = current.user.email || "zalogowane konto"; document.querySelector("#account-email-field").value = current.user.email || "";
   const meta = () => { const username = String(form.elements.username?.value || "").trim().toLowerCase(); const display = String(form.elements.display_name?.value || username || "Twoje konto").trim(); const active = readLinks().filter((link) => safeUrl(link.url)).length; document.querySelector("#account-name").textContent = display; document.querySelector("#account-avatar").textContent = display.slice(0, 1).toUpperCase(); document.querySelector("#links-count").textContent = active; document.querySelector("#bio-count").textContent = `${String(form.elements.bio?.value || "").length} / 160`; document.querySelector("#color-value").textContent = String(form.elements.background_color.value).toUpperCase(); document.querySelectorAll("[data-output-for]").forEach((out) => { const field = form.elements[out.dataset.outputFor]; if (field) out.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; }); document.querySelectorAll("[data-color-label]").forEach((out) => { const field = form.elements[out.dataset.colorLabel]; if (field) out.textContent = String(field.value).toUpperCase(); }); const address = username ? `${location.origin}/${username}` : "Ustaw nazwę użytkownika"; document.querySelector("#profile-address-field").value = address; if (username) { profileLink.href = `/${encodeURIComponent(username)}`; profileLink.classList.remove("is-disabled"); } else { profileLink.href = "/"; profileLink.classList.add("is-disabled"); } }; const tabs = { profile: ["Profil", "SQEZEN / PROFILE", "Zbuduj swój profil.", "Ustaw informacje, które zobaczą osoby odwiedzające Twój adres."], links: ["Linki", "SQEZEN / LINKS", "Twoje odnośniki.", "Dodawaj, testuj i układaj linki w kolejności, którą lubisz."], appearance: ["Wygląd", "SQEZEN / CUSTOMIZE", "Twój klimat.", "Tło, karta, typografia i kolory — wszystko pod Twoją kontrolą."], account: ["Konto", "SQEZEN / ACCOUNT", "Konto i adres.", "Sprawdź e-mail i skopiuj publiczny adres profilu."] }; const setTab = (tab) => { const selected = tabs[tab] ? tab : "profile"; document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.classList.toggle("is-active", item.dataset.dashboardTab === selected)); document.querySelectorAll("[data-tab-panel]").forEach((panel) => { panel.hidden = panel.dataset.tabPanel !== selected; }); const [label, eyebrow, title, subtitle] = tabs[selected]; document.querySelector("#topbar-section").textContent = label; document.querySelector("#dashboard-eyebrow").textContent = eyebrow; document.querySelector("#dashboard-title").textContent = title; document.querySelector("#dashboard-subtitle").textContent = subtitle; sessionStorage.setItem("sqezen_dashboard_tab", selected); }; document.querySelectorAll("[data-dashboard-tab]").forEach((item) => item.addEventListener("click", () => { setTab(item.dataset.dashboardTab); document.querySelector("#dashboard-sidebar")?.classList.remove("is-open"); })); setTab(sessionStorage.getItem("sqezen_dashboard_tab") || "profile"); meta(); renderPreview();
-  form.addEventListener("input", (event) => { if (event.target.matches("[data-link-url]")) { const item = event.target.closest("[data-link-item]"); const detected = profileIcon({ url: event.target.value, icon: "website" }); if (detected !== "globe") item.querySelector("[data-link-icon]").value = detected; } if (event.target.matches("#profile-form input[type=range]")) return; meta(); renderPreview(); }); form.addEventListener("change", (event) => { if (event.target.matches("#profile-form input[type=range]")) { document.querySelector("#dashboard-preview")?.classList.remove("is-range-updating"); return; } meta(); renderPreview(); }); document.querySelector("#add-link").addEventListener("click", () => { linksList.insertAdjacentHTML("beforeend", linkItem({}, document.querySelectorAll("[data-link-item]").length)); updateLinkNumbers(); renderPreview(); linksList.lastElementChild?.querySelector("[data-link-title]")?.focus(); }); linksList.addEventListener("click", (event) => { const button = event.target.closest("[data-link-action]"); if (!button) return; const item = button.closest("[data-link-item]"); const action = button.dataset.linkAction; if (action === "remove") { item.remove(); if (!document.querySelector("[data-link-item]")) linksList.insertAdjacentHTML("beforeend", linkItem({}, 0)); } if (action === "duplicate") { const copy = { title: item.querySelector("[data-link-title]").value, url: item.querySelector("[data-link-url]").value, icon: item.querySelector("[data-link-icon]").value }; item.insertAdjacentHTML("afterend", linkItem(copy, 0)); } if (action === "up" && item.previousElementSibling) item.previousElementSibling.before(item); if (action === "down" && item.nextElementSibling) item.nextElementSibling.after(item); updateLinkNumbers(); meta(); renderPreview(); }); document.querySelectorAll("[data-color-preset]").forEach((item) => item.addEventListener("click", () => { form.elements.background_color.value = item.dataset.colorPreset; meta(); renderPreview(); })); document.querySelector("#reset-customization").addEventListener("click", () => { setCustomization(form, DEFAULT_CUSTOMIZATION); meta(); renderPreview(); feedback("Przywrócono ustawienia domyślne."); }); document.querySelector("#copy-profile-address").addEventListener("click", async () => { const value = document.querySelector("#profile-address-field").value; if (!value.startsWith("http")) return feedback("Najpierw ustaw nazwę użytkownika.", true); try { await navigator.clipboard.writeText(value); feedback("Adres skopiowany."); } catch { feedback("Nie udało się skopiować adresu.", true); } }); document.querySelector("#mobile-menu").addEventListener("click", () => document.querySelector("#dashboard-sidebar")?.classList.toggle("is-open")); document.querySelector("#logout-button").addEventListener("click", async () => { await supabaseClient.auth.signOut(); navigate("/"); });   form.addEventListener("submit", async (event) => { event.preventDefault(); const submit = form.querySelector("button[type=submit]"); const values = new FormData(form); const username = String(values.get("username") || "").trim().toLowerCase(); const display = String(values.get("display_name") || "").trim(); const linksValue = readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) })); if (!/^[a-z0-9_]{3,24}$/.test(username)) { setTab("profile"); return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true); } if (!display) { setTab("profile"); return feedback("Wpisz nazwę wyświetlaną.", true); } for (const link of linksValue) if (!safeUrl(link.url)) { setTab("links"); return feedback(`Sprawdź adres linku „${link.title || "bez nazwy"}”.`, true); } let customization = readCustomization(form); let avatarUrl = safeImageUrl(values.get("avatar_url")); busy(submit, true, "Zapisywanie…"); feedback("Przygotowuję materiały…");   try { if (avatarUrl && isDiscordUrl(avatarUrl)) { avatarUrl = await cacheDiscordAsset(avatarUrl, "avatar", PROFILE_ASSET_OPTIONS.avatar); const avatarInput = form.querySelector('[name="avatar_url"]'); if (avatarInput) avatarInput.value = avatarUrl; } } catch (error) { busy(submit, false); return feedback(String(error?.message || "Nie udało się zapisać trwałej kopii pliku. Wybierz plik z komputera."), true); } feedback("Zapisuję wszystkie zmiany…"); let save = await supabaseClient.from("profiles").upsert({ id: current.user.id, username, display_name: display, bio: String(values.get("bio") || "").trim(), avatar_url: avatarUrl, background_color: profileAccentColor(values.get("background_color")), customization }); if (save.error) { busy(submit, false); return feedback(errorText(save.error), true); } const deleted = await supabaseClient.from("links").delete().eq("profile_id", current.user.id); if (deleted.error) { busy(submit, false); return feedback("Profil zapisany, ale nie udało się odświeżyć linków.", true); } if (linksValue.length) { const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({ profile_id: current.user.id, title: link.title || "Link", url: link.url, icon: link.icon, position: index, is_visible: true }))); if (inserted.error) { busy(submit, false); return feedback("Profil zapisany, ale linki mają problem z zapisem.", true); } } linksValue.forEach((link, index) => { const input = document.querySelectorAll("[data-link-url]")[index]; if (input) input.value = link.url; }); busy(submit, false); meta(); document.querySelector("#top-status").innerHTML = `<i></i> zapisano przed chwilą`; feedback("Wszystkie zmiany zostały zapisane."); }); }
+  form.addEventListener("input", (event) => { if (event.target.matches("[data-link-url]")) { const item = event.target.closest("[data-link-item]"); const iconInput = item?.querySelector("[data-link-icon]"); const detected = window.detectLinkPlatform?.(event.target.value)?.value || profileIcon({ url: event.target.value, icon: "website" }); if (detected !== "globe" && iconInput?.dataset.userSelected !== "true") iconInput.value = detected; } if (event.target.matches("#profile-form input[type=range]")) return; meta(); renderPreview(); }); form.addEventListener("change", (event) => { if (event.target.matches("#profile-form input[type=range]")) { document.querySelector("#dashboard-preview")?.classList.remove("is-range-updating"); return; } meta(); renderPreview(); }); document.querySelector("#add-link").addEventListener("click", () => { linksList.insertAdjacentHTML("beforeend", linkItem({}, document.querySelectorAll("[data-link-item]").length)); updateLinkNumbers(); renderPreview(); linksList.lastElementChild?.querySelector("[data-link-title]")?.focus(); }); linksList.addEventListener("click", (event) => { const button = event.target.closest("[data-link-action]"); if (!button) return; const item = button.closest("[data-link-item]"); const action = button.dataset.linkAction; if (action === "remove") { item.remove(); if (!document.querySelector("[data-link-item]")) linksList.insertAdjacentHTML("beforeend", linkItem({}, 0)); } if (action === "duplicate") { const copy = { title: item.querySelector("[data-link-title]").value, url: item.querySelector("[data-link-url]").value, icon: item.querySelector("[data-link-icon]").value }; item.insertAdjacentHTML("afterend", linkItem(copy, 0)); } if (action === "up" && item.previousElementSibling) item.previousElementSibling.before(item); if (action === "down" && item.nextElementSibling) item.nextElementSibling.after(item); updateLinkNumbers(); meta(); renderPreview(); }); document.querySelectorAll("[data-color-preset]").forEach((item) => item.addEventListener("click", () => { form.elements.background_color.value = item.dataset.colorPreset; meta(); renderPreview(); })); document.querySelector("#reset-customization").addEventListener("click", () => { setCustomization(form, DEFAULT_CUSTOMIZATION); meta(); renderPreview(); feedback("Przywrócono ustawienia domyślne."); }); document.querySelector("#copy-profile-address").addEventListener("click", async () => { const value = document.querySelector("#profile-address-field").value; if (!value.startsWith("http")) return feedback("Najpierw ustaw nazwę użytkownika.", true); try { await navigator.clipboard.writeText(value); feedback("Adres skopiowany."); } catch { feedback("Nie udało się skopiować adresu.", true); } }); document.querySelector("#mobile-menu").addEventListener("click", () => document.querySelector("#dashboard-sidebar")?.classList.toggle("is-open")); document.querySelector("#logout-button").addEventListener("click", async () => { await supabaseClient.auth.signOut(); navigate("/"); });   form.addEventListener("submit", async (event) => { event.preventDefault(); const submit = form.querySelector("button[type=submit]"); const values = new FormData(form); const username = String(values.get("username") || "").trim().toLowerCase(); const display = String(values.get("display_name") || "").trim(); const linksValue = readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) })); if (!/^[a-z0-9_]{3,24}$/.test(username)) { setTab("profile"); return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true); } if (!display) { setTab("profile"); return feedback("Wpisz nazwę wyświetlaną.", true); } for (const link of linksValue) if (!safeUrl(link.url)) { setTab("links"); return feedback(`Sprawdź adres linku „${link.title || "bez nazwy"}”.`, true); } let customization = readCustomization(form); let avatarUrl = safeImageUrl(values.get("avatar_url")); busy(submit, true, "Zapisywanie…"); feedback("Przygotowuję materiały…");   try { if (avatarUrl && isDiscordUrl(avatarUrl)) { avatarUrl = await cacheDiscordAsset(avatarUrl, "avatar", PROFILE_ASSET_OPTIONS.avatar); const avatarInput = form.querySelector('[name="avatar_url"]'); if (avatarInput) avatarInput.value = avatarUrl; } } catch (error) { busy(submit, false); return feedback(String(error?.message || "Nie udało się zapisać trwałej kopii pliku. Wybierz plik z komputera."), true); } feedback("Zapisuję wszystkie zmiany…"); let save = await supabaseClient.from("profiles").upsert({ id: current.user.id, username, display_name: display, bio: String(values.get("bio") || "").trim(), avatar_url: avatarUrl, background_color: profileAccentColor(values.get("background_color")), customization }); if (save.error) { busy(submit, false); return feedback(errorText(save.error), true); } const deleted = await supabaseClient.from("links").delete().eq("profile_id", current.user.id); if (deleted.error) { busy(submit, false); return feedback("Profil zapisany, ale nie udało się odświeżyć linków.", true); } if (linksValue.length) { const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({ profile_id: current.user.id, title: link.title || "Link", url: link.url, icon: link.icon, position: index, is_visible: true }))); if (inserted.error) { busy(submit, false); return feedback("Profil zapisany, ale linki mają problem z zapisem.", true); } } linksValue.forEach((link, index) => { const input = document.querySelectorAll("[data-link-url]")[index]; if (input) input.value = link.url; }); busy(submit, false); meta(); document.querySelector("#top-status").innerHTML = `<i></i> zapisano przed chwilą`; feedback("Wszystkie zmiany zostały zapisane."); }); }
 function updateLinkNumbers() { document.querySelectorAll("[data-link-item]").forEach((item, index) => { item.querySelector(".link-number").textContent = String(index + 1).padStart(2, "0"); item.querySelector(".link-item-name").textContent = `Link ${index + 1}`; }); }
 document.addEventListener("input", (event) => { const field = event.target; if (!field.matches?.("#profile-form input[type=range]")) return; const output = document.querySelector(`[data-output-for="${field.name}"]`); if (output) output.textContent = `${field.value}${field.name === "profile_opacity" ? "%" : "px"}`; if (syncPreviewRange(field)) return; renderPreview(); });
 function publicLink(link) { const href = safeUrl(link.url); if (!href) return ""; return `<a class="profile-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"><span class="profile-link-icon">${icon(profileIcon(link))}</span><span class="profile-link-title">${escapeHtml(String(link.title || "Link").trim() || "Link")}</span><span class="profile-link-arrow">${icon("arrowUp")}</span></a>`; }
@@ -644,7 +678,7 @@ dashboard = () => {
   markup = markup.replace("</nav>", `${cursorTab}</nav>`);
   markup = markup.replace('<section data-tab-panel="account" hidden>', `${cursorEffectsPanel()}<section data-tab-panel="account" hidden>`);
   markup = markup.replace(/<div class="cursor-effects-hero">[\s\S]*?(?=<div class="cursor-effect-grid")/, "");
-  markup = markup.replace(`<button class="button button-primary save-button" type="submit">Zapisz wszystkie zmiany ${icon("check")}</button>`, '<span class="auto-save-note">Zmiany zapisują się automatycznie.</span>');
+  markup = markup.replace(`<button class="button button-primary save-button" type="submit">Zapisz wszystkie zmiany ${icon("check")}</button>`, '<span class="auto-save-note sr-only">Changes save automatically.</span>');
   return markup
     .replace("Zapisz profil, aby opublikować wybrany efekt.", "Wybrany efekt zapisuje się automatycznie.")
     .replace("Zapisz profil, aby opublikować układ.", "Układ zapisuje się automatycznie.")
@@ -894,7 +928,7 @@ const baseIcon = icon;
 const brandIcon = (name, className = "") => { const source = PLATFORM_ICON_LOGOS[name]; if (!source) return baseIcon(name === "email" ? "mail" : "globe"); const remoteSource = source.startsWith("http") ? source : `https://cdn.simpleicons.org/${source}/f5f6fb`; return `<img class="platform-logo ${source.startsWith("http") ? "is-monochrome " : ""}${className}" src="${remoteSource}" alt="" aria-hidden="true" loading="lazy" decoding="async">`; };
 icon = (name) => PLATFORM_ICON_NAMES.includes(name) ? brandIcon(name) : baseIcon(name);
 const baseProfileIcon = profileIcon;
-profileIcon = (link) => { const value = String(link?.icon || "").toLowerCase(); if (PLATFORM_ICON_NAMES.includes(value) && value !== "website") return value; const url = String(link?.url || "").toLowerCase(); const matches = [["snapchat", "snapchat"], ["youtube", "youtube"], ["discord", "discord"], ["spotify", "spotify"], ["instagram", "instagram"], ["x", "x.com"], ["tiktok", "tiktok"], ["telegram", "t.me"], ["soundcloud", "soundcloud"], ["paypal", "paypal"], ["github", "github"], ["roblox", "roblox"], ["xbox", "xbox"], ["gitlab", "gitlab"], ["twitch", "twitch"], ["reddit", "reddit"], ["namemc", "namemc"], ["steam", "steam"], ["threads", "threads"], ["linkedin", "linkedin"], ["pinterest", "pinterest"], ["email", "mailto:"]]; const detected = matches.find(([, needle]) => url.includes(needle)); return detected?.[0] || baseProfileIcon(link); };
+profileIcon = (link) => { const value = String(link?.icon || "").toLowerCase(); if (PLATFORM_ICON_NAMES.includes(value) && value !== "website") return value; const detected = window.detectLinkPlatform?.(link?.url); if (detected) return detected.value === "website" ? "globe" : detected.value; return baseProfileIcon(link); };
 iconOptions = (selected = "website") => PLATFORM_ICON_NAMES.map((value) => `<option value="${value}"${selected === value ? " selected" : ""}>${escapeHtml(PLATFORM_ICON_LABELS[value])}</option>`).join("");
 const baseWireDashboard = wireDashboard;
 wireDashboard = async function () {
@@ -1284,14 +1318,18 @@ function bindProfileAssetPreview() {
     const modal = document.createElement("div");
     modal.className = "asset-picker-backdrop";
     modal.dataset.assetPicker = kind;
-    modal.innerHTML = `<div class="asset-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-picker-title"><div class="asset-picker-head"><div><span class="asset-picker-kicker">PROFILE ASSETS</span><h2 id="asset-picker-title">${escapeHtml(meta.title)}</h2><p>${escapeHtml(meta.description)}</p></div><button class="asset-picker-close" type="button" data-asset-picker-close aria-label="Zamknij">×</button></div><div class="asset-picker-choice"><div><strong>Wybierz z komputera</strong><small>Plik zostanie zapisany w profilu i od razu pojawi się w podglądzie.</small></div><button class="button button-small button-dark asset-picker-file-button" type="button" data-asset-file-button>Wybierz z komputera</button><input data-asset-file type="file" accept="${meta.accept}" hidden></div><div class="asset-picker-divider"><span>albo</span></div><label class="asset-picker-url"><span>Wklej adres URL</span><input data-asset-url type="url" inputmode="url" placeholder="https://..." value="${currentIsLocal ? "" : escapeHtml(currentValue)}"><small>Adres musi prowadzić bezpośrednio do pliku. Linki z Discorda mogą wymagać wybrania pliku z komputera.</small></label><p class="asset-picker-current" data-asset-picker-current>${currentValue ? (currentIsLocal ? "Obecnie ustawiono plik z komputera." : "Obecnie ustawiono adres URL.") : "Nie wybrano jeszcze tego assetu."}</p><p class="asset-picker-message" data-asset-picker-message role="status" aria-live="polite"></p><div class="asset-picker-foot"><button class="button button-small button-dark" type="button" data-asset-picker-close>Anuluj</button><button class="button button-small button-primary" type="button" data-asset-picker-apply>Ustaw asset</button></div></div>`;
+    modal.innerHTML = `<div class="asset-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-picker-title"><div class="asset-picker-head"><div><span class="asset-picker-kicker">PROFILE ASSETS</span><h2 id="asset-picker-title">${escapeHtml(meta.title)}</h2><p>${escapeHtml(meta.description)}</p></div><button class="asset-picker-close" type="button" data-asset-picker-close aria-label="Zamknij">×</button></div><div class="asset-picker-choice asset-picker-dropzone" data-asset-dropzone><div><strong>Drop a file here</strong><small>or choose a local file. A temporary preview is created without converting it to Base64.</small></div><button class="button button-small button-dark asset-picker-file-button" type="button" data-asset-file-button>Choose file</button><input data-asset-file type="file" accept="${meta.accept}" hidden><div class="asset-picker-file-preview" data-asset-file-preview hidden></div></div><div class="asset-picker-divider"><span>or</span></div><label class="asset-picker-url"><span>Paste a direct URL</span><input data-asset-url type="url" inputmode="url" placeholder="https://..." value="${currentIsLocal ? "" : escapeHtml(currentValue)}"><small>The URL must point directly to a file. Discord links can require choosing a local file instead.</small></label><p class="asset-picker-current" data-asset-picker-current>${currentValue ? (currentIsLocal ? "A local file is currently selected." : "A direct URL is currently selected.") : "No asset selected yet."}</p><p class="asset-picker-message" data-asset-picker-message role="status" aria-live="polite"></p><div class="asset-picker-foot"><button class="button button-small button-dark" type="button" data-asset-picker-close>Cancel</button><button class="button button-small button-primary" type="button" data-asset-picker-apply>Use asset</button></div></div>`;
     document.body.append(modal);
     document.body.classList.add("asset-picker-open");
     const fileInput = modal.querySelector("[data-asset-file]");
     const fileButton = modal.querySelector("[data-asset-file-button]");
+    const dropzone = modal.querySelector("[data-asset-dropzone]");
+    const filePreview = modal.querySelector("[data-asset-file-preview]");
     const urlInput = modal.querySelector("[data-asset-url]");
     const message = modal.querySelector("[data-asset-picker-message]");
     const current = modal.querySelector("[data-asset-picker-current]");
+    let pendingFile = null;
+    let previewObjectUrl = "";
     let audioTitleInput;
     let audioArtistInput;
     let audioLyricsInput;
@@ -1305,6 +1343,31 @@ function bindProfileAssetPreview() {
       audioLyricsInput = metadata.querySelector("[data-asset-audio-lyrics]");
     }
     const setMessage = (text, error = false) => { message.textContent = text; message.classList.toggle("is-error", error); };
+    const clearPendingFile = () => {
+      pendingFile = null;
+      if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl = "";
+      if (filePreview) {
+        filePreview.replaceChildren();
+        filePreview.hidden = true;
+      }
+      dropzone?.classList.remove("has-file");
+    };
+    const previewFile = (file) => {
+      clearPendingFile();
+      pendingFile = file;
+      previewObjectUrl = URL.createObjectURL(file);
+      if (!filePreview) return;
+      if (kind === "audio") {
+        filePreview.innerHTML = `<span class="asset-picker-preview-audio">${icon("volume")}<strong>${escapeHtml(file.name)}</strong></span>`;
+      } else if (kind === "background" && /^video\//i.test(file.type || "")) {
+        filePreview.innerHTML = `<video src="${escapeHtml(previewObjectUrl)}" muted autoplay loop playsinline></video>`;
+      } else {
+        filePreview.innerHTML = `<img src="${escapeHtml(previewObjectUrl)}" alt="">`;
+      }
+      filePreview.hidden = false;
+      dropzone?.classList.add("has-file");
+    };
     if (currentValue && isExpiredDiscordUrl(currentValue)) setMessage("Ten link z Discorda wygasł. Wybierz plik z komputera albo wklej nowy, stały URL.", true);
     const readVideoDimensions = (file) => {
       const isVideo = kind === "background" && (/^video\//i.test(file.type || "") || meta.extensions.test(file.name || ""));
@@ -1320,35 +1383,40 @@ function bindProfileAssetPreview() {
       });
     };
     let onKeydown;
-    const close = () => { if (onKeydown) document.removeEventListener("keydown", onKeydown); modal.remove(); document.body.classList.remove("asset-picker-open"); };
+    const close = () => { if (onKeydown) document.removeEventListener("keydown", onKeydown); clearPendingFile(); modal.remove(); document.body.classList.remove("asset-picker-open"); };
     fileButton.addEventListener("click", () => fileInput.click());
-    fileInput.addEventListener("change", async () => {
-      const file = fileInput.files?.[0];
+    const acceptFile = async (file) => {
       if (!file) return;
       const validType = meta.test.test(file.type || "") || meta.extensions.test(file.name || "");
-      if (!validType) { pendingValue = ""; setMessage("Ten typ pliku nie pasuje do wybranego assetu.", true); return; }
-      if (file.size > meta.maxSize) { pendingValue = ""; setMessage(`Plik jest za duży. Maksymalny rozmiar to ${Math.round(meta.maxSize / 1000000)} MB.`, true); return; }
+      if (!validType) { pendingValue = ""; clearPendingFile(); setMessage("This file type is not supported for the selected asset.", true); return; }
+      if (file.size > meta.maxSize) { pendingValue = ""; clearPendingFile(); setMessage(`The file is too large. Maximum size: ${Math.round(meta.maxSize / 1000000)} MB.`, true); return; }
       const dimensions = await readVideoDimensions(file);
       const qualityMessage = dimensions && Math.min(dimensions.width, dimensions.height) < 720
-        ? `Nagranie ma ${dimensions.width}×${dimensions.height} px. Na pełnym tle może wyglądać pikselowo — użyj pliku co najmniej 1280×720.`
+        ? `This video is ${dimensions.width}×${dimensions.height}px and can look pixelated as a full background. Use at least 1280×720.`
         : "";
       if (kind === "audio" && audioTitleInput && !audioTitleInput.value.trim()) {
         const inferredTitle = dynamicAudioFilenameTitle(file.name);
         if (inferredTitle) audioTitleInput.value = inferredTitle.slice(0, 80);
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const value = assetValue(kind, String(reader.result || ""));
-        if (!value) { pendingValue = ""; setMessage("Nie udało się odczytać tego pliku.", true); return; }
-        pendingValue = value;
-        urlInput.value = "";
-        current.textContent = `${file.name} — plik gotowy do ustawienia.`;
-        setMessage(qualityMessage);
-      };
-      reader.onerror = () => { pendingValue = ""; setMessage("Nie udało się odczytać tego pliku.", true); };
-      reader.readAsDataURL(file);
-    });
+      pendingValue = "";
+      urlInput.value = "";
+      previewFile(file);
+      current.textContent = `${file.name} — ready to use.`;
+      setMessage(qualityMessage);
+    };
+    fileInput.addEventListener("change", () => acceptFile(fileInput.files?.[0]));
+    ["dragenter", "dragover"].forEach((name) => dropzone?.addEventListener(name, (event) => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+      dropzone.classList.add("is-dragging");
+    }));
+    ["dragleave", "drop"].forEach((name) => dropzone?.addEventListener(name, (event) => {
+      event.preventDefault();
+      dropzone.classList.remove("is-dragging");
+    }));
+    dropzone?.addEventListener("drop", (event) => acceptFile(event.dataTransfer?.files?.[0]));
     urlInput.addEventListener("input", () => {
+      if (urlInput.value.trim()) clearPendingFile();
       pendingValue = urlInput.value.trim() ? "" : (currentIsLocal && !urlInput.value.trim() ? currentValue : "");
       if (urlInput.value.trim()) current.textContent = "Adres URL zostanie użyty po zatwierdzeniu.";
       else if (!currentValue) current.textContent = "Nie wybrano jeszcze tego assetu.";
@@ -1361,7 +1429,20 @@ function bindProfileAssetPreview() {
     const applyButton = modal.querySelector("[data-asset-picker-apply]");
     applyButton.addEventListener("click", async () => {
       const typedUrl = urlInput.value.trim();
+      if (/^data:/i.test(typedUrl)) return setMessage("Choose a local file instead of pasting Base64 data.", true);
       let value = typedUrl ? assetValue(kind, typedUrl) : pendingValue;
+      if (!typedUrl && pendingFile) {
+        busy(applyButton, true, "Preparing…");
+        try {
+          value = assetValue(kind, await blobToDataUrl(pendingFile));
+          if (!value) throw new Error("The selected file could not be prepared.");
+        } catch (error) {
+          setMessage(String(error?.message || "The selected file could not be prepared."), true);
+          return;
+        } finally {
+          busy(applyButton, false);
+        }
+      }
       if (typedUrl && !value) return setMessage("Wpisz prawidłowy bezpośredni adres URL do pliku.", true);
       if (typedUrl && isExpiredDiscordUrl(typedUrl)) return setMessage("Ten link z Discorda wygasł. Wybierz plik z komputera albo wklej nowy URL.", true);
       if (typedUrl && isDiscordUrl(typedUrl)) {
@@ -1493,20 +1574,22 @@ feedback = (message, error = false) => {
     .replace("Zapisz profil, aby opublikować zmianę.", "Zmiana zostanie opublikowana automatycznie.");
   return baseFeedbackWithAutoSave(text, error);
 };
-async function saveDashboardProfile(form) {
+async function saveDashboardProfile(form, dirtySections = new Set(["profile", "links"])) {
   const userId = dashboardCurrentUserId;
   if (!form || !userId) return false;
   const status = document.querySelector("#top-status");
-  const setStatus = (message) => { if (status) { status.dataset.saveState = ""; status.innerHTML = `<i></i> ${message}`; } };
+  const setStatus = (message, error = false) => updateSaveIndicator(status, message, error);
+  const saveProfile = dirtySections.has("profile");
+  const saveLinks = dirtySections.has("links");
   const values = new FormData(form);
   const username = String(values.get("username") || "").trim().toLowerCase();
   const display = String(values.get("display_name") || "").trim();
-  const linksValue = readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) }));
-  if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+  const linksValue = saveLinks ? readLinks().map((link) => ({ ...link, url: normalizeUrl(link.url) })) : [];
+  if (saveProfile && !/^[a-z0-9_]{3,24}$/.test(username)) {
     setStatus("uzupełnij dane");
     return feedback("Nazwa musi mieć 3–24 znaki: małe litery, cyfry lub _.", true);
   }
-  if (!display) {
+  if (saveProfile && !display) {
     setStatus("uzupełnij dane");
     return feedback("Wpisz nazwę wyświetlaną.", true);
   }
@@ -1516,55 +1599,60 @@ async function saveDashboardProfile(form) {
       return feedback(`Sprawdź adres linku „${link.title || "bez nazwy"}”.`, true);
     }
   }
-  const customization = readCustomization(form);
-  let avatarUrl = safeImageUrl(values.get("avatar_url"));
-  setStatus("zapisuję…");
-  feedback("Zapisuję zmiany…");
+  const customization = saveProfile ? readCustomization(form) : null;
+  let avatarUrl = saveProfile ? safeImageUrl(values.get("avatar_url")) : "";
+  setStatus("Saving changes…");
   try {
-    if (avatarUrl && isDiscordUrl(avatarUrl)) {
+    if (saveProfile && avatarUrl && isDiscordUrl(avatarUrl)) {
       avatarUrl = await cacheDiscordAsset(avatarUrl, "avatar", PROFILE_ASSET_OPTIONS.avatar);
       const avatarInput = form.querySelector('[name="avatar_url"]');
       if (avatarInput) avatarInput.value = avatarUrl;
     }
-    const save = await supabaseClient.from("profiles").upsert({
-      id: userId,
-      username,
-      display_name: display,
-      bio: String(values.get("bio") || "").trim(),
-      avatar_url: avatarUrl,
-      background_color: safeColor(values.get("background_color")),
-      customization
-    });
-    if (save.error) throw save.error;
-    const deleted = await supabaseClient.from("links").delete().eq("profile_id", userId);
-    if (deleted.error) {
-      setStatus("częściowo zapisano");
-      return feedback("Profil zapisany, ale nie udało się odświeżyć linków.", true);
+    if (saveProfile) {
+      const save = await supabaseClient.from("profiles").upsert({
+        id: userId,
+        username,
+        display_name: display,
+        bio: String(values.get("bio") || "").trim(),
+        avatar_url: avatarUrl,
+        background_color: safeColor(values.get("background_color")),
+        customization
+      });
+      if (save.error) throw save.error;
     }
-    if (linksValue.length) {
-      const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({
-        profile_id: userId,
-        title: link.title || "Link",
-        url: link.url,
-        icon: link.icon,
-        position: index,
-        is_visible: true
-      })));
-      if (inserted.error) {
-        setStatus("częściowo zapisano");
-        return feedback("Profil zapisany, ale linki mają problem z zapisem.", true);
+    if (saveLinks) {
+      const deleted = await supabaseClient.from("links").delete().eq("profile_id", userId);
+      if (deleted.error) {
+        setStatus("Links could not be refreshed.", true);
+        feedback("Profile saved, but links could not be refreshed.", true);
+        return false;
       }
+      if (linksValue.length) {
+        const inserted = await supabaseClient.from("links").insert(linksValue.map((link, index) => ({
+          profile_id: userId,
+          title: link.title || "Link",
+          url: link.url,
+          icon: link.icon,
+          position: index,
+          is_visible: true
+        })));
+        if (inserted.error) {
+          setStatus("Links could not be stored.", true);
+          feedback("Profile saved, but links could not be stored.", true);
+          return false;
+        }
+      }
+      linksValue.forEach((link, index) => {
+        const input = form.querySelectorAll("[data-link-url]")[index];
+        if (input) input.value = link.url;
+      });
     }
-    linksValue.forEach((link, index) => {
-      const input = form.querySelectorAll("[data-link-url]")[index];
-      if (input) input.value = link.url;
-    });
-    setStatus("zapisano przed chwilą");
-    feedback("Wszystkie zmiany zostały zapisane.");
+    setStatus("All changes saved.");
+    feedback("");
     return true;
   } catch (error) {
     console.error("Dashboard autosave failed", error);
-    setStatus("błąd zapisu");
+    setStatus("Changes could not be saved.", true);
     return feedback(errorText(error), true);
   }
 }
@@ -1575,46 +1663,46 @@ wireDashboard = async function () {
   if (!form || form.dataset.autoSaveBound === "true") return;
   form.dataset.autoSaveBound = "true";
   let timer = 0;
-  let queued = false;
+  const queuedSections = new Set();
   let saving = false;
-  const schedule = (delay = 700) => {
-    queued = true;
+  const schedule = (section = "profile", delay = 700) => {
+    queuedSections.add(section);
     window.clearTimeout(timer);
     const status = document.querySelector("#top-status");
-    if (status && status.dataset.saveState !== "pending") {
-      status.dataset.saveState = "pending";
-      status.innerHTML = "<i></i> oczekuje na zapis";
-    }
+    if (status?.dataset.saveState !== "pending") updateSaveIndicator(status, "Pending changes");
     timer = window.setTimeout(run, delay);
   };
   const run = async () => {
     timer = 0;
-    if (!queued) return;
+    if (!queuedSections.size) return;
     if (saving) {
       timer = window.setTimeout(run, 250);
       return;
     }
-    queued = false;
+    const sections = new Set(queuedSections);
+    queuedSections.clear();
     saving = true;
     try {
-      await saveDashboardProfile(form);
+      await saveDashboardProfile(form, sections);
     } finally {
       saving = false;
-      if (queued && !timer) timer = window.setTimeout(run, 250);
+      if (queuedSections.size && !timer) timer = window.setTimeout(run, 250);
     }
   };
   form.addEventListener("input", (event) => {
     if (event.target.matches("[readonly]")) return;
-    schedule();
+    schedule(event.target.closest("[data-link-item],#links-list") ? "links" : "profile");
   });
-  form.addEventListener("change", () => schedule());
+  form.addEventListener("change", (event) => schedule(event.target.closest("[data-link-item],#links-list") ? "links" : "profile"));
   form.addEventListener("click", (event) => {
-    if (event.target.closest("#add-link,[data-link-action],[data-color-preset],#reset-customization,[data-asset-clear]")) schedule();
+    if (event.target.closest("#add-link,[data-link-action]")) schedule("links");
+    else if (event.target.closest("[data-color-preset],#reset-customization,[data-asset-clear]")) schedule("profile");
   });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     event.stopImmediatePropagation();
-    schedule(0);
+    queuedSections.add("profile");
+    schedule("links", 0);
   }, true);
 };
 const DASHBOARD_WORKSPACE_TABS = Object.freeze({
@@ -2266,13 +2354,10 @@ function clampDynamicEmbedTiles(main) {
   });
 }
 function dynamicEmbedEditorToolbar() {
-  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong>Arrange your embed</strong><small>Drag or resize profile, Connections, Discord presence, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button><a class="button button-small button-dark" href="/dashboard">Back to builder</a></div></div>`;
+  return `<div class="embed-editor-toolbar" data-embed-editor-toolbar><div class="embed-editor-copy"><span class="embed-editor-kicker">EMBED EDITOR</span><strong data-i18n="editor.arrange">Arrange your embed</strong><small>Drag or resize profile, Connections, Discord presence, music player or Live lyrics. Add synced lines in Audio settings.</small></div><div class="embed-editor-actions"><span class="embed-editor-status" data-embed-editor-status data-save-state="idle" title="Ready"><span class="sr-only" data-save-announcement aria-live="polite">Ready</span></span><button class="button button-small button-primary" data-embed-editor-save type="button" hidden aria-hidden="true" tabindex="-1">Save layout</button><a class="button button-small button-dark" href="/dashboard" data-i18n="editor.back">Back to builder</a></div></div>`;
 }
 const baseDynamicEmbedEditorToolbarWithAutoSave = dynamicEmbedEditorToolbar;
-dynamicEmbedEditorToolbar = () => baseDynamicEmbedEditorToolbarWithAutoSave().replace(
-  '<span class="embed-editor-status" data-embed-editor-status>Changes not saved</span><button class="button button-small button-primary" data-embed-editor-save type="button">Save layout</button>',
-  '<span class="embed-editor-status" data-embed-editor-status>Changes save automatically</span><button class="button button-small button-primary" data-embed-editor-save type="button" hidden aria-hidden="true" tabindex="-1">Save layout</button>'
-);
+dynamicEmbedEditorToolbar = () => baseDynamicEmbedEditorToolbarWithAutoSave();
 const baseWirePublicWithEmbedEditor = wirePublic;
 wirePublic = function () {
   baseWirePublicWithEmbedEditor();
@@ -2301,7 +2386,7 @@ wirePublic = function () {
     tile.style.setProperty("--dynamic-y", String(position.y));
     applyEmbedTileSize(tile, position, "dynamic");
   };
-  const setStatus = (message, error = false) => { if (status) { status.textContent = message; status.classList.toggle("is-error", error); } };
+  const setStatus = (message, error = false) => updateSaveIndicator(status, message, error);
   const clampTilePosition = (tile, position) => clampDynamicEmbedTilePosition(tile, main, position);
   const clampTiles = () => { const positions = readPositions(); tiles.forEach((tile) => applyPosition(tile, clampTilePosition(tile, positions[tile.dataset.dynamicTile] || { x: 50, y: 50 }))); };
   tiles.forEach((tile) => {
@@ -2373,12 +2458,16 @@ wirePublic = function () {
   const saveButton = page?.querySelector("[data-embed-editor-save]");
   const status = page?.querySelector("[data-embed-editor-status]");
   if (!page || !main || !saveButton || page.dataset.autoSaveBound === "true") return;
+  if (window.SqezenCanvas) {
+    page.dataset.autoSaveBound = "native";
+    return;
+  }
   page.dataset.autoSaveBound = "true";
   let timer = 0;
   let dirty = false;
   const schedule = () => {
     window.clearTimeout(timer);
-    if (status) status.textContent = "Changes save automatically";
+    updateSaveIndicator(status, "Pending changes");
     timer = window.setTimeout(() => {
       timer = 0;
       if (dirty) saveButton.click();
@@ -2421,11 +2510,7 @@ wirePublic = function () {
     tile.style.setProperty("--standard-y", String(position.y));
     applyEmbedTileSize(tile, position, "standard");
   };
-  const setStatus = (message, error = false) => {
-    if (!status) return;
-    status.textContent = message;
-    status.classList.toggle("is-error", error);
-  };
+  const setStatus = (message, error = false) => updateSaveIndicator(status, message, error);
   const clampPosition = (position) => clampStandardEmbedPosition(tile, main, position);
   const clampTile = () => applyPosition(clampPosition(readPosition()));
   let timer = 0;
@@ -2647,7 +2732,7 @@ publicProfile = async function (username) {
   return markup
     .replace('class="public-page ', 'class="public-page standard-embed-editor-page is-embed-editor ')
     .replace(' style="', ` data-embed-editor="true" data-embed-username="${escapeHtml(username)}" style="`)
-    .replace('<div class="public-shade"></div>', `${dynamicEmbedEditorToolbar().replace("Arrange your embed", "Arrange your standard embed").replace("Drag or resize profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.", "Drag or resize the profile card to place it anywhere on the page.")}<div class="public-shade"></div>`);
+    .replace('<div class="public-shade"></div>', `${dynamicEmbedEditorToolbar().replace('data-i18n="editor.arrange"', 'data-i18n="editor.arrangeStandard"').replace("Arrange your embed", "Arrange your standard embed").replace("Drag or resize profile, Connections, music player or Live lyrics. Add synced lines in Audio settings.", "Drag or resize the profile card to place it anywhere on the page.")}<div class="public-shade"></div>`);
 };
 const basePublicProfileWithDiscord = publicProfile;
 publicProfile = async function (username) {
@@ -2867,6 +2952,20 @@ const baseWirePublicForFastPath = wirePublic;
 wirePublic = function () {
   baseWirePublicForFastPath();
   if (state.fastPublicProfile) hydrateFastPublicProfile(state.fastPublicProfile);
+  window.SqezenCanvas?.mount(document);
+  document.querySelectorAll(".is-embed-editor").forEach((page) => {
+    const main = page.querySelector(".dynamic-embed-main,.public-main");
+    const saveButton = page.querySelector("[data-embed-editor-save]");
+    const status = page.querySelector("[data-embed-editor-status]");
+    if (!main || !saveButton || main.dataset.nativeAutoSaveBound === "true") return;
+    main.dataset.nativeAutoSaveBound = "true";
+    let timer = 0;
+    main.addEventListener("sqezen:canvascommit", () => {
+      window.clearTimeout(timer);
+      updateSaveIndicator(status, "Pending changes");
+      timer = window.setTimeout(() => saveButton.click(), 650);
+    });
+  });
 };
 function fastPublicProfileBootMarkup(username) {
   const value = String(username || "profile").trim().toLowerCase();
@@ -2886,5 +2985,30 @@ render = async function () {
 };
 const baseRender = render;
 render = async function () { const path = currentPath(); if (!["/login", "/register", "/register/code"].includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; document.title = `${path === "/login" ? "Sign in" : path === "/register" ? "Create an account" : "Confirm your email"} — sqezen`; const app = document.querySelector("#app"); const kind = path === "/register/code" ? "code" : path.slice(1); app.innerHTML = typeof window.auth === "function" ? window.auth(kind) : auth(kind); await wireAuth(); };
+const baseRenderWithUiServices = render;
+render = async function () {
+  const result = await baseRenderWithUiServices();
+  const app = document.querySelector("#app");
+  window.sqezenI18n?.apply(app || document);
+  window.SqezenLinks?.enhance();
+  window.SqezenCanvas?.mount(document);
+  document.querySelectorAll('input[type="range"]').forEach((range) => {
+    const min = Number(range.min || 0);
+    const max = Number(range.max || 100);
+    const value = Number(range.value || min);
+    const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
+    range.style.setProperty("--range-progress", `${Math.min(100, Math.max(0, progress))}%`);
+  });
+  return result;
+};
+document.addEventListener("input", (event) => {
+  const range = event.target instanceof HTMLInputElement && event.target.type === "range" ? event.target : null;
+  if (!range) return;
+  const min = Number(range.min || 0);
+  const max = Number(range.max || 100);
+  const value = Number(range.value || min);
+  const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  range.style.setProperty("--range-progress", `${Math.min(100, Math.max(0, progress))}%`);
+}, { passive: true });
 window.rerenderAuth = () => render();
 addEventListener("popstate", render); render();

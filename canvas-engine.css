@@ -1,0 +1,119 @@
+.dynamic-embed-main.native-canvas-active,
+.standard-embed-editor-page .public-main.native-canvas-active {
+  position: relative;
+  overflow: hidden;
+  contain: layout style;
+}
+
+.native-canvas-active [data-dynamic-tile],
+.native-canvas-active [data-standard-tile] {
+  position: absolute !important;
+  inset: 0 auto auto 0 !important;
+  top: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 0 !important;
+  margin: 0 !important;
+  translate: none !important;
+  animation: none !important;
+  touch-action: none;
+  user-select: none;
+  will-change: auto;
+}
+
+.native-canvas-active [data-dynamic-tile].is-dragging,
+.native-canvas-active [data-dynamic-tile].is-resizing,
+.native-canvas-active [data-dynamic-tile].is-settling,
+.native-canvas-active [data-standard-tile].is-dragging,
+.native-canvas-active [data-standard-tile].is-resizing,
+.native-canvas-active [data-standard-tile].is-settling {
+  will-change: transform;
+}
+
+.native-canvas-active [data-dynamic-tile].is-dragging,
+.native-canvas-active [data-standard-tile].is-dragging {
+  z-index: 20;
+  cursor: grabbing;
+}
+
+.native-canvas-active [data-dynamic-tile].is-dragging,
+.native-canvas-active [data-dynamic-tile].is-resizing,
+.native-canvas-active [data-standard-tile].is-dragging,
+.native-canvas-active [data-standard-tile].is-resizing {
+  background-color: rgba(var(--profile-card-rgb, 18, 18, 20), .92);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .34);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (max-width: 1023.98px) {
+  .dynamic-embed-page .dynamic-embed-main,
+  .dynamic-embed-page.is-embed-editor .dynamic-embed-main,
+  .standard-embed-editor-page .public-main,
+  .standard-embed-editor-page.is-embed-editor .public-main {
+    display: flex;
+    width: min(100%, 620px);
+    height: auto;
+    min-height: 100dvh;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0 auto;
+    padding:
+      max(94px, calc(env(safe-area-inset-top) + 82px))
+      max(16px, env(safe-area-inset-right))
+      max(24px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+    overflow: visible;
+  }
+
+  .dynamic-embed-page:not(.is-embed-editor) .dynamic-embed-main {
+    padding-top: max(24px, env(safe-area-inset-top));
+  }
+
+  .dynamic-embed-page [data-dynamic-tile],
+  .standard-embed-editor-page [data-standard-tile] {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    translate: none !important;
+    transform: none !important;
+    touch-action: auto;
+    user-select: auto;
+    will-change: auto;
+  }
+
+  .dynamic-embed-page.is-embed-editor [data-dynamic-tile],
+  .standard-embed-editor-page.is-embed-editor [data-standard-tile] {
+    cursor: auto;
+    outline: 0 !important;
+  }
+
+  .dynamic-embed-page [data-dynamic-tile="profile"] { order: 1; }
+  .dynamic-embed-page [data-dynamic-tile="connections"] { order: 2; }
+  .dynamic-embed-page [data-dynamic-tile="discord"] { order: 3; }
+  .dynamic-embed-page [data-dynamic-tile="audio"] { order: 4; }
+  .dynamic-embed-page [data-dynamic-tile="lyrics"] { order: 5; }
+  .dynamic-embed-page [data-dynamic-tile="badges"] { order: 6; }
+
+  .dynamic-embed-page .embed-resize-handle,
+  .standard-embed-editor-page .embed-resize-handle {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .native-canvas-active [data-dynamic-tile],
+  .native-canvas-active [data-standard-tile] {
+    transition: none !important;
+  }
+}
