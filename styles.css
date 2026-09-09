@@ -55,7 +55,7 @@
 .dynamic-embed-page{display:block;min-height:100vh;padding:0;overflow:hidden;background:var(--profile-background,#07070a)}
 .dynamic-embed-page:after{opacity:.045}
 .dynamic-embed-page .public-media{opacity:.62}
-.public-media.is-low-resolution{filter:blur(10px) saturate(.88);transform:scale(1.06)}
+.public-media.is-low-resolution{filter:saturate(.88);transform:scale(1.06)}
 .dynamic-embed-page .public-media.is-low-resolution{opacity:.56}
 .dynamic-embed-page .public-shade{background:radial-gradient(circle at 52% 42%,transparent 0,rgba(5,5,7,.2) 42%,rgba(5,5,7,.82) 100%)}
 .dynamic-embed-main{position:relative;z-index:1;min-height:100vh;width:100%;margin:0}
