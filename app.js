@@ -3064,5 +3064,8 @@ document.addEventListener("input", (event) => {
   const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
   range.style.setProperty("--range-progress", `${Math.min(100, Math.max(0, progress))}%`);
 }, { passive: true });
-window.rerenderAuth = () => render();
+window.rerenderAuth = () => {
+  const path = currentPath();
+  return ["/login", "/register", "/register/code"].includes(path) ? render() : Promise.resolve();
+};
 addEventListener("popstate", render); render();
