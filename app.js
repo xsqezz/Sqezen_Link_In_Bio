@@ -36,8 +36,10 @@ const icons = {
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg>',
   copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>',
+  cursor: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 3 12.5 9-6.2 1.4L9.5 20 6 3Z"/></svg>',
   dashboard: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>',
   discord: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.4 8.5a14 14 0 0 1 7.2 0M8 16.5c2.8 1.4 5.2 1.4 8 0M7.5 17c-1.8-2-2.5-4.7-1.5-8.2 1.6-1.2 3.2-1.7 4.8-1.8l1.2 1.5 1.2-1.5c1.6.1 3.2.6 4.8 1.8 1 3.5.3 6.2-1.5 8.2-1.8.3-3.2-.4-4.5-1.4M9.3 13.5h.1M14.6 13.5h.1"/></svg>',
+  embed: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7-5 5 5 5M15 7l5 5-5 5M13.5 4l-3 16"/></svg>',
   globe: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2 2.2 3 4.8 3 8s-1 5.8-3 8c-2-2.2-3-4.8-3-8s1-5.8 3-8Z"/></svg>',
   github: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1.2-4-2-5.5-2.5M14.5 21v-3.5c0-1 .1-1.7-.5-2.5 2.8-.3 5.8-1.4 5.8-6.1 0-1.3-.5-2.4-1.3-3.3.1-.3.6-1.6-.1-3.3 0 0-1.1-.4-3.5 1.3a12 12 0 0 0-6.4 0C6.1 1.9 5 2.3 5 2.3c-.7 1.7-.2 3-.1 3.3-.8.9-1.3 2-1.3 3.3 0 4.7 3 5.8 5.8 6.1-.6.5-.7 1.2-.7 2.5V21"/></svg>',
   link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7.1l2-2a4 4 0 0 0-5.7-5.7l-1.1 1.1M14 10.5a4 4 0 0 0-5.7-.1l-2 2A4 4 0 0 0 12 18.1l1.1-1.1"/></svg>',
@@ -46,12 +48,17 @@ const icons = {
   mail: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="m5 8 7 5 7-5"/></svg>',
   palette: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 0 16h1.2a1.8 1.8 0 0 0 1.2-3.1 1.8 1.8 0 0 1 1.2-3.1H18A2 2 0 0 0 20 12a8 8 0 0 0-8-8Z"/><path d="M8 10h.1M10 7h.1M7 14h.1"/></svg>',
   pencil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6 4 4M5 19l3.5-.8L18.5 8a2.1 2.1 0 0 0-3-3L5.5 15.2 5 19Z"/></svg>',
+  profile: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.25"/><path d="M5.5 20c.5-4.2 2.7-6.3 6.5-6.3s6 2.1 6.5 6.3"/></svg>',
+  avatar: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="12" cy="9" r="2.4"/><path d="M7 18c.7-2.7 2.3-4 5-4s4.3 1.3 5 4"/></svg>',
   plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="m8 5 11 7-11 7V5Z"/></svg>',
   pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
   rewind: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M11 6 4 12l7 6V6Zm9 0-7 6 7 6V6Z"/></svg>',
   settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.5-1.2.9-1.9-2.1-2.1-1.9.9-1.2-.5-.7-2h-3l-.7 2-1.2.5-1.9-.9-2.1 2.1.9 1.9-.5 1.2-2 .7v3l2 .7.5 1.2-.9 1.9 2.1 2.1 1.9-.9 1.2.5.7 2h3l.7-2 1.2-.5 1.9.9 2.1-2.1-.9-1.9.5-1.2 2-.7Z"/></svg>',
+  site: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M4 9h16M7 7h.1M10 7h.1"/></svg>',
   sparkle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>',
+  typeEffect: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 10.4 5h3.2L19 19M7.2 14h9.6M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5L19 3Z"/></svg>',
+  badge: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 3 1.7 3.5.1.1 3.5 1.7 3-1.7 3-.1 3.5-3.5.1-3 1.7-3-1.7-3.5-.1-.1-3.5-1.7-3 1.7-3 .1-3.5 3.5-.1 3-1.7 3 1.7Z"/><path d="m9.5 12 1.6 1.6 3.5-3.5"/></svg>',
   volume: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 3V7l-4 3H5ZM16 9.5a4 4 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10"/></svg>',
   forward: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="m13 6 7 6-7 6V6ZM4 6l7 6-7 6V6Z"/></svg>',
   tiktok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5v9.2a4 4 0 1 1-3-3.9M14 5c.5 2.2 1.9 3.6 4 4"/></svg>',
@@ -526,7 +533,7 @@ async function wireBadgeAdmin(form, currentUserId) {
   const editorPanel = form.querySelector(".editor-panel");
   if (!nav || !editorPanel) return;
   form.dataset.badgeAdminBound = "true";
-  nav.insertAdjacentHTML("beforeend", `<button class="sidebar-item" data-dashboard-tab="badge-admin" type="button">${icon("sparkle")}<span>Badge admin</span></button>`);
+  nav.insertAdjacentHTML("beforeend", `<button class="sidebar-item" data-dashboard-tab="badge-admin" type="button">${icon("badge")}<span>Badge admin</span></button>`);
   const footer = editorPanel.querySelector(".editor-footer");
   if (footer) footer.insertAdjacentHTML("beforebegin", badgeAdminPanel());
   else editorPanel.insertAdjacentHTML("beforeend", badgeAdminPanel());
@@ -753,14 +760,14 @@ dashboard = () => {
     nav.setAttribute("role", "tablist");
     nav.setAttribute("aria-label", "Panel profilu");
     nav.innerHTML = [
-      workspaceTabButton("identity", "Nazwa użytkownika i bio", "dashboard"),
-      workspaceTabButton("avatar", "Avatar", "dashboard"),
+      workspaceTabButton("identity", "Nazwa użytkownika i bio", "profile"),
+      workspaceTabButton("avatar", "Avatar", "avatar"),
       workspaceTabButton("links", "Linki", "link"),
-      workspaceTabButton("profile-card", "Karta profilu", "dashboard"),
-      workspaceTabButton("name-effect", "Efekty nazwy", "sparkle"),
-      workspaceTabButton("assets", "Twoja strona", "sparkle"),
-      workspaceTabButton("embed-builder", "Kreator embedu", "link"),
-      workspaceTabButton("cursor-effects", "Personalizacja kursora", "sparkle"),
+      workspaceTabButton("profile-card", "Karta profilu", "palette"),
+      workspaceTabButton("name-effect", "Efekty nazwy", "typeEffect"),
+      workspaceTabButton("assets", "Twoja strona", "site"),
+      workspaceTabButton("embed-builder", "Kreator embedu", "embed"),
+      workspaceTabButton("cursor-effects", "Personalizacja kursora", "cursor"),
       workspaceTabButton("discord", "Profil Discord", "discord"),
       workspaceTabButton("account", "Konto", "settings"),
       '<button class="sidebar-item" data-dashboard-tab="profile" type="button" hidden aria-hidden="true" tabindex="-1"></button>',
@@ -1962,7 +1969,9 @@ async function wireDiscordDashboard() {
     if (!currentConnection) return;
     const payload = {};
     accountState.querySelectorAll("[data-discord-setting]").forEach((field) => {
-      payload[field.dataset.discordSetting] = field.type === "checkbox" ? field.checked : field.value;
+      const setting = field.dataset.discordSetting;
+      const value = field.type === "checkbox" ? field.checked : field.value.trim();
+      payload[setting] = setting === "custom_idle_text" && !value ? null : value;
     });
     setStatus("Saving Discord settings...");
     try {
