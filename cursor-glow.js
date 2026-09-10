@@ -48,6 +48,7 @@
       this.effect = "none";
       this.color = "#626262";
       this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      this.previewActive = false;
       const memory = Number(navigator.deviceMemory || 8);
       const cores = Number(navigator.hardwareConcurrency || 8);
       const saveData = Boolean(navigator.connection?.saveData);
@@ -59,7 +60,7 @@
       this.tick = this.tick.bind(this);
       window.addEventListener("resize", this.resize, { passive: true });
       this.reducedMotion.addEventListener?.("change", () => {
-        this.enabled = !this.reducedMotion.matches;
+        this.enabled = this.previewActive || !this.reducedMotion.matches;
         if (!this.enabled) this.clear();
       });
       this.resize();
@@ -81,6 +82,12 @@
       this.effect = effect;
       this.color = FIXED_EFFECT_COLORS[effect] || cleanColor(color) || "#626262";
       if (changed) this.clear();
+    }
+
+    setPreviewActive(active) {
+      this.previewActive = Boolean(active);
+      this.enabled = this.previewActive || !this.reducedMotion.matches;
+      if (!this.enabled) this.clear();
     }
 
     movement(x, y) {
@@ -176,6 +183,19 @@
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.fillText(glyph, 0, 0);
+      } else if (particle.effect === "comet") {
+        const length = particle.size * 3;
+        const gradient = context.createLinearGradient(-length, 0, particle.size, 0);
+        gradient.addColorStop(0, "transparent");
+        gradient.addColorStop(1, particle.color);
+        context.fillStyle = gradient;
+        context.fillRect(-length, -1.5, length + particle.size, 3);
+      } else if (particle.effect === "fire") {
+        context.beginPath();
+        context.moveTo(0, -particle.size * 1.25);
+        context.bezierCurveTo(particle.size, -particle.size * .25, particle.size * .8, particle.size, 0, particle.size * 1.15);
+        context.bezierCurveTo(-particle.size * .8, particle.size, -particle.size, -particle.size * .25, 0, -particle.size * 1.25);
+        context.fill();
       } else if (particle.effect === "snow") {
         context.lineWidth = 1.4;
         for (let index = 0; index < 3; index += 1) {
@@ -191,6 +211,9 @@
         context.fill();
       } else if (particle.effect === "confetti" || particle.effect === "shards") {
         context.fillRect(-particle.size * .35, -particle.size, particle.size * .7, particle.size * 2);
+      } else if (particle.effect === "pixel") {
+        context.shadowBlur = 3;
+        context.fillRect(-particle.size * .55, -particle.size * .55, particle.size * 1.1, particle.size * 1.1);
       } else if (particle.effect === "ripple" || particle.effect === "bubbles" || particle.effect === "crosshair") {
         context.globalAlpha = alpha * .85;
         context.lineWidth = 1.4;
@@ -270,6 +293,7 @@
     let appliedEffect = "";
     let appliedDashboard = null;
     let appliedDashboardPreview = null;
+    let dashboardPreviewActive = false;
 
     const getPublicPage = () => document.querySelector(".public-page");
     const getCursorUrl = () => getPublicPage()?.dataset.customCursor || document.querySelector('#profile-form [name="cursor_url"]')?.value || "";
@@ -284,7 +308,7 @@
       const glowColor = cleanColor(getGlowColor()) || "#626262";
       const cursorEffect = cleanCursorEffect(getCursorEffect());
       const isDashboard = document.body.dataset.route === "/dashboard";
-      const dashboardPreview = isDashboard && Boolean(document.querySelector('[data-tab-panel="cursor-effects"]:hover'));
+      const dashboardPreview = isDashboard && dashboardPreviewActive;
       if (cursorUrl === appliedCursor && glowColor === appliedGlow && cursorEffect === appliedEffect && isDashboard === appliedDashboard && dashboardPreview === appliedDashboardPreview) return;
       const cursorChanged = cursorUrl !== appliedCursor;
       appliedCursor = cursorUrl;
@@ -300,6 +324,7 @@
       glow.style.setProperty("--cursor-glow-rgb", colorRgb(effectColor));
       setEffectClass(glow, cursorEffect);
       setEffectClass(cursor, cursorEffect);
+      studio.setPreviewActive(dashboardPreview);
       studio.configure(cursorEffect, effectColor);
       const enhanced = supportsFinePointer() && (!isDashboard || dashboardPreview) && (Boolean(cursorUrl) || cursorEffect !== "none");
       document.documentElement.classList.toggle("has-custom-cursor", enhanced);
@@ -350,6 +375,7 @@
     document.addEventListener("pointermove", (event) => {
       targetX = event.clientX;
       targetY = event.clientY;
+      dashboardPreviewActive = Boolean(event.target?.closest?.('[data-tab-panel="cursor-effects"]'));
       syncCursor();
       if (!document.documentElement.classList.contains("cursor-enhanced")) return;
       const interactive = Boolean(event.target?.closest?.("a,button,input,textarea,select,[role='button']"));
