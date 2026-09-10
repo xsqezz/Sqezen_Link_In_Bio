@@ -115,6 +115,33 @@ function safeNumber(value, min, max, fallback) { const number = Number(value); r
 function choice(value, list, fallback) { return list.includes(value) ? value : fallback; }
 function bool(value, fallback) { return typeof value === "boolean" ? value : fallback; }
 function hexRgb(value) { const hex = safeColor(value).slice(1); return `${parseInt(hex.slice(0, 2), 16)},${parseInt(hex.slice(2, 4), 16)},${parseInt(hex.slice(4, 6), 16)}`; }
+function hexChannels(value) {
+  const hex = safeColor(value, "#000000").slice(1);
+  return [0, 2, 4].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16));
+}
+function relativeLuminance(channels) {
+  const linear = channels.map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= .04045 ? normalized / 12.92 : ((normalized + .055) / 1.055) ** 2.4;
+  });
+  return .2126 * linear[0] + .7152 * linear[1] + .0722 * linear[2];
+}
+function contrastRatio(first, second) {
+  const light = Math.max(relativeLuminance(first), relativeLuminance(second));
+  const dark = Math.min(relativeLuminance(first), relativeLuminance(second));
+  return (light + .05) / (dark + .05);
+}
+function readableTextColor(preferred, surface, background = surface, opacity = 1) {
+  const foreground = hexChannels(surface);
+  const behind = hexChannels(background);
+  const alpha = safeNumber(opacity, 0, 1, 1);
+  const composite = foreground.map((channel, index) => Math.round(channel * alpha + behind[index] * (1 - alpha)));
+  const requested = hexChannels(preferred);
+  if (contrastRatio(requested, composite) >= 4.5) return safeColor(preferred, "#f5f6fb");
+  const light = "#f5f6fb";
+  const dark = "#111216";
+  return contrastRatio(hexChannels(light), composite) >= contrastRatio(hexChannels(dark), composite) ? light : dark;
+}
 function brandMarkup(className = "brand-wordmark") { return `<img class="${escapeHtml(className)}" src="/sqezen-logo-chrome.png" alt="sqezen">`; }
 const EMBED_TILE_MIN_WIDTH = 120;
 const EMBED_TILE_MIN_HEIGHT = 72;
@@ -152,6 +179,15 @@ function sanitizeStandardEmbedPosition(raw = {}) {
 function sanitizeCustomization(raw = {}) { const value = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}; return { backgroundMediaUrl: safeMediaUrl(value.backgroundMediaUrl), audioUrl: safeMediaUrl(value.audioUrl), audioTitle: String(value.audioTitle || "").trim().slice(0, 80), audioArtist: String(value.audioArtist || "").trim().slice(0, 60), audioLyrics: String(value.audioLyrics || "").trim().slice(0, 12000), cursorUrl: safeMediaUrl(value.cursorUrl), cursorGlowColor: profileAccentColor(themeColor(value.cursorGlowColor)), cursorEffect: choice(value.cursorEffect, CURSOR_EFFECT_VALUES, "none"), location: String(value.location || "").trim().slice(0, 42), profileOpacity: safeNumber(value.profileOpacity, 45, 100, 92), profileBlur: safeNumber(value.profileBlur, 0, 40, 18), cardWidth: safeNumber(value.cardWidth, 360, 680, 520), avatarSize: safeNumber(value.avatarSize, 72, 148, 104), backgroundEffect: choice(value.backgroundEffect, ["none", "noise", "grid", "spotlight"], "none"), usernameEffect: choice(value.usernameEffect, ["none", "gradient", "soft-glow", "outline"], "none"), textColor: migrateColor(value.textColor, "#f5f7fb", "#f5f6fb"), cardColor: migrateColor(value.cardColor, "#171820", "#111116"), buttonColor: profileAccentColor(migrateColor(value.buttonColor, "#ffffff", "#626262")), buttonTextColor: migrateColor(value.buttonTextColor, "#f5f7fb", "#ffffff"), gradientPrimary: migrateColor(value.gradientPrimary, "#151521", "#000000"), gradientSecondary: migrateColor(value.gradientSecondary, "#07070a", "#000000"), useGradient: bool(value.useGradient, false), alignment: choice(value.alignment, ["center", "left"], "center"), spacing: choice(value.spacing, ["compact", "comfortable", "airy"], "comfortable"), buttonStyle: choice(value.buttonStyle, ["glass", "solid", "outline"], "glass"), buttonRadius: safeNumber(value.buttonRadius, 0, 28, 13), fontFamily: choice(value.fontFamily, ["inter", "system", "mono", "serif"], "inter"), showHandle: bool(value.showHandle, true), showBranding: bool(value.showBranding, true) }; }
 const baseSanitizeCustomization = sanitizeCustomization;
 sanitizeCustomization = (raw = {}) => ({ ...baseSanitizeCustomization(raw), cursorUrl: safeCursorUrl(raw?.cursorUrl) });
+const baseSanitizeCustomizationWithCursor = sanitizeCustomization;
+sanitizeCustomization = (raw = {}) => {
+  const config = baseSanitizeCustomizationWithCursor(raw);
+  return {
+    ...config,
+    textColor: readableTextColor(config.textColor, config.cardColor, config.gradientSecondary, config.profileOpacity / 100),
+    buttonTextColor: readableTextColor(config.buttonTextColor, config.buttonColor),
+  };
+};
 const CURSOR_EFFECT_VALUES = ["none", "glow", "ring", "neon", "comet", "trail", "sparkle", "orbit", "bubbles", "fire", "snow", "hearts", "pixel", "crosshair", "spotlight", "ripple", "rainbow", "magnetic", "dust", "glitter", "confetti", "leaves", "petals", "shards", "orbs", "smoke", "magic", "coins", "lightning", "stars"];
 const CURSOR_EFFECT_DEFINITIONS = [
   { id: "none", name: "Minimal", description: "Bez cząsteczek", sample: "minimal" },
