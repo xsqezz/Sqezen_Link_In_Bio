@@ -48,7 +48,7 @@
       this.effect = "none";
       this.color = "#626262";
       this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-      this.previewActive = false;
+      this.effectActive = false;
       const memory = Number(navigator.deviceMemory || 8);
       const cores = Number(navigator.hardwareConcurrency || 8);
       const saveData = Boolean(navigator.connection?.saveData);
@@ -60,7 +60,7 @@
       this.tick = this.tick.bind(this);
       window.addEventListener("resize", this.resize, { passive: true });
       this.reducedMotion.addEventListener?.("change", () => {
-        this.enabled = this.previewActive || !this.reducedMotion.matches;
+        this.enabled = this.effectActive || !this.reducedMotion.matches;
         if (!this.enabled) this.clear();
       });
       this.resize();
@@ -84,9 +84,9 @@
       if (changed) this.clear();
     }
 
-    setPreviewActive(active) {
-      this.previewActive = Boolean(active);
-      this.enabled = this.previewActive || !this.reducedMotion.matches;
+    setEffectActive(active) {
+      this.effectActive = Boolean(active);
+      this.enabled = this.effectActive || !this.reducedMotion.matches;
       if (!this.enabled) this.clear();
     }
 
@@ -324,9 +324,9 @@
       glow.style.setProperty("--cursor-glow-rgb", colorRgb(effectColor));
       setEffectClass(glow, cursorEffect);
       setEffectClass(cursor, cursorEffect);
-      studio.setPreviewActive(dashboardPreview);
       studio.configure(cursorEffect, effectColor);
       const enhanced = supportsFinePointer() && (!isDashboard || dashboardPreview) && (Boolean(cursorUrl) || cursorEffect !== "none");
+      studio.setEffectActive(enhanced);
       document.documentElement.classList.toggle("has-custom-cursor", enhanced);
       document.documentElement.classList.toggle("cursor-enhanced", enhanced);
       document.documentElement.classList.toggle("cursor-particle-mode", enhanced);
