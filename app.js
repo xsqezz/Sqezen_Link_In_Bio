@@ -1875,7 +1875,7 @@ function discordDashboardAccountMarkup(connection, presence) {
   const displayName = value.global_name || value.username || "Discord user";
   const avatar = discordAvatarMarkup(value, "discord-dashboard-avatar", status.className);
   const guildTag = value.primary_guild_tag ? `<span class="discord-guild-tag">${icon("discord")}${escapeHtml(value.primary_guild_tag)}</span>` : "";
-  return `<div class="discord-account-card"><div class="discord-account-head"><div class="discord-dashboard-identity">${avatar}<div><strong>${escapeHtml(displayName)}</strong><small>@${escapeHtml(value.username || value.discord_id)}</small></div></div>${guildTag}</div>${value.show_status ? `<p class="discord-widget-status discord-dashboard-status"><i class="discord-status-dot ${status.className}" data-discord-status-dot></i><span>${escapeHtml(status.label)}</span></p>` : `<p class="discord-dashboard-muted">Presence is hidden from your public profile.</p>`}${discordActivityMarkup(current, value.show_activity)}${discordCustomStatusMarkup(value, current)}<div class="discord-settings-grid"><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_widget"${value.show_widget ? " checked" : ""}><span class="toggle"></span><span><b>Show Discord widget</b><small>Display this card on your public profile.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_status"${value.show_status ? " checked" : ""}><span class="toggle"></span><span><b>Show presence</b><small>Online, idle or do not disturb.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_activity"${value.show_activity ? " checked" : ""}><span class="toggle"></span><span><b>Show activity</b><small>Playing, listening or watching.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_badges"${value.show_badges ? " checked" : ""}><span class="toggle"></span><span><b>Show badges</b><small>Public Discord account badges.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_guild_tag"${value.show_guild_tag ? " checked" : ""}><span class="toggle"></span><span><b>Show guild tag</b><small>Display your primary Discord tag.</small></span></label></div><label class="field-label discord-custom-idle-field">Custom idle text<input type="text" maxlength="80" data-discord-setting="custom_idle_text" value="${escapeHtml(value.custom_idle_text)}" placeholder="e.g. He is a god of his universum"><small>This is a sqezen label. Discord custom status is read-only.</small></label><div class="discord-action-row"><button class="button button-small button-dark" data-discord-refresh type="button">Refresh presence</button><button class="button button-small button-dark" data-discord-disconnect type="button">Disconnect Discord</button></div></div>`;
+  return `<div class="discord-account-card"><div class="discord-account-head"><div class="discord-dashboard-identity">${avatar}<div><strong>${escapeHtml(displayName)}</strong><small>@${escapeHtml(value.username || value.discord_id)}</small></div></div>${guildTag}</div>${value.show_status ? `<p class="discord-widget-status discord-dashboard-status"><i class="discord-status-dot ${status.className}" data-discord-status-dot></i><span>${escapeHtml(status.label)}</span></p>` : `<p class="discord-dashboard-muted">Presence is hidden from your public profile.</p>`}${discordActivityMarkup(current, value.show_activity)}${discordCustomStatusMarkup(value, current)}<div class="discord-settings-grid"><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_widget"${value.show_widget ? " checked" : ""}><span class="toggle"></span><span><b>Show Discord widget</b><small>Display this card on your public profile.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_status"${value.show_status ? " checked" : ""}><span class="toggle"></span><span><b>Show presence</b><small>Online, idle or do not disturb.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_activity"${value.show_activity ? " checked" : ""}><span class="toggle"></span><span><b>Show activity</b><small>Playing, listening or watching.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_badges"${value.show_badges ? " checked" : ""}><span class="toggle"></span><span><b>Show badges</b><small>Public Discord account badges.</small></span></label><label class="toggle-row discord-setting-toggle"><input type="checkbox" data-discord-setting="show_guild_tag"${value.show_guild_tag ? " checked" : ""}><span class="toggle"></span><span><b>Show guild tag</b><small>Display your primary Discord tag.</small></span></label></div><label class="field-label discord-custom-idle-field">Custom idle text<input type="text" maxlength="80" data-discord-setting="custom_idle_text" value="${escapeHtml(value.custom_idle_text)}" placeholder="e.g. He is a god of his universum"><small>This is a sqezen label. Discord custom status is read-only.</small></label><div class="discord-action-row"><button class="button button-small button-dark" data-discord-refresh type="button">Sync Discord profile</button><button class="button button-small button-dark" data-discord-disconnect type="button">Disconnect Discord</button></div></div>`;
 }
 async function wireDiscordDashboard() {
   const panel = document.querySelector('[data-tab-panel="discord"]');
@@ -1969,7 +1969,23 @@ async function wireDiscordDashboard() {
   });
   accountState.addEventListener("click", async (event) => {
     event.stopPropagation();
-    if (event.target.closest("[data-discord-refresh]")) return load();
+    const refreshButton = event.target.closest("[data-discord-refresh]");
+    if (refreshButton) {
+      busy(refreshButton, true, "Opening Discord...");
+      setStatus("Authorize Discord to sync your current profile...");
+      try {
+        const result = await invokeDiscordFunction("authorize");
+        const target = new URL(String(result.url || result.authorize_url || ""));
+        if (target.origin !== "https://discord.com" || target.pathname !== "/oauth2/authorize") throw new Error("Invalid Discord authorization URL");
+        sessionStorage.setItem("sqezen_discord_profile_sync", "true");
+        window.location.assign(target.href);
+      } catch (error) {
+        console.error("Discord profile sync failed", error);
+        busy(refreshButton, false);
+        setStatus(discordFunctionErrorText(error), true);
+      }
+      return;
+    }
     const disconnectButton = event.target.closest("[data-discord-disconnect]");
     if (!disconnectButton || !window.confirm("Disconnect your Discord profile from sqezen?")) return;
     busy(disconnectButton, true, "Disconnecting...");
@@ -1989,9 +2005,11 @@ async function wireDiscordDashboard() {
   const oauthCode = callbackParams.get("code");
   const oauthState = callbackParams.get("state");
   const oauthError = callbackParams.get("error");
+  const profileSyncRequested = sessionStorage.getItem("sqezen_discord_profile_sync") === "true";
   let callbackMessage = "";
   let callbackFailed = false;
   if (callbackState || oauthCode || oauthState || oauthError) {
+    sessionStorage.removeItem("sqezen_discord_profile_sync");
     history.replaceState(null, "", location.pathname || "/dashboard");
     document.querySelector('[data-dashboard-tab="discord"]')?.click();
     if (oauthError) {
@@ -2006,7 +2024,7 @@ async function wireDiscordDashboard() {
         try {
           const result = await invokeDiscordFunction("authorize", { code: oauthCode, state: oauthState });
           render(result);
-          callbackMessage = "Discord connected. Waiting for the first presence update...";
+          callbackMessage = profileSyncRequested ? "Discord profile synced." : "Discord connected. Waiting for the first presence update...";
         } catch (error) {
           console.error("Discord callback failed", error);
           callbackMessage = discordFunctionErrorText(error);
@@ -2015,7 +2033,7 @@ async function wireDiscordDashboard() {
       }
     } else {
       callbackMessage = callbackState === "connected"
-        ? "Discord connected. Waiting for the first presence update..."
+        ? profileSyncRequested ? "Discord profile synced." : "Discord connected. Waiting for the first presence update..."
         : "Discord connection failed. Please try again.";
       callbackFailed = callbackState !== "connected";
     }
