@@ -73,9 +73,6 @@
 .site-cursor.has-image.is-crosshair{border:1px solid color-mix(in srgb,var(--cursor-glow,#626262) 75%,transparent)}
 .site-cursor.has-image.is-crosshair:before{width:58px;height:1px}.site-cursor.has-image.is-crosshair:after{width:1px;height:58px}
 .site-cursor.has-image.is-neon,.site-cursor.has-image.is-rainbow{animation:cursor-neon-spin 2s linear infinite}
-html.cursor-particle-mode .site-cursor.particle-anchor:not(.has-image){width:7px;height:7px;background:currentColor;border:0;border-radius:50%;clip-path:none;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 18%,transparent),0 0 8px 1px currentColor,0 0 18px 5px currentColor;animation:none}
-html.cursor-particle-mode .site-cursor.particle-anchor:not(.has-image)::before,html.cursor-particle-mode .site-cursor.particle-anchor:not(.has-image)::after{display:none;content:none}
-html.cursor-particle-mode .site-cursor.particle-anchor:not(.has-image).is-confetti{background:conic-gradient(#57d9ff,#ff7096,#ffe574,#8dff9b,#a78bfa,#57d9ff);box-shadow:0 0 0 3px rgba(87,217,255,.2),0 0 8px 1px #57d9ff,0 0 18px 5px rgba(167,139,250,.65)}
 html.cursor-enhanced,html.cursor-enhanced *{cursor:none!important}
 @supports not (color:color-mix(in srgb,black,white)){.cursor-glow{background:radial-gradient(circle,var(--cursor-glow,var(--profile-accent,var(--accent,#626262))) 0%,rgba(var(--cursor-glow-rgb,98,98,98),.72) 17%,transparent 72%)}.site-cursor{box-shadow:0 0 0 3px rgba(var(--cursor-glow-rgb,98,98,98),.18),0 0 8px 1px var(--cursor-glow,var(--profile-accent,var(--accent,#626262))),0 0 22px 6px var(--cursor-glow,var(--profile-accent,var(--accent,#626262)))}.site-cursor.is-none{box-shadow:0 0 0 2px rgba(var(--cursor-glow-rgb,98,98,98),.26),0 0 8px 1px var(--cursor-glow,var(--profile-accent,var(--accent,#626262)))}}
 @keyframes cursor-ring-pulse{0%,100%{opacity:.65}50%{opacity:1}}
