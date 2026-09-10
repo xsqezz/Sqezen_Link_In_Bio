@@ -269,6 +269,7 @@
     let appliedGlow = "";
     let appliedEffect = "";
     let appliedDashboard = null;
+    let appliedDashboardPreview = null;
 
     const getPublicPage = () => document.querySelector(".public-page");
     const getCursorUrl = () => getPublicPage()?.dataset.customCursor || document.querySelector('#profile-form [name="cursor_url"]')?.value || "";
@@ -283,12 +284,14 @@
       const glowColor = cleanColor(getGlowColor()) || "#626262";
       const cursorEffect = cleanCursorEffect(getCursorEffect());
       const isDashboard = document.body.dataset.route === "/dashboard";
-      if (cursorUrl === appliedCursor && glowColor === appliedGlow && cursorEffect === appliedEffect && isDashboard === appliedDashboard) return;
+      const dashboardPreview = isDashboard && Boolean(document.querySelector('[data-tab-panel="cursor-effects"]:hover'));
+      if (cursorUrl === appliedCursor && glowColor === appliedGlow && cursorEffect === appliedEffect && isDashboard === appliedDashboard && dashboardPreview === appliedDashboardPreview) return;
       const cursorChanged = cursorUrl !== appliedCursor;
       appliedCursor = cursorUrl;
       appliedGlow = glowColor;
       appliedEffect = cursorEffect;
       appliedDashboard = isDashboard;
+      appliedDashboardPreview = dashboardPreview;
       const effectColor = FIXED_EFFECT_COLORS[cursorEffect] || (cursorEffect === "confetti" ? CONFETTI_COLORS[0] : glowColor);
       document.documentElement.style.setProperty("--cursor-glow", glowColor);
       document.documentElement.style.setProperty("--cursor-glow-rgb", colorRgb(glowColor));
@@ -298,7 +301,7 @@
       setEffectClass(glow, cursorEffect);
       setEffectClass(cursor, cursorEffect);
       studio.configure(cursorEffect, effectColor);
-      const enhanced = supportsFinePointer() && !isDashboard && (Boolean(cursorUrl) || cursorEffect !== "none");
+      const enhanced = supportsFinePointer() && (!isDashboard || dashboardPreview) && (Boolean(cursorUrl) || cursorEffect !== "none");
       document.documentElement.classList.toggle("has-custom-cursor", enhanced);
       document.documentElement.classList.toggle("cursor-enhanced", enhanced);
       document.documentElement.classList.toggle("cursor-particle-mode", enhanced);
