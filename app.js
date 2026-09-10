@@ -845,21 +845,6 @@ dashboard = () => {
 
   return template.innerHTML;
 };
-const baseDashboardWithWorkspacePreview = dashboard;
-dashboard = () => {
-  const markup = baseDashboardWithWorkspacePreview();
-  if (typeof document === "undefined") return markup;
-  const template = document.createElement("template");
-  template.innerHTML = markup;
-  const form = template.content.querySelector("#profile-form");
-  if (!form || form.querySelector(".dashboard-studio-preview")) return markup;
-  const preview = document.createElement("aside");
-  preview.className = "preview-column dashboard-studio-preview";
-  preview.setAttribute("aria-label", "Live profile preview");
-  preview.innerHTML = `<div class="preview-sticky"><div class="preview-heading"><div><span class="panel-index">LIVE PREVIEW</span><h2>Tak widzą Cię inni</h2></div><span class="live-pill"><i></i> na żywo</span></div><div id="dashboard-preview" class="dashboard-preview"></div><p class="preview-footnote">${icon("check")} Zmiany są widoczne od razu.</p></div>`;
-  form.append(preview);
-  return template.innerHTML;
-};
 const baseRenderPreview = renderPreview;
 renderPreview = function () {
   const result = baseRenderPreview();

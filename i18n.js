@@ -101,7 +101,6 @@
     "Tak widzą Cię inni": "How others see you",
     "na żywo": "live",
     "Zmiany są widoczne tutaj od razu. Opublikują się po zapisaniu.": "Changes appear here instantly. They go live after saving.",
-    "Zmiany są widoczne od razu.": "Changes appear here instantly.",
     "public profile": "public profile",
     "made with": "made with",
     "Ten profil nie ma jeszcze linków.": "This profile has no links yet.",
