@@ -366,7 +366,7 @@ function sanitizeDiscordConnection(raw = {}) {
   const discordId = String(value.discord_id || "").trim();
   const username = String(value.username || "").trim().slice(0, 32);
   const avatarValue = String(value.avatar || value.avatar_url || value.discord_avatar_url || "").trim();
-  const avatarUrl = /^https:\/\/cdn\.discordapp\.com\/avatars\/\d{16,22}\/[a-zA-Z0-9_]+\.(?:png|jpe?g|gif|webp)(?:\?[^"'<>]*)?$/i.test(avatarValue) ? avatarValue : "";
+  const avatarUrl = /^https:\/\/cdn\.discordapp\.com\/(?:avatars\/\d{16,22}|guilds\/\d{16,22}\/users\/\d{16,22}\/avatars)\/[a-zA-Z0-9_]+\.(?:png|jpe?g|gif|webp)(?:\?[^"'<>]*)?$/i.test(avatarValue) ? avatarValue : "";
   return {
     profile_id: String(value.profile_id || "").trim(),
     discord_id: /^\d{16,22}$/.test(discordId) ? discordId : "",
