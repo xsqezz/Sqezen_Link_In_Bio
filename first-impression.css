@@ -8,10 +8,10 @@
   --first-text: #f4f5f1;
   --first-muted: #a4a8b2;
   --first-lime: #ffffff;
-  --first-violet: #9b89ff;
+  --first-violet: #c4c7cf;
   color: var(--first-text);
   background-color: var(--first-bg);
-  background-image: radial-gradient(ellipse at 72% 17%, rgba(155, 137, 255, .09), transparent 31%), radial-gradient(ellipse at 14% 54%, rgba(255, 255, 255, .055), transparent 30%);
+  background-image: radial-gradient(ellipse at 72% 17%, rgba(255, 255, 255, .09), transparent 31%), radial-gradient(ellipse at 14% 54%, rgba(255, 255, 255, .055), transparent 30%);
   font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -258,8 +258,8 @@
   height: 25px;
   place-items: center;
   color: var(--first-violet);
-  background: rgba(155, 137, 255, .1);
-  border: 1px solid rgba(155, 137, 255, .2);
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .2);
   border-radius: 8px;
 }
 
@@ -275,7 +275,7 @@
   position: absolute;
   inset: 8% 5%;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(155, 137, 255, .19), rgba(255, 255, 255, .1) 39%, transparent 72%);
+  background: radial-gradient(ellipse, rgba(255, 255, 255, .19), rgba(255, 255, 255, .1) 39%, transparent 72%);
   filter: blur(24px);
 }
 
@@ -289,7 +289,7 @@
   background: linear-gradient(145deg, rgba(25, 28, 35, .98), rgba(14, 16, 21, .98));
   border: 1px solid rgba(255, 255, 255, .15);
   border-radius: 25px;
-  box-shadow: 0 38px 110px rgba(0, 0, 0, .48), 0 0 70px rgba(155, 137, 255, .08);
+  box-shadow: 0 38px 110px rgba(0, 0, 0, .48), 0 0 70px rgba(255, 255, 255, .08);
   transform: rotate(-2.2deg);
   animation: firstImpressionRise .7s cubic-bezier(.2,.8,.2,1) both;
 }
@@ -320,11 +320,11 @@
 }
 
 .landing-reference-browser i:first-child {
-  background: #ff786e;
+  background: #8c919c;
 }
 
 .landing-reference-browser i:nth-child(2) {
-  background: #f1c85c;
+  background: #b8bdc7;
 }
 
 .landing-reference-browser i:nth-child(3) {
@@ -510,9 +510,9 @@
 }
 
 .landing-reference-sparkle {
-  color: #b5aaff;
-  background: rgba(155, 137, 255, .12);
-  border-color: rgba(155, 137, 255, .19);
+  color: #c4c7cf;
+  background: rgba(255, 255, 255, .12);
+  border-color: rgba(255, 255, 255, .19);
 }
 
 .landing-reference-float b,
@@ -612,15 +612,15 @@
 }
 
 .landing-reference-feature-icon-style {
-  color: #b3a8ff;
-  background: rgba(155, 137, 255, .11);
-  border-color: rgba(155, 137, 255, .13);
+  color: #c4c7cf;
+  background: rgba(255, 255, 255, .11);
+  border-color: rgba(255, 255, 255, .13);
 }
 
 .landing-reference-feature-icon-share {
-  color: #8bd6dd;
-  background: rgba(139, 214, 221, .1);
-  border-color: rgba(139, 214, 221, .13);
+  color: #c4c7cf;
+  background: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .13);
 }
 
 .landing-reference-feature-grid h3 {
@@ -874,7 +874,7 @@
   background: linear-gradient(150deg, rgba(25, 28, 35, .97), rgba(16, 18, 23, .98));
   border: 1px solid rgba(255, 255, 255, .115);
   border-radius: 20px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, .28), 0 0 55px rgba(155, 137, 255, .055);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .28), 0 0 55px rgba(255, 255, 255, .055);
   animation: firstImpressionRise .5s ease both;
 }
 
