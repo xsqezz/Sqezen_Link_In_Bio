@@ -296,8 +296,6 @@
     "Nowy": "A fresh",
     "początek.": "start.",
     "Ustaw nowe hasło": "Choose a new password",
-    "ODZYSKIWANIE": "RECOVER",
-    "ODZYSKIWANIE HASŁA": "PASSWORD RECOVERY",
     "Sprawdź skrzynkę po 8-cyfrowy kod i dokończ tworzenie profilu.": "Check your inbox for the 8-digit code and you’ll be ready to go.",
     "Zbierz linki, profile społecznościowe i osobowość na jednej stronie, którą dopasujesz do siebie.": "Bring your links, socials and personality together in one profile you can make your own.",
     "Wróć do edycji profilu i dalej dopracowuj stronę po swojemu.": "Pick up where you left off and keep shaping a page that feels like you.",
@@ -331,7 +329,7 @@
     "Sprawdzanie kodu…": "Checking your code…",
     "Sprawdzanie…": "Checking…"
   }));
-  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Jeśli konto istnieje, wysłaliśmy kod na ", "If the account exists, we sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["Nie udało się", "Could not"], [" — gotowy do użycia.", " — ready to use."]];
+  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Jeśli konto istnieje, wysłaliśmy kod na ", "If the account exists, we sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["ODZYSKIWANIE HASŁA", "PASSWORD RECOVERY"], ["ODZYSKIWANIE", "RECOVER"], ["Nie udało się", "Could not"], [" — gotowy do użycia.", " — ready to use."]];
   const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Nazwa utworu", "Track name"], ["Nazwa wykonawcy", "Artist name"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"], ["Twoje hasło", "Your password"], ["minimum 6 znaków", "minimum 6 characters"], ["ty@example.com", "you@example.com"], ["Co najmniej 6 znaków", "At least 6 characters"], ["Wpisz ponownie nowe hasło", "Enter your new password again"]]);
   const dictionaries = Object.freeze({
     en: Object.freeze({
