@@ -11,8 +11,13 @@
   --first-violet: #c4c7cf;
   color: var(--first-text);
   background-color: var(--first-bg);
-  background-image: radial-gradient(ellipse at 72% 17%, rgba(255, 255, 255, .09), transparent 31%), radial-gradient(ellipse at 14% 54%, rgba(255, 255, 255, .055), transparent 30%);
+  background-image: none;
   font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+body:has(.landing-reference-page),
+body:has(.auth-reference-page) {
+  background: #090a0d;
 }
 
 .landing-reference-page {
@@ -108,9 +113,9 @@
   color: #151515 !important;
   background: var(--first-lime) !important;
   border: 1px solid var(--first-lime) !important;
-  box-shadow: 0 8px 28px rgba(255, 255, 255, .13);
   font-weight: 800;
-  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  box-shadow: none;
+  transition: transform .2s ease, background .2s ease;
 }
 
 .landing-reference-page .button-primary:hover,
@@ -118,7 +123,7 @@
   color: #111111 !important;
   background: #ffffff !important;
   border-color: #ffffff !important;
-  box-shadow: 0 12px 34px rgba(255, 255, 255, .2);
+  box-shadow: none;
   transform: translateY(-2px);
 }
 
@@ -168,7 +173,6 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--first-lime);
-  box-shadow: 0 0 14px rgba(255, 255, 255, .7);
 }
 
 .landing-reference-copy h1,
@@ -272,11 +276,7 @@
 }
 
 .landing-reference-stage-glow {
-  position: absolute;
-  inset: 8% 5%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255, 255, 255, .19), rgba(255, 255, 255, .1) 39%, transparent 72%);
-  filter: blur(24px);
+  display: none;
 }
 
 .landing-reference-profile {
@@ -289,7 +289,7 @@
   background: linear-gradient(145deg, rgba(25, 28, 35, .98), rgba(14, 16, 21, .98));
   border: 1px solid rgba(255, 255, 255, .15);
   border-radius: 25px;
-  box-shadow: 0 38px 110px rgba(0, 0, 0, .48), 0 0 70px rgba(255, 255, 255, .08);
+  box-shadow: 0 38px 110px rgba(0, 0, 0, .48);
   transform: rotate(-2.2deg);
   animation: firstImpressionRise .7s cubic-bezier(.2,.8,.2,1) both;
 }
@@ -359,7 +359,7 @@
   background: linear-gradient(145deg, #ffffff, #d9dce2);
   border: 3px solid rgba(255, 255, 255, .18);
   border-radius: 19px;
-  box-shadow: 0 8px 25px rgba(255, 255, 255, .15);
+  box-shadow: none;
   font-size: 1.6rem;
   font-weight: 850;
 }
@@ -383,7 +383,6 @@
   height: 6px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, .7);
 }
 
 .landing-reference-handle {
@@ -815,7 +814,6 @@
   height: 7px;
   border-radius: 50%;
   background: var(--first-lime);
-  box-shadow: 0 0 14px rgba(255, 255, 255, .7);
 }
 
 .auth-reference-pitch h1 {
@@ -874,7 +872,7 @@
   background: linear-gradient(150deg, rgba(25, 28, 35, .97), rgba(16, 18, 23, .98));
   border: 1px solid rgba(255, 255, 255, .115);
   border-radius: 20px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, .28), 0 0 55px rgba(255, 255, 255, .055);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .28);
   animation: firstImpressionRise .5s ease both;
 }
 
@@ -932,13 +930,13 @@
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 10px;
   font-size: .83rem;
-  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+  transition: border-color .18s ease, background .18s ease;
 }
 
 .auth-reference-card .field-label input:focus {
   background: rgba(5, 6, 9, .68);
   border-color: rgba(255, 255, 255, .65);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, .1);
+  box-shadow: none;
   outline: none;
 }
 
