@@ -3045,7 +3045,7 @@ render = async function () {
   return baseRenderWithPublicShell();
 };
 const baseRender = render;
-render = async function () { const path = currentPath(); if (!["/login", "/register", "/register/code"].includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; document.title = `${path === "/login" ? "Sign in" : path === "/register" ? "Create an account" : "Confirm your email"} — sqezen`; const app = document.querySelector("#app"); const kind = path === "/register/code" ? "code" : path.slice(1); app.innerHTML = typeof window.auth === "function" ? window.auth(kind) : auth(kind); await wireAuth(); };
+render = async function () { const path = currentPath(); const authRoutes = ["/login", "/register", "/register/code", "/forgot-password", "/forgot-password/code"]; if (!authRoutes.includes(path)) return baseRender(); if (state.resendTimer) { clearInterval(state.resendTimer); state.resendTimer = null; } document.body.dataset.route = path; const titles = { "/login": "Sign in", "/register": "Create an account", "/register/code": "Confirm your email", "/forgot-password": "Reset your password", "/forgot-password/code": "Choose a new password" }; document.title = `${titles[path]} — sqezen`; const app = document.querySelector("#app"); const kinds = { "/login": "login", "/register": "register", "/register/code": "code", "/forgot-password": "forgot", "/forgot-password/code": "reset-code" }; app.innerHTML = typeof window.auth === "function" ? window.auth(kinds[path]) : auth(kinds[path]); await wireAuth(); };
 const baseRenderWithUiServices = render;
 render = async function () {
   const result = await baseRenderWithUiServices();
@@ -3071,8 +3071,99 @@ document.addEventListener("input", (event) => {
   const progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
   range.style.setProperty("--range-progress", `${Math.min(100, Math.max(0, progress))}%`);
 }, { passive: true });
+async function wirePasswordRecovery() {
+  const forgotForm = document.querySelector("#forgot-password-form");
+  if (forgotForm) forgotForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submit = forgotForm.querySelector("button[type=submit]");
+    const email = String(new FormData(forgotForm).get("email") || "").trim().toLowerCase();
+    if (!email) return feedback("Start by entering your email address.", true);
+    feedback("Sending a reset code…");
+    busy(submit, true, "Sending…");
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+    busy(submit, false);
+    if (error) return feedback(errorText(error), true);
+    sessionStorage.setItem("sqezen_reset_email", email);
+    navigate("/forgot-password/code");
+  });
+
+  const resetForm = document.querySelector("#reset-password-form");
+  const savedEmail = sessionStorage.getItem("sqezen_reset_email");
+  if (resetForm) {
+    const intro = resetForm.closest(".auth-card")?.querySelector(".form-intro");
+    const emailInput = resetForm.elements.email;
+    if (emailInput && savedEmail) emailInput.value = savedEmail;
+    if (intro && savedEmail) intro.textContent = `If the account exists, we sent a code to ${savedEmail}.`;
+    const tokenInput = resetForm.elements.token;
+    tokenInput?.addEventListener("input", () => {
+      tokenInput.value = tokenInput.value.replace(/\D/g, "").slice(0, 8);
+    });
+    resetForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const values = new FormData(resetForm);
+      const email = String(values.get("email") || "").trim().toLowerCase();
+      const token = String(values.get("token") || "");
+      const password = String(values.get("password") || "");
+      const confirmation = String(values.get("confirm_password") || "");
+      if (!email) return feedback("Start by entering your email address.", true);
+      if (!/^\d{8}$/.test(token)) return feedback("Enter the 8-digit code from your email.", true);
+      if (password !== confirmation) return feedback("The passwords do not match.", true);
+      const submit = resetForm.querySelector("button[type=submit]");
+      feedback("Checking your code…");
+      busy(submit, true, "Checking…");
+      const { error: verifyError } = await supabaseClient.auth.verifyOtp({ email, token, type: "recovery" });
+      if (verifyError) {
+        busy(submit, false);
+        return feedback(errorText(verifyError), true);
+      }
+      sessionStorage.setItem("sqezen_reset_email", email);
+      const { error: updateError } = await supabaseClient.auth.updateUser({ password });
+      busy(submit, false);
+      if (updateError) return feedback(errorText(updateError), true);
+      sessionStorage.removeItem("sqezen_reset_email");
+      feedback("Password updated. Opening your workspace…");
+      navigate("/dashboard");
+    });
+  }
+
+  const resend = document.querySelector("#resend-reset-code");
+  if (resend) resend.addEventListener("click", async () => {
+    const email = String(resetForm?.elements.email?.value || savedEmail || "").trim().toLowerCase();
+    if (!email) {
+      feedback("Start by entering your email address.", true);
+      return navigate("/forgot-password");
+    }
+    resend.disabled = true;
+    feedback("Sending a reset code…");
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+    if (error) {
+      resend.disabled = false;
+      return feedback(errorText(error), true);
+    }
+    sessionStorage.setItem("sqezen_reset_email", email);
+    feedback("If an account exists, a reset code has been sent. Check your inbox and spam folder.");
+    let seconds = 30;
+    resend.textContent = `Send again in ${seconds}s`;
+    state.resendTimer = setInterval(() => {
+      seconds -= 1;
+      if (seconds <= 0) {
+        clearInterval(state.resendTimer);
+        state.resendTimer = null;
+        resend.disabled = false;
+        resend.textContent = "Send a new code";
+      } else resend.textContent = `Send again in ${seconds}s`;
+    }, 1000);
+  });
+}
+
+const baseWireAuthWithRecovery = wireAuth;
+wireAuth = async function () {
+  await baseWireAuthWithRecovery();
+  await wirePasswordRecovery();
+};
+
 window.rerenderAuth = () => {
   const path = currentPath();
-  return ["/login", "/register", "/register/code"].includes(path) ? render() : Promise.resolve();
+  return ["/login", "/register", "/register/code", "/forgot-password", "/forgot-password/code"].includes(path) ? render() : Promise.resolve();
 };
 addEventListener("popstate", render); render();

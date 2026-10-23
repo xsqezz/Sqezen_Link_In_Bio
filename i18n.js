@@ -291,15 +291,46 @@
     "Twoje zasady.": "Your rules.",
     "Jeszcze jeden": "One last",
     "krok.": "step.",
+    "Wracamy do": "Let’s get",
+    "siebie.": "you back.",
+    "Nowy": "A fresh",
+    "początek.": "start.",
+    "Ustaw nowe hasło": "Choose a new password",
     "Sprawdź skrzynkę po 8-cyfrowy kod i dokończ tworzenie profilu.": "Check your inbox for the 8-digit code and you’ll be ready to go.",
     "Zbierz linki, profile społecznościowe i osobowość na jednej stronie, którą dopasujesz do siebie.": "Bring your links, socials and personality together in one profile you can make your own.",
     "Wróć do edycji profilu i dalej dopracowuj stronę po swojemu.": "Pick up where you left off and keep shaping a page that feels like you.",
     "Profil dopasowany do Ciebie": "A profile that feels like you",
     "Jeden prosty link do udostępnienia": "One simple link to share",
-    "Linki, styl i osobowość w jednym miejscu": "Links, style and personality together"
+    "Linki, styl i osobowość w jednym miejscu": "Links, style and personality together",
+    "Nie pamiętasz hasła?": "Forgot password?",
+    "Zacznij od adresu e-mail, a wyślemy Ci kod do zresetowania hasła.": "Enter the email address on your account and we’ll send you a reset code.",
+    "Wyślemy 8-cyfrowy kod na ten adres, jeśli jest przypisany do konta.": "We’ll email you an 8-digit code if there’s an account with that address.",
+    "Zresetuj hasło": "Reset your password",
+    "Wyślij kod resetujący": "Send reset code",
+    "Jeśli masz konto, wyślemy kod na Twoją skrzynkę.": "If you have an account, we’ll send a code to your inbox.",
+    "Wpisz kod z e-maila i ustaw nowe hasło.": "Enter the code from your email and choose a new password.",
+    "Wpisz 8-cyfrowy kod resetujący i nowe hasło.": "Enter the 8-digit reset code and your new password.",
+    "Kod resetujący": "Reset code",
+    "Nowe hasło": "New password",
+    "Potwierdź nowe hasło": "Confirm new password",
+    "Wpisz ponownie nowe hasło": "Enter your new password again",
+    "Zmień hasło": "Update password",
+    "Wyślij nowy kod": "Send a new code",
+    "Zmień adres e-mail": "Change email address",
+    "Wróć do logowania": "Back to sign in",
+    "Jeśli konto istnieje, kod resetujący został wysłany. Sprawdź skrzynkę i folder Spam.": "If an account exists, a reset code has been sent. Check your inbox and spam folder.",
+    "Podaj adres e-mail, aby kontynuować.": "Start by entering your email address.",
+    "Podaj 8-cyfrowy kod z wiadomości e-mail.": "Enter the 8-digit code from your email.",
+    "Hasła nie są takie same.": "The passwords do not match.",
+    "Hasło zmienione. Otwieramy Twój panel…": "Password updated. Opening your workspace…",
+    "Użyj najnowszego kodu. Sprawdź też folder Spam.": "Use the latest code. Check your spam folder too.",
+    "Wysyłanie kodu resetującego…": "Sending a reset code…",
+    "Wysyłanie…": "Sending…",
+    "Sprawdzanie kodu…": "Checking your code…",
+    "Sprawdzanie…": "Checking…"
   }));
-  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["Nie udało się", "Could not"], [" — gotowy do użycia.", " — ready to use."]];
-  const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Nazwa utworu", "Track name"], ["Nazwa wykonawcy", "Artist name"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"], ["Twoje hasło", "Your password"], ["minimum 6 znaków", "minimum 6 characters"], ["ty@example.com", "you@example.com"]]);
+  const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Jeśli konto istnieje, wysłaliśmy kod na ", "If the account exists, we sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["PASSWORD RECOVERY", "ODZYSKIWANIE HASŁA"], ["RECOVER", "ODZYSKIWANIE"], ["Nie udało się", "Could not"], [" — gotowy do użycia.", " — ready to use."]];
+  const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Nazwa utworu", "Track name"], ["Nazwa wykonawcy", "Artist name"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"], ["Twoje hasło", "Your password"], ["minimum 6 znaków", "minimum 6 characters"], ["ty@example.com", "you@example.com"], ["Co najmniej 6 znaków", "At least 6 characters"], ["Wpisz ponownie nowe hasło", "Enter your new password again"]]);
   const dictionaries = Object.freeze({
     en: Object.freeze({
       "nav.profile": "Profile",
@@ -372,7 +403,7 @@
   };
 
   const ensureLocaleControl = () => {
-    const allowed = new Set(["/", "/login", "/register", "/register/code", "/dashboard"]);
+    const allowed = new Set(["/", "/login", "/register", "/register/code", "/forgot-password", "/forgot-password/code", "/dashboard"]);
     const route = document.body?.dataset.route || location.pathname.replace(/\/+$/, "") || "/";
     let control = document.querySelector("[data-locale-toggle]");
     if (!allowed.has(route)) {
@@ -388,7 +419,7 @@
     }
     const inlineHost = route === "/dashboard"
       ? document.querySelector(".dashboard-topbar-actions")
-      : route.startsWith("/login") || route.startsWith("/register")
+      : route.startsWith("/login") || route.startsWith("/register") || route.startsWith("/forgot-password")
         ? document.querySelector(".auth-reference-header")
         : route === "/"
           ? document.querySelector(".landing-reference-nav")
@@ -454,8 +485,8 @@
     document.documentElement.lang = locale;
     const route = document.body?.dataset.route || location.pathname.replace(/\/+$/, "") || "/";
     const routeTitles = {
-      en: { "/": "sqezen — your space online", "/login": "Sign in — sqezen", "/register": "Create an account — sqezen", "/register/code": "Confirm your email — sqezen", "/dashboard": "Workspace — sqezen" },
-      pl: { "/": "sqezen — twoja przestrzeń online", "/login": "Logowanie — sqezen", "/register": "Utwórz konto — sqezen", "/register/code": "Potwierdź e-mail — sqezen", "/dashboard": "Panel — sqezen" }
+      en: { "/": "sqezen — your space online", "/login": "Sign in — sqezen", "/register": "Create an account — sqezen", "/register/code": "Confirm your email — sqezen", "/forgot-password": "Reset your password — sqezen", "/forgot-password/code": "Choose a new password — sqezen", "/dashboard": "Workspace — sqezen" },
+      pl: { "/": "sqezen — twoja przestrzeń online", "/login": "Logowanie — sqezen", "/register": "Utwórz konto — sqezen", "/register/code": "Potwierdź e-mail — sqezen", "/forgot-password": "Resetowanie hasła — sqezen", "/forgot-password/code": "Ustaw nowe hasło — sqezen", "/dashboard": "Panel — sqezen" }
     };
     const pageTitle = routeTitles[locale][route];
     if (pageTitle && document.title !== pageTitle) document.title = pageTitle;
