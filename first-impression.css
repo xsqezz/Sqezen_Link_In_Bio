@@ -7,7 +7,7 @@
   --first-line: rgba(255, 255, 255, .09);
   --first-text: #f4f5f1;
   --first-muted: #a4a8b2;
-  --first-lime: #c9f36a;
+  --first-lime: #ffffff;
   --first-violet: #9b89ff;
   color: var(--first-text);
   background-color: var(--first-bg);
@@ -87,8 +87,8 @@
 .landing-reference-nav .locale-toggle:hover,
 .landing-reference-nav .locale-toggle:focus-visible {
   color: var(--first-lime);
-  background: rgba(201, 243, 106, .075);
-  border-color: rgba(201, 243, 106, .32);
+  background: rgba(255, 255, 255, .075);
+  border-color: rgba(255, 255, 255, .32);
 }
 
 .landing-reference-nav-actions {
@@ -108,7 +108,7 @@
   color: #15190d !important;
   background: var(--first-lime) !important;
   border: 1px solid var(--first-lime) !important;
-  box-shadow: 0 8px 28px rgba(201, 243, 106, .13);
+  box-shadow: 0 8px 28px rgba(255, 255, 255, .13);
   font-weight: 800;
   transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
@@ -116,9 +116,9 @@
 .landing-reference-page .button-primary:hover,
 .auth-reference-page .button-primary:hover {
   color: #11150b !important;
-  background: #d7ff83 !important;
-  border-color: #d7ff83 !important;
-  box-shadow: 0 12px 34px rgba(201, 243, 106, .2);
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 12px 34px rgba(255, 255, 255, .2);
   transform: translateY(-2px);
 }
 
@@ -168,7 +168,7 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--first-lime);
-  box-shadow: 0 0 14px rgba(201, 243, 106, .7);
+  box-shadow: 0 0 14px rgba(255, 255, 255, .7);
 }
 
 .landing-reference-copy h1,
@@ -224,7 +224,7 @@
 .auth-reference-page .button-ghost:hover {
   color: var(--first-lime);
   background: rgba(255, 255, 255, .04);
-  border-color: rgba(201, 243, 106, .45);
+  border-color: rgba(255, 255, 255, .45);
 }
 
 .landing-reference-text-link {
@@ -369,9 +369,9 @@
   align-items: center;
   gap: 7px;
   padding: 8px 10px;
-  color: #c6f288;
-  background: rgba(157, 226, 94, .09);
-  border: 1px solid rgba(157, 226, 94, .16);
+  color: #ffffff;
+  background: rgba(255, 255, 255, .09);
+  border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 100px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: .51rem;
@@ -436,7 +436,7 @@
   height: 27px;
   place-items: center;
   color: var(--first-lime);
-  background: rgba(201, 243, 106, .1);
+  background: rgba(255, 255, 255, .1);
   border-radius: 8px;
   font-size: 1rem;
 }
@@ -502,9 +502,9 @@
   width: 33px;
   height: 33px;
   place-items: center;
-  color: #c9f36a;
-  background: rgba(201, 243, 106, .11);
-  border: 1px solid rgba(201, 243, 106, .18);
+  color: #ffffff;
+  background: rgba(255, 255, 255, .11);
+  border: 1px solid rgba(255, 255, 255, .18);
   border-radius: 10px;
   font-size: 1rem;
 }
@@ -584,7 +584,7 @@
 
 .landing-reference-feature-grid article:hover {
   background: linear-gradient(145deg, rgba(255, 255, 255, .065), rgba(255, 255, 255, .024));
-  border-color: rgba(201, 243, 106, .25);
+  border-color: rgba(255, 255, 255, .25);
   transform: translateY(-4px);
 }
 
@@ -604,8 +604,8 @@
   place-items: center;
   margin-bottom: 31px;
   color: var(--first-lime);
-  background: rgba(201, 243, 106, .1);
-  border: 1px solid rgba(201, 243, 106, .12);
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 13px;
   font-size: 1.2rem;
   font-weight: 600;
@@ -762,7 +762,7 @@
 .auth-reference-header .locale-toggle:hover,
 .auth-reference-header .locale-toggle:focus-visible {
   color: var(--first-lime);
-  border-color: rgba(201, 243, 106, .32);
+  border-color: rgba(255, 255, 255, .32);
 }
 
 .auth-reference-brand img {
@@ -815,7 +815,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--first-lime);
-  box-shadow: 0 0 14px rgba(201, 243, 106, .7);
+  box-shadow: 0 0 14px rgba(255, 255, 255, .7);
 }
 
 .auth-reference-pitch h1 {
@@ -861,8 +861,8 @@
   height: 20px;
   place-items: center;
   color: var(--first-lime);
-  background: rgba(201, 243, 106, .1);
-  border: 1px solid rgba(201, 243, 106, .18);
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .18);
   border-radius: 7px;
   font-size: .67rem;
   font-style: normal;
@@ -886,8 +886,8 @@
 .auth-reference-step {
   padding: 7px 10px;
   color: var(--first-lime);
-  background: rgba(201, 243, 106, .075);
-  border: 1px solid rgba(201, 243, 106, .12);
+  background: rgba(255, 255, 255, .075);
+  border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 7px;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: .62rem;
@@ -937,8 +937,8 @@
 
 .auth-reference-card .field-label input:focus {
   background: rgba(5, 6, 9, .68);
-  border-color: rgba(201, 243, 106, .65);
-  box-shadow: 0 0 0 3px rgba(201, 243, 106, .1);
+  border-color: rgba(255, 255, 255, .65);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .1);
   outline: none;
 }
 
