@@ -1,9 +1,9 @@
 /* Shared visual language for the landing page and account entry points. */
 .landing-reference-page,
 .auth-reference-page {
-  --first-bg: #090a0d;
-  --first-surface: #111318;
-  --first-surface-raised: #171a20;
+  --first-bg: #090909;
+  --first-surface: #111111;
+  --first-surface-raised: #191919;
   --first-line: rgba(255, 255, 255, .09);
   --first-text: #f4f5f1;
   --first-muted: #a4a8b2;
@@ -17,7 +17,7 @@
 
 body:has(.landing-reference-page),
 body:has(.auth-reference-page) {
-  background: #090a0d;
+  background: #090909;
 }
 
 .landing-reference-page {
@@ -286,7 +286,7 @@ body:has(.auth-reference-page) {
   padding: 0;
   overflow: hidden;
   color: var(--first-text);
-  background: linear-gradient(145deg, rgba(25, 28, 35, .98), rgba(14, 16, 21, .98));
+  background: linear-gradient(145deg, rgba(25, 25, 25, .98), rgba(14, 14, 14, .98));
   border: 1px solid rgba(255, 255, 255, .15);
   border-radius: 25px;
   box-shadow: 0 38px 110px rgba(0, 0, 0, .48);
@@ -316,7 +316,7 @@ body:has(.auth-reference-page) {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #4b4e57;
+  background: #4b4b4b;
 }
 
 .landing-reference-browser i:first-child {
@@ -478,7 +478,7 @@ body:has(.auth-reference-page) {
   align-items: center;
   gap: 11px;
   padding: 13px 16px;
-  background: rgba(25, 27, 34, .92);
+  background: rgba(25, 25, 25, .92);
   border: 1px solid rgba(255, 255, 255, .13);
   border-radius: 15px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, .35);
@@ -591,7 +591,7 @@ body:has(.auth-reference-page) {
   position: absolute;
   top: 25px;
   right: 25px;
-  color: #656b76;
+  color: #666666;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: .63rem;
 }
@@ -869,7 +869,7 @@ body:has(.auth-reference-page) {
 .auth-reference-card {
   width: 100%;
   padding: 34px 34px 30px;
-  background: linear-gradient(150deg, rgba(25, 28, 35, .97), rgba(16, 18, 23, .98));
+  background: linear-gradient(150deg, rgba(25, 25, 25, .97), rgba(16, 16, 16, .98));
   border: 1px solid rgba(255, 255, 255, .115);
   border-radius: 20px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, .28);
@@ -926,7 +926,7 @@ body:has(.auth-reference-page) {
   padding: 0 14px;
   color: #f2f4f7;
   caret-color: var(--first-lime);
-  background: rgba(5, 6, 9, .46);
+  background: rgba(5, 5, 5, .46);
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 10px;
   font-size: .83rem;
@@ -934,7 +934,7 @@ body:has(.auth-reference-page) {
 }
 
 .auth-reference-card .field-label input:focus {
-  background: rgba(5, 6, 9, .68);
+  background: rgba(5, 5, 5, .68);
   border-color: rgba(255, 255, 255, .65);
   box-shadow: none;
   outline: none;
