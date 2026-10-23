@@ -256,7 +256,47 @@
     "Gotowe": "Ready",
     "Zmiany zapisują się automatycznie.": "Changes save automatically.",
     "Przeciągaj lub skaluj profil, połączenia, Discord presence, odtwarzacz muzyki albo Live lyrics. Zsynchronizowane wersy dodasz w ustawieniach audio.": "Drag or resize profile, Connections, Discord presence, music player or Live lyrics. Add synced lines in Audio settings.",
-    "Przeciągaj lub skaluj kartę profilu, aby umieścić ją w dowolnym miejscu strony.": "Drag or resize the profile card to place it anywhere on the page."
+    "Przeciągaj lub skaluj kartę profilu, aby umieścić ją w dowolnym miejscu strony.": "Drag or resize the profile card to place it anywhere on the page.",
+    "Co możesz stworzyć": "What you can make",
+    "Podgląd": "Preview",
+    "Stwórz swoją stronę": "Create your page",
+    "TWOJE MIEJSCE, NA TWOICH ZASADACH": "YOUR SPACE, YOUR WAY",
+    "Cały Ty,": "All of you,",
+    "na jednej stronie.": "one page.",
+    "Zbierz swoje linki, profile społecznościowe i osobowość na jednej stronie, którą dopasujesz do siebie.": "Bring your links, socials and personality together in one profile you can shape from top to bottom.",
+    "Zaloguj się na konto": "Sign in to your account",
+    "Każdy profil może wyglądać inaczej.": "No two profiles have to look the same.",
+    "Stworzona po Twojemu": "Made to feel like you",
+    "Każdy szczegół zależy od Ciebie": "Every detail is yours",
+    "Mały zakątek internetu, który należy do Ciebie.": "A little corner of the internet, made yours.",
+    "PODGLĄD PROFILU": "PROFILE PREVIEW",
+    "TWÓJ PROFIL": "YOUR PAGE",
+    "Twoje linki w jednym miejscu": "Your links, one place",
+    "Gotowe do udostępnienia": "Ready whenever you share",
+    "WIĘCEJ NIŻ LINK": "MORE THAN A LINK",
+    "Stwórz stronę": "Make the page",
+    "po swojemu.": "feel like yours.",
+    "Zacznij od podstaw, a potem dopracuj szczegóły, żeby wszystko pasowało do Ciebie.": "Start with the essentials, then shape the details until it feels right.",
+    "Wszystko w jednym miejscu": "Everything in one place",
+    "Dodaj swoje profile, ulubione linki i wszystko, co chcesz pokazać.": "Bring your socials, favorite links and the things you want people to find.",
+    "Twój styl, Twoje zasady": "Your style, your rules",
+    "Wybierz kolory, tło, typografię i detale, które pasują do Ciebie.": "Choose the colors, background, typography and details that feel like you.",
+    "Jeden link do udostępnienia": "One link to pass around",
+    "Daj innym jeden zapamiętywalny adres do całego Twojego świata online.": "Give people one memorable address for your online world.",
+    "CZAS NA TWOJĄ STRONĘ": "YOUR NEXT TAB",
+    "Gotowy, żeby stworzyć": "Ready to make",
+    "ją po swojemu?": "it yours?",
+    "Twój zakątek internetu czeka.": "Your corner of the internet is waiting.",
+    "Twoja strona.": "Your page.",
+    "Twoje zasady.": "Your rules.",
+    "Jeszcze jeden": "One last",
+    "krok.": "step.",
+    "Sprawdź skrzynkę po 8-cyfrowy kod i dokończ tworzenie profilu.": "Check your inbox for the 8-digit code and you’ll be ready to go.",
+    "Zbierz linki, profile społecznościowe i osobowość na jednej stronie, którą dopasujesz do siebie.": "Bring your links, socials and personality together in one profile you can make your own.",
+    "Wróć do edycji profilu i dalej dopracowuj stronę po swojemu.": "Pick up where you left off and keep shaping a page that feels like you.",
+    "Profil dopasowany do Ciebie": "A profile that feels like you",
+    "Jeden prosty link do udostępnienia": "One simple link to share",
+    "Linki, styl i osobowość w jednym miejscu": "Links, style and personality together"
   }));
   const partMap = [["małe litery, cyfry i _", "lowercase letters, numbers and _"], ["bez nazwy", "untitled"], ["Przesuń link wyżej", "Move link up"], ["Przesuń link niżej", "Move link down"], ["Duplikuj link", "Duplicate link"], ["Usuń link", "Remove link"], ["Skopiuj link", "Copy link"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Wysłaliśmy kod na ", "We sent a code to "], ["Wyślij ponownie za ", "Send again in "], ["Nie udało się", "Could not"], [" — gotowy do użycia.", " — ready to use."]];
   const attrMap = new Map([["np. sqezen", "e.g. sqezen"], ["twoja_nazwa", "your_name"], ["Twoja nazwa", "Your name"], ["np. Mój GitHub", "e.g. My GitHub"], ["discord.gg/nazwa lub dowolny tekst", "discord.gg/name or any text"], ["https://.../avatar.png", "https://.../avatar.png"], ["np. Warszawa", "e.g. Warsaw"], ["https://.../background.mp4", "https://.../background.mp4"], ["https://.../track.mp3", "https://.../track.mp3"], ["Nazwa utworu", "Track name"], ["Nazwa wykonawcy", "Artist name"], ["Panel profilu", "Profile workspace"], ["Otwórz menu", "Open menu"], ["Skopiuj adres", "Copy address"], ["Skopiuj link", "Copy link"], ["Twoje hasło", "Your password"], ["minimum 6 znaków", "minimum 6 characters"], ["ty@example.com", "you@example.com"]]);
@@ -350,6 +390,8 @@
       ? document.querySelector(".dashboard-topbar-actions")
       : route.startsWith("/login") || route.startsWith("/register")
         ? document.querySelector(".auth-reference-header")
+        : route === "/"
+          ? document.querySelector(".landing-reference-nav")
         : null;
     const host = inlineHost || document.body;
     if (control.parentElement !== host) host.prepend(control);
