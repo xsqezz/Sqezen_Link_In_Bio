@@ -2,3 +2,9 @@ node_modules/
 supabase/.temp/
 .env
 .env.*
+
+# Backend / private infrastructure (not for public repo)
+supabase/
+supabase-*.sql
+discord-presence-bot/
+.github/workflows/discord-presence.yml
